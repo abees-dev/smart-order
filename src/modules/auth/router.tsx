@@ -1,4 +1,5 @@
 import { Outlet, type RouteObject } from "react-router-dom";
+import { LoginPage } from "./components";
 
 const authRouter: RouteObject[] = [
   {
@@ -6,7 +7,11 @@ const authRouter: RouteObject[] = [
     path: "/auth",
     children: [
       {
-        element: <div>Auth</div>,
+        element: <LoginPage />,
+        path: "login",
+      },
+      {
+        element: <LoginPage />,
         index: true,
       },
     ],

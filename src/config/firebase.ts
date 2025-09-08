@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -10,7 +11,27 @@ const firebaseConfig = {
   appId: "1:200046591062:web:31d9b2d513c96768f74ff7",
   measurementId: "G-M5EPDGGCPG",
 };
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase Authentication
+const auth = getAuth(app);
+
+// Initialize Firestore
 const db = getFirestore(app);
 
-export { db };
+// Configure Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: "select_account",
+});
+googleProvider.addScope("email");
+googleProvider.addScope("profile");
+
+// Validate Firebase configuration in development
+if (import.meta.env.DEV) {
+  console.log("Firebase initialized with project:", firebaseConfig.projectId);
+}
+
+export { auth, db, googleProvider };

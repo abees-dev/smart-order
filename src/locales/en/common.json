@@ -14,7 +14,11 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "welcomeBack": "Welcome back",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "loginDescription": "Choose your preferred sign-in method",
+    "signInWithGoogle": "Continue with Google",
+    "signInWithZalo": "Continue with Zalo",
+    "termsAgreement": "By continuing, you agree to our Terms of Service and Privacy Policy"
   },
   "navigation": {
     "dashboard": "Dashboard",

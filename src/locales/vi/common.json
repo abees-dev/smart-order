@@ -14,7 +14,11 @@
     "signIn": "Đăng nhập",
     "signUp": "Đăng ký",
     "welcomeBack": "Chào mừng trở lại",
-    "createAccount": "Tạo tài khoản"
+    "createAccount": "Tạo tài khoản",
+    "loginDescription": "Chọn phương thức đăng nhập ưa thích của bạn",
+    "signInWithGoogle": "Tiếp tục với Google",
+    "signInWithZalo": "Tiếp tục với Zalo",
+    "termsAgreement": "Bằng cách tiếp tục, bạn đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật của chúng tôi"
   },
   "navigation": {
     "dashboard": "Bảng điều khiển",
