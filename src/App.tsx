@@ -5,6 +5,7 @@ import { useDocumentTitle } from "./hooks/use-document-title";
 
 function App() {
   useDocumentTitle();
+  console.log("VITE_MODE:", import.meta.env.MODE);
 
   return (
     <Suspense
@@ -14,6 +15,7 @@ function App() {
         </div>
       }
     >
+      <div>test app</div>
       <RouterProvider router={router} />
     </Suspense>
   );
