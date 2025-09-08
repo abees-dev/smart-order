@@ -1,9 +1,8 @@
-import DashboardLayout from "@/layout/dashboard-layout";
-import type { RouteObject } from "react-router-dom";
+import { Outlet, type RouteObject } from "react-router-dom";
 
 const authRouter: RouteObject[] = [
   {
-    element: <DashboardLayout />,
+    element: <Outlet />,
     path: "/auth",
     children: [
       {

@@ -1,0 +1,70 @@
+{
+  "app": {
+    "title": "Đặt Hàng Thông Minh",
+    "description": "Hệ thống đặt hàng thông minh"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "register": "Đăng ký",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "forgotPassword": "Quên mật khẩu?",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "welcomeBack": "Chào mừng trở lại",
+    "createAccount": "Tạo tài khoản"
+  },
+  "navigation": {
+    "dashboard": "Bảng điều khiển",
+    "orders": "Đơn hàng",
+    "products": "Sản phẩm",
+    "customers": "Khách hàng",
+    "reports": "Báo cáo",
+    "settings": "Cài đặt"
+  },
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "add": "Thêm",
+    "search": "Tìm kiếm",
+    "loading": "Đang tải...",
+    "success": "Thành công",
+    "error": "Lỗi",
+    "warning": "Cảnh báo",
+    "info": "Thông tin",
+    "confirm": "Xác nhận",
+    "close": "Đóng",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "previous": "Trước",
+    "submit": "Gửi",
+    "reset": "Đặt lại"
+  },
+  "orders": {
+    "title": "Đơn hàng",
+    "newOrder": "Đơn hàng mới",
+    "orderNumber": "Số đơn hàng",
+    "customer": "Khách hàng",
+    "total": "Tổng cộng",
+    "status": "Trạng thái",
+    "date": "Ngày",
+    "pending": "Đang chờ",
+    "processing": "Đang xử lý",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy"
+  },
+  "products": {
+    "title": "Sản phẩm",
+    "addProduct": "Thêm sản phẩm",
+    "productName": "Tên sản phẩm",
+    "price": "Giá",
+    "category": "Danh mục",
+    "stock": "Kho",
+    "description": "Mô tả",
+    "image": "Hình ảnh"
+  }
+}
