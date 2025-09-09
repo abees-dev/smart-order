@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   Loader2,
   Edit3,
@@ -49,6 +47,7 @@ import { useSupplyActions } from "../hooks/use-supply";
 import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { updateSupplySchema, type UpdateSupplyFormData } from "../validation";
 import type { Supply } from "../types";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface SupplyDetailDialogProps {
   supply: Supply | null;
@@ -83,7 +82,6 @@ export function SupplyDetailDialog({
           unit: supply.unit,
           currentStock: supply.currentStock,
           minStock: supply.minStock,
-          maxStock: supply.maxStock,
           purchasePrice: supply.purchasePrice,
           salePrice: supply.salePrice,
           supplierId: supply.supplierId || "",
@@ -196,16 +194,6 @@ export function SupplyDetailDialog({
               <span>Tối thiểu: </span>
               <span className="font-semibold">
                 {supply.minStock} {supply.unit}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            <div className="text-sm">
-              <span>Tối đa: </span>
-              <span className="font-semibold">
-                {supply.maxStock} {supply.unit}
               </span>
             </div>
           </div>
@@ -453,7 +441,7 @@ export function SupplyDetailDialog({
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             <FormField
               control={form.control}
               name="currentStock"
@@ -495,31 +483,6 @@ export function SupplyDetailDialog({
                   </FormControl>
                   <FormDescription>
                     Cảnh báo khi tồn kho dưới mức này
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="maxStock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tồn kho tối đa *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Mức tồn kho tối đa trong kho
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

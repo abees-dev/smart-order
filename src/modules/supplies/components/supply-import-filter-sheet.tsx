@@ -28,109 +28,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SupplierService } from "@/modules/suppliers/services/supplier.service";
-import type { Supplier } from "@/modules/suppliers";
 import type { SupplyImportFilters } from "../types";
 
 interface SupplyImportFilterSheetProps {
   filters: SupplyImportFilters;
   onFiltersChange: (filters: SupplyImportFilters) => void;
-}
-
-// Standalone Supplier Select without form context
-function StandaloneSupplierSelect({
-  value,
-  onValueChange,
-  placeholder,
-}: {
-  value?: string;
-  onValueChange?: (value: string) => void;
-  placeholder?: string;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // Load suppliers when dropdown opens
-  useEffect(() => {
-    const loadSuppliers = async () => {
-      if (!isOpen) return;
-
-      try {
-        setLoading(true);
-        const allSuppliers = await SupplierService.getActiveSuppliers();
-        setSuppliers(allSuppliers.slice(0, 50));
-      } catch (error) {
-        console.error("Error loading suppliers:", error);
-        setSuppliers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSuppliers();
-  }, [isOpen]);
-
-  const selectedSupplier = suppliers.find((supplier) => supplier.id === value);
-
-  const handleValueChange = (selectedValue: string) => {
-    if (selectedValue === "all") {
-      onValueChange?.("");
-    } else {
-      onValueChange?.(selectedValue);
-    }
-    setIsOpen(false);
-  };
-
-  return (
-    <Select
-      value={value || "all"}
-      onValueChange={handleValueChange}
-      open={isOpen}
-      onOpenChange={setIsOpen}
-    >
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder={placeholder}>
-          {selectedSupplier ? (
-            <div className="flex items-center gap-2">
-              <span className="font-medium truncate">
-                {selectedSupplier.name}
-              </span>
-            </div>
-          ) : null}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">Tất cả nhà cung cấp</SelectItem>
-
-        {loading && (
-          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-            Đang tải...
-          </div>
-        )}
-
-        {!loading && suppliers.length === 0 && (
-          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-            Không có nhà cung cấp nào
-          </div>
-        )}
-
-        {!loading &&
-          suppliers.map((supplier) => (
-            <SelectItem key={supplier.id} value={supplier.id}>
-              <div className="flex flex-col items-start gap-1 w-full">
-                <span className="font-medium">{supplier.name}</span>
-                {supplier.phone && (
-                  <span className="text-xs text-muted-foreground">
-                    {supplier.phone}
-                  </span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 export function SupplyImportFilterSheet({

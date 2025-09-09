@@ -134,7 +134,6 @@ export function SuppliesListPage() {
       title: "Tồn kho",
       render: (_, supply) => {
         const status = getStockStatus(supply);
-        const stockPercentage = (supply.currentStock / supply.maxStock) * 100;
         return (
           <div className="text-center min-w-[100px] lg:min-w-[120px]">
             <div className="font-bold text-sm lg:text-lg mb-1">
@@ -157,20 +156,8 @@ export function SuppliesListPage() {
                 <span className="hidden lg:inline">{status.label}</span>
               </Badge>
             </div>
-            <div className="w-full bg-muted rounded-full h-1 lg:h-1.5 mb-1">
-              <div
-                className={`h-1 lg:h-1.5 rounded-full transition-all ${
-                  stockPercentage <= 20
-                    ? "bg-red-500"
-                    : stockPercentage <= 50
-                    ? "bg-yellow-500"
-                    : "bg-green-500"
-                }`}
-                style={{ width: `${Math.min(stockPercentage, 100)}%` }}
-              />
-            </div>
             <div className="text-xs text-muted-foreground hidden lg:block">
-              Min: {supply.minStock} • Max: {supply.maxStock}
+              Tối thiểu: {supply.minStock} {supply.unit}
             </div>
           </div>
         );

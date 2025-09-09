@@ -67,7 +67,6 @@ export function SupplyFormDialog({
       unit: supply?.unit ?? "",
       currentStock: supply?.currentStock ?? 0,
       minStock: supply?.minStock ?? 0,
-      maxStock: supply?.maxStock ?? 0,
       purchasePrice: supply?.purchasePrice ?? 0,
       salePrice: supply?.salePrice ?? 0,
       supplierId: supply?.supplierId ?? "",
@@ -245,7 +244,7 @@ export function SupplyFormDialog({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <FormField
                   control={form.control}
                   name="currentStock"
@@ -287,31 +286,6 @@ export function SupplyFormDialog({
                       </FormControl>
                       <FormDescription>
                         Cảnh báo khi tồn kho dưới mức này
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="maxStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tồn kho tối đa *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Mức tồn kho tối đa trong kho
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

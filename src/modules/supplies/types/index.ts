@@ -9,7 +9,6 @@ export interface Supply {
   unit: string; // e.g., "kg", "piece", "liter", etc.
   currentStock: number;
   minStock: number; // minimum stock level for alerts
-  maxStock: number; // maximum stock level
   purchasePrice: number; // giá mua
   salePrice: number; // giá bán
   supplierId?: string;
@@ -28,7 +27,6 @@ export interface CreateSupplyData {
   unit: string;
   currentStock: number;
   minStock: number;
-  maxStock: number;
   purchasePrice: number;
   salePrice: number;
   supplierId?: string;

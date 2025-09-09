@@ -1,67 +1,54 @@
 import { z } from "zod";
 
-export const createSupplySchema = z
-  .object({
-    name: z
-      .string()
-      .min(2, "Tên vật tư phải có ít nhất 2 ký tự")
-      .max(100, "Tên vật tư không được vượt quá 100 ký tự"),
-    sku: z
-      .string()
-      .min(2, "Mã SKU phải có ít nhất 2 ký tự")
-      .max(50, "Mã SKU không được vượt quá 50 ký tự")
-      .regex(
-        /^[A-Z0-9\-_]+$/,
-        "Mã SKU chỉ được chứa chữ hoa, số, gạch ngang và gạch dưới"
-      ),
-    description: z
-      .string()
-      .max(500, "Mô tả không được vượt quá 500 ký tự")
-      .optional()
-      .or(z.literal("")),
-    category: z
-      .string()
-      .min(2, "Danh mục phải có ít nhất 2 ký tự")
-      .max(50, "Danh mục không được vượt quá 50 ký tự"),
-    unit: z
-      .string()
-      .min(1, "Đơn vị tính là bắt buộc")
-      .max(20, "Đơn vị tính không được vượt quá 20 ký tự"),
-    currentStock: z
-      .number()
-      .min(0, "Tồn kho hiện tại không được âm")
-      .max(999999, "Tồn kho hiện tại quá lớn"),
-    minStock: z
-      .number()
-      .min(0, "Tồn kho tối thiểu không được âm")
-      .max(999999, "Tồn kho tối thiểu quá lớn"),
-    maxStock: z
-      .number()
-      .min(1, "Tồn kho tối đa phải lớn hơn 0")
-      .max(999999, "Tồn kho tối đa quá lớn"),
-    purchasePrice: z
-      .number()
-      .min(0, "Giá mua không được âm")
-      .max(99999999, "Giá mua quá lớn"),
-    salePrice: z
-      .number()
-      .min(0, "Giá bán không được âm")
-      .max(99999999, "Giá bán quá lớn"),
-    supplierId: z.string().optional().or(z.literal("")),
-    location: z
-      .string()
-      .max(100, "Vị trí lưu trữ không được vượt quá 100 ký tự")
-      .optional()
-      .or(z.literal("")),
-  })
-  .refine((data) => data.maxStock >= data.minStock, {
-    message: "Tồn kho tối đa phải lớn hơn hoặc bằng tồn kho tối thiểu",
-    path: ["maxStock"],
-  })
-  .refine((data) => data.currentStock <= data.maxStock, {
-    message: "Tồn kho hiện tại không được vượt quá tồn kho tối đa",
-    path: ["currentStock"],
-  });
+export const createSupplySchema = z.object({
+  name: z
+    .string()
+    .min(2, "Tên vật tư phải có ít nhất 2 ký tự")
+    .max(100, "Tên vật tư không được vượt quá 100 ký tự"),
+  sku: z
+    .string()
+    .min(2, "Mã SKU phải có ít nhất 2 ký tự")
+    .max(50, "Mã SKU không được vượt quá 50 ký tự")
+    .regex(
+      /^[A-Z0-9\-_]+$/,
+      "Mã SKU chỉ được chứa chữ hoa, số, gạch ngang và gạch dưới"
+    ),
+  description: z
+    .string()
+    .max(500, "Mô tả không được vượt quá 500 ký tự")
+    .optional()
+    .or(z.literal("")),
+  category: z
+    .string()
+    .min(2, "Danh mục phải có ít nhất 2 ký tự")
+    .max(50, "Danh mục không được vượt quá 50 ký tự"),
+  unit: z
+    .string()
+    .min(1, "Đơn vị tính là bắt buộc")
+    .max(20, "Đơn vị tính không được vượt quá 20 ký tự"),
+  currentStock: z
+    .number()
+    .min(0, "Tồn kho hiện tại không được âm")
+    .max(999999, "Tồn kho hiện tại quá lớn"),
+  minStock: z
+    .number()
+    .min(0, "Tồn kho tối thiểu không được âm")
+    .max(999999, "Tồn kho tối thiểu quá lớn"),
+  purchasePrice: z
+    .number()
+    .min(0, "Giá mua không được âm")
+    .max(99999999, "Giá mua quá lớn"),
+  salePrice: z
+    .number()
+    .min(0, "Giá bán không được âm")
+    .max(99999999, "Giá bán quá lớn"),
+  supplierId: z.string().optional().or(z.literal("")),
+  location: z
+    .string()
+    .max(100, "Vị trí lưu trữ không được vượt quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
+});
 
 export const updateSupplySchema = createSupplySchema.partial().extend({
   isActive: z.boolean().optional(),
