@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Search, Filter, Package, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   type ResponsiveTableColumn,
 } from "@/components/tables";
 import type { Supply, SupplyFilters } from "../types";
+import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 
 export function SuppliesListPage() {
   useDocumentTitle();
@@ -28,16 +29,16 @@ export function SuppliesListPage() {
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
   const [supplyToDelete, setSupplyToDelete] = useState<Supply | null>(null);
 
-  const {
-    supplies,
-    loading,
-    error,
-    hasMore,
-    filters,
-    updateFilters,
-    refreshSupplies,
-    loadMoreSupplies,
-  } = useSupplies();
+  const { supplies, loading, error, filters, updateFilters, refreshSupplies } =
+    useSupplies();
+
+  // Get supplier IDs from supplies and fetch supplier data
+  const supplierIds = useMemo(
+    () => supplies.map((supply) => supply.supplierId),
+    [supplies]
+  );
+
+  const { getSupplierName } = useSuppliersByIds(supplierIds);
 
   const { createColumn } = useResponsiveTableColumns<Supply>();
 
@@ -137,7 +138,7 @@ export function SuppliesListPage() {
       key: "supplier",
       title: "Nhà cung cấp",
       render: (_, supply) => (
-        <div className="text-sm">{supply.supplier || "—"}</div>
+        <div className="text-sm">{getSupplierName(supply.supplierId)}</div>
       ),
     }),
     createColumn({

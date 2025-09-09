@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSuppliers } from "@/modules/suppliers";
+import { SupplierService } from "@/modules/suppliers/services/supplier.service";
 import type { Supplier, SupplierFilters } from "@/modules/suppliers";
 
 export interface UseSupplierSelectOptions {
@@ -82,5 +83,79 @@ export function useSupplierSelect(
     selectSupplier,
     clearSelection,
     refreshSuppliers,
+  };
+}
+
+/**
+ * Hook to get suppliers by their IDs
+ * Useful for displaying supplier names in lists where you only have IDs
+ */
+export function useSuppliersByIds(supplierIds: (string | undefined)[]) {
+  const [suppliers, setSuppliers] = useState<Record<string, Supplier>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get unique, non-undefined IDs
+  const uniqueIds = useMemo(() => {
+    const ids = supplierIds.filter((id): id is string => !!id);
+    return Array.from(new Set(ids));
+  }, [supplierIds]);
+
+  const fetchSuppliers = useCallback(async () => {
+    if (uniqueIds.length === 0) {
+      setSuppliers({});
+      return;
+    }
+
+    // Check if we already have all the suppliers
+    const missingIds = uniqueIds.filter((id) => !suppliers[id]);
+    if (missingIds.length === 0) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const fetchedSuppliers = await SupplierService.getSuppliersByIds(
+        missingIds
+      );
+
+      setSuppliers((prev) => {
+        const newSuppliers = { ...prev };
+        fetchedSuppliers.forEach((supplier) => {
+          newSuppliers[supplier.id] = supplier;
+        });
+        return newSuppliers;
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Không thể tải thông tin nhà cung cấp"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [uniqueIds, suppliers]);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
+
+  // Helper function to get supplier name by ID
+  const getSupplierName = useCallback(
+    (supplierId?: string) => {
+      if (!supplierId) return "—";
+      return suppliers[supplierId]?.name || "—";
+    },
+    [suppliers]
+  );
+
+  return {
+    suppliers,
+    loading,
+    error,
+    getSupplierName,
   };
 }
