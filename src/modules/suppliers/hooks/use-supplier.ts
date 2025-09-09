@@ -21,7 +21,7 @@ export function useSuppliers(filters: SupplierFilters = {}, pageSize = 100) {
   });
 
   const lastDocRef = useRef<DocumentSnapshot | null>(null);
-  
+
   // Use JSON.stringify to create stable dependency
   const filtersString = JSON.stringify(filters);
   const pageSizeValue = pageSize;
@@ -37,11 +37,7 @@ export function useSuppliers(filters: SupplierFilters = {}, pageSize = 100) {
       try {
         lastDocRef.current = null; // Reset for new filters
         const { suppliers, lastDoc: newLastDoc } =
-          await SupplierService.getAllSuppliers(
-            filters,
-            pageSize,
-            undefined
-          );
+          await SupplierService.getAllSuppliers(filters, pageSize, undefined);
 
         setState((prev) => ({
           ...prev,

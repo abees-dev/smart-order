@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Edit3, Package } from "lucide-react";
+import {
+  Loader2,
+  Edit3,
+  Package,
+  MapPin,
+  AlertTriangle,
+  DollarSign,
+  Info,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -101,74 +109,196 @@ export function SupplyDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
+        <DialogHeader className="pb-6 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="space-y-2">
+              <DialogTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Package className="h-6 w-6 text-primary" />
+                </div>
                 {supply.name}
               </DialogTitle>
-              <DialogDescription>
-                Mã SKU: {supply.sku} • Danh mục: {supply.category}
+              <DialogDescription className="text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
+                    {supply.sku}
+                  </span>
+                  <span>•</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {supply.category}
+                  </Badge>
+                  {supply.location && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 text-xs">
+                        <MapPin className="h-3 w-3" />
+                        {supply.location}
+                      </span>
+                    </>
+                  )}
+                </div>
               </DialogDescription>
             </div>
-            {stockStatus && (
-              <Badge variant={stockStatus.color}>{stockStatus.label}</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {stockStatus && (
+                <Badge
+                  variant={stockStatus.color}
+                  className="flex items-center gap-1 px-3 py-1"
+                >
+                  {stockStatus.color === "destructive" && (
+                    <AlertTriangle className="h-3 w-3" />
+                  )}
+                  {stockStatus.color === "outline" && (
+                    <AlertTriangle className="h-3 w-3" />
+                  )}
+                  {stockStatus.color === "default" && (
+                    <Package className="h-3 w-3" />
+                  )}
+                  {stockStatus.label}
+                </Badge>
+              )}
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  Chỉnh sửa
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
         {!isEditing ? (
           <div className="space-y-6">
-            {/* Stock Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Thông tin tồn kho</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Tồn kho hiện tại
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {supply.currentStock} {supply.unit}
-                    </p>
+            {/* Enhanced Stock Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="border-l-4 border-l-blue-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="h-5 w-5 text-blue-600" />
+                    Thông tin tồn kho
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-600 font-medium mb-1">
+                        Tồn kho hiện tại
+                      </p>
+                      <p className="text-3xl font-bold text-blue-700">
+                        {supply.currentStock}
+                      </p>
+                      <p className="text-sm text-blue-600">{supply.unit}</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">
+                          Tối thiểu:
+                        </span>
+                        <span className="font-semibold">
+                          {supply.minStock} {supply.unit}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">
+                          Tối đa:
+                        </span>
+                        <span className="font-semibold">
+                          {supply.maxStock} {supply.unit}
+                        </span>
+                      </div>
+                      <div className="w-full">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>0</span>
+                          <span>{supply.maxStock}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3">
+                          <div
+                            className={`h-3 rounded-full transition-all ${
+                              supply.currentStock / supply.maxStock <= 0.2
+                                ? "bg-red-500"
+                                : supply.currentStock / supply.maxStock <= 0.5
+                                ? "bg-yellow-500"
+                                : "bg-green-500"
+                            }`}
+                            style={{
+                              width: `${Math.min(
+                                (supply.currentStock / supply.maxStock) * 100,
+                                100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tối thiểu</p>
-                    <p className="text-lg font-semibold">
-                      {supply.minStock} {supply.unit}
-                    </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    Thông tin giá cả
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                      <span className="text-sm font-medium text-red-600">
+                        Giá mua:
+                      </span>
+                      <span className="text-lg font-bold text-red-700">
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(supply.purchasePrice)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                      <span className="text-sm font-medium text-green-600">
+                        Giá bán:
+                      </span>
+                      <span className="text-lg font-bold text-green-700">
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(supply.salePrice)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                      <span className="text-sm font-medium text-purple-600">
+                        Lợi nhuận:
+                      </span>
+                      <span className="text-lg font-bold text-purple-700">
+                        {Math.round(
+                          ((supply.salePrice - supply.purchasePrice) /
+                            supply.purchasePrice) *
+                            100
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm font-medium text-blue-600">
+                        Giá trị kho:
+                      </span>
+                      <span className="text-lg font-bold text-blue-700">
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(supply.currentStock * supply.purchasePrice)}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tối đa</p>
-                    <p className="text-lg font-semibold">
-                      {supply.maxStock} {supply.unit}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Giá mua</p>
-                    <p className="text-lg font-semibold text-red-600">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(supply.purchasePrice)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Giá bán</p>
-                    <p className="text-lg font-semibold text-green-600">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(supply.salePrice)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* General Information */}
             <Card>
