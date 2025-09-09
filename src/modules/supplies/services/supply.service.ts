@@ -26,7 +26,6 @@ import type {
   CreateStockMovementData,
   SupplyImport,
   CreateSupplyImportData,
-  UpdateSupplyImportData,
   SupplyImportFilters,
 } from "../types";
 
@@ -489,6 +488,14 @@ export class SupplyService {
       }
       if (filters.status) {
         constraints.push(where("status", "==", filters.status));
+      }
+
+      if (filters.dateFrom) {
+        constraints.push(where("importDate", ">=", filters.dateFrom));
+      }
+
+      if (filters.dateTo) {
+        constraints.push(where("importDate", "<=", filters.dateTo));
       }
 
       constraints.push(orderBy("importDate", "desc"));
