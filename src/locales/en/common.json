@@ -61,7 +61,8 @@
     "retry": "Retry",
     "loadMore": "Load More",
     "deleting": "Deleting...",
-    "all": "All"
+    "all": "All",
+    "status": "Status"
   },
   "orders": {
     "title": "Orders",

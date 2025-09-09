@@ -44,6 +44,32 @@ export function SupplierSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
+  // Load selected supplier by ID when value changes
+  useEffect(() => {
+    const loadSelectedSupplier = async () => {
+      if (!value) return;
+      
+      // Check if we already have this supplier in our list
+      const existingSupplier = suppliers.find(s => s.id === value);
+      if (existingSupplier) return;
+
+      try {
+        const supplier = await SupplierService.getSupplierById(value);
+        if (supplier) {
+          setSuppliers(prev => {
+            // Add to suppliers if not already present
+            const exists = prev.some(s => s.id === value);
+            if (exists) return prev;
+            return [supplier, ...prev];
+          });
+        }
+      } catch (error) {
+        console.error("Error loading selected supplier:", error);
+      }
+    };
+
+    loadSelectedSupplier();
+  }, [value]);
 
   // Load suppliers with direct service call
   useEffect(() => {
@@ -55,7 +81,11 @@ export function SupplierSelect({
         const allSuppliers = await SupplierService.getActiveSuppliers();
         // Show first 50 suppliers when no search term
 
-        setSuppliers(allSuppliers.slice(0, 50));
+        setSuppliers(prev => {
+          // Merge with existing suppliers, avoid duplicates
+          const existing = prev.filter(p => !allSuppliers.some(a => a.id === p.id));
+          return [...existing, ...allSuppliers.slice(0, 50)];
+        });
       } catch (error) {
         console.error("Error loading suppliers:", error);
         setSuppliers([]);
@@ -64,14 +94,14 @@ export function SupplierSelect({
       }
     };
 
-    // Only load when dropdown is open or there's a search term
+    // Load suppliers when dropdown is opened
     if (isOpen) {
       loadSuppliers();
     }
   }, [isOpen]);
 
   // Find selected supplier
-  const selectedSupplier = suppliers.find((supplier) => supplier.id === value);
+  const selectedSupplier = value ? suppliers.find((supplier) => supplier.id === value) : null;
 
   // Reset search when dropdown closes and focus input when opened
   const handleOpenChange = useCallback((open: boolean) => {
@@ -105,10 +135,16 @@ export function SupplierSelect({
             className={cn(error && "border-destructive", "w-full")}
           >
             <SelectValue placeholder={placeholder || t("Chọn nhà cung cấp")}>
-              {selectedSupplier ? (
+              {value && selectedSupplier ? (
                 <div className="flex items-center gap-2 w-[220px]">
                   <span className="font-medium truncate">
                     {selectedSupplier.name}
+                  </span>
+                </div>
+              ) : value ? (
+                <div className="flex items-center gap-2 w-[220px]">
+                  <span className="font-medium truncate text-muted-foreground">
+                    Đang tải...
                   </span>
                 </div>
               ) : null}
@@ -183,6 +219,7 @@ export function SupplierSelectField({
   field: {
     value: string | undefined;
     onChange: (value: string) => void;
+    onBlur?: () => void;
   };
   fieldState: {
     error?: {
@@ -190,11 +227,16 @@ export function SupplierSelectField({
     };
   };
 } & Omit<SupplierSelectProps, "value" | "onValueChange" | "error">) {
+  const handleValueChange = useCallback((value: string) => {
+    field.onChange(value);
+    field.onBlur?.();
+  }, [field]);
+
   return (
     <SupplierSelect
       {...props}
       value={field.value || ""}
-      onValueChange={field.onChange}
+      onValueChange={handleValueChange}
       error={fieldState.error?.message}
     />
   );

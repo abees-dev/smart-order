@@ -61,7 +61,8 @@
     "retry": "Thử lại",
     "loadMore": "Tải thêm",
     "deleting": "Đang xóa...",
-    "all": "Tất cả"
+    "all": "Tất cả",
+    "status": "Trạng thái"
   },
   "orders": {
     "title": "Đơn hàng",
