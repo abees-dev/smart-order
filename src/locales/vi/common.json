@@ -27,6 +27,8 @@
     "customers": "Khách hàng",
     "suppliers": "Nhà cung cấp",
     "supplies": "Vật tư",
+    "inventory": "Kho",
+    "invoices": "Hóa đơn",
     "reports": "Báo cáo",
     "settings": "Cài đặt"
   },

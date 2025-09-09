@@ -4,6 +4,7 @@ import { customerRouter } from "./modules/customer";
 import { suppliesRouter } from "./modules/supplies";
 import { suppliersRouter } from "./modules/suppliers";
 import DashboardLayout from "./layout/dashboard-layout";
+import { ROUTES } from "./constants/routes";
 
 const router = createBrowserRouter(
   [
@@ -30,7 +31,7 @@ const router = createBrowserRouter(
       path: "/",
       element: (
         <div>
-          Home - <Link to="/auth/login">Go to Login</Link>
+          Home - <Link to={ROUTES.AUTH.LOGIN}>Go to Login</Link>
         </div>
       ),
     },

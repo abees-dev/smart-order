@@ -27,6 +27,8 @@
     "customers": "Customers",
     "suppliers": "Suppliers",
     "supplies": "Supplies",
+    "inventory": "Inventory",
+    "invoices": "Invoices",
     "reports": "Reports",
     "settings": "Settings"
   },

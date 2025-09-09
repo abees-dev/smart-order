@@ -2,106 +2,142 @@
 
 ## Architecture Overview
 
-This is a React + TypeScript + Vite application built with a modular architecture pattern. The app is internationalized (i18n) with Vietnamese as the default language and uses Firebase for backend services.
+This is a React + TypeScript + Vite application built for both web and **Zalo Mini App (ZMP)** deployment. Features a modular architecture with Vietnamese-first i18n, Firebase backend, and shadcn/ui component system.
 
 ### Key Patterns & Conventions
 
 **Module-Based Architecture:**
+Each feature lives in `src/modules/[feature]/` with this exact structure:
 
-- Features organized in `src/modules/[feature]/` with standardized subdirectories:
-  - `components/` - Feature-specific UI components
-  - `hooks/` - Custom React hooks for feature logic
-  - `services/` - API calls and business logic
-  - `types/` - TypeScript interfaces and types
-  - `validation/` - Zod schemas for form/data validation
-  - `router.tsx` - Route definitions for the module
-  - `index.tsx` - Public API exports
+- `components/` - UI components with barrel exports via `index.ts`
+- `hooks/` - React hooks for state/business logic (e.g., `use-customer.ts`)
+- `services/` - Firebase service classes (e.g., `CustomerService`)
+- `types/` - TypeScript interfaces exported from `index.ts`
+- `validation/` - Zod schemas with form type inference
+- `router.tsx` - Exports `RouteObject[]` for React Router v7
+- `index.tsx` - Public API barrel export of all module components/hooks/services
 
-**Routing Strategy:**
+**Critical Routing Setup:**
 
-- Centralized in `src/router.tsx` that imports module routers
-- Each module exports its own `RouteObject[]` from `router.tsx`
-- Uses React Router v7 with nested routing patterns
+```typescript
+// src/router.tsx - Module routes registered under DashboardLayout
+const router = createBrowserRouter(
+  [
+    ...authRouter,
+    {
+      path: "/dashboard",
+      element: <DashboardLayout />,
+      children: [...customerRouter, ...suppliersRouter, ...suppliesRouter],
+    },
+  ],
+  {
+    basename:
+      import.meta.env.MODE === "miniapp" ? "/zapps/1309730958729066148" : "/",
+  }
+);
+```
 
-**UI Component System:**
+**ZMP (Zalo Mini App) Integration:**
 
-- Built with shadcn/ui components in `src/components/ui/`
-- Uses Radix UI primitives + Tailwind CSS v4
-- `components.json` configures shadcn with "new-york" style
-- Custom utilities in `src/lib/utils.ts` with `cn()` helper for className merging
+- Build mode: `npm run build-miniapp` copies `app-config.json` to dist
+- Route basename changes for ZMP deployment (`/zapps/1309730958729066148`)
+- `zmp-sdk` package included for Zalo-specific features
+- SSL dev server (port 4000) with local certificates for ZMP testing
 
-**Internationalization (i18n):**
+**Firebase Service Pattern:**
 
-- Vietnamese (`vi`) is the default language, English (`en`) as fallback
-- Translation files in `src/locales/[lang]/common.json`
-- Initialized in `src/main.tsx` before React app
-- Uses `useDocumentTitle()` hook to sync page titles with translations
-- TypeScript support via `src/types/i18next.d.ts` module augmentation
+```typescript
+// All services follow this class-based pattern
+export class CustomerService {
+  private static collectionRef = collection(db, "customers");
 
-**Firebase Integration:**
+  static async getAllCustomers(
+    filters: CustomerFilters = {},
+    pageSize = 10,
+    lastDoc?: DocumentSnapshot
+  ) {
+    // Firestore v9+ modular API with pagination
+    const constraints: QueryConstraint[] = [];
+    if (filters.search) {
+      constraints.push(where("name", ">=", filters.search));
+      constraints.push(where("name", "<=", filters.search + "\uf8ff"));
+    }
+    // Returns { customers, hasMore, lastDoc } for infinite scroll
+  }
+}
+```
 
-- Configuration in `src/config/firebase.ts`
-- Exports Firestore `db` instance for data operations
-- API keys committed (appears to be development environment)
+**Custom Hook Patterns:**
+
+```typescript
+// Standard pattern: useEntity, useEntityActions, useEntitySearch
+export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
+  const [state, setState] = useState<CustomerListState>({
+    customers: [],
+    loading: true,
+    error: null,
+    total: 0,
+    page: 1,
+    pageSize,
+  });
+  // Returns { state, refreshCustomers, loadMore, hasMore }
+}
+```
 
 ### Development Workflow
 
-**Build & Development:**
+**Commands:**
 
 ```bash
-npm run dev          # Start Vite dev server
-npm run build        # TypeScript compilation + Vite build
-npm run lint         # ESLint check
-npm run preview      # Preview production build
+npm run dev              # Vite dev server on https://localhost:4000 (SSL for ZMP)
+npm run build-miniapp    # ZMP build with app-config.json
+npm run build            # Standard web build
 ```
 
-**Path Aliases:**
+**i18n Setup (Vietnamese Default):**
 
-- `@/` maps to `src/` (configured in `vite.config.ts` and `tsconfig.json`)
-- Import components as `@/components/ui/button` not `../../components/ui/button`
+- Translations: `src/locales/vi/common.json` (default), `src/locales/en/common.json`
+- Initialized in `src/main.tsx` before React render
+- Detection order: localStorage → navigator → htmlTag
+- Form validation messages in Vietnamese
 
-### Code Guidelines
+**shadcn/ui Configuration:**
 
-**Component Patterns:**
-
-- Use functional components with TypeScript interfaces
-- Extract reusable logic into custom hooks (see `src/hooks/`)
-- Layout components in `src/layout/` for page structure (e.g., `DashboardLayout`)
-
-**State Management:**
-
-- React hooks for local state
-- Form handling with `react-hook-form` + `@hookform/resolvers`
-- Data validation using Zod schemas
-
-**Styling Conventions:**
-
-- Tailwind CSS with CSS variables for theming
-- Use `cn()` utility for conditional className merging
-- Responsive design patterns: `hidden sm:inline` for mobile-first approach
-
-**File Organization:**
-
-- Group related files by feature, not by file type
-- Keep components close to their usage (feature modules)
-- Shared components in `src/components/`
-- Business logic in `services/` directories within modules
+- Style: "new-york", Tailwind v4 with CSS variables
+- Aliases: `@/components`, `@/lib/utils`, `@/components/ui`
+- Use `cn()` utility from `@/lib/utils` for className merging
 
 ### Critical Implementation Details
 
-**Language Switching:**
+**Module Registration (Required Steps):**
 
-- `LanguageSwitcher` component handles i18n language changes
-- Persists selection to localStorage via i18next-browser-languagedetector
+1. Create module following `src/modules/customer/` pattern
+2. Export router from `router.tsx` as `RouteObject[]`
+3. Import and spread in `src/router.tsx` under DashboardLayout children
+4. Barrel export all public APIs from module's `index.tsx`
 
-**Module Registration:**
+**Firebase Integration:**
 
-- New feature modules must export routes and register in `src/router.tsx`
-- Follow the auth module pattern in `src/modules/auth/` as reference
+```typescript
+import { db } from "@/config/firebase"; // Pre-configured Firestore instance
+// Use Firebase v9+ modular SDK: collection(), doc(), getDocs(), etc.
+```
 
-**Firebase Usage:**
+**Validation Pattern:**
 
-- Import `db` from `@/config/firebase` for Firestore operations
-- Follow Firebase v9+ modular SDK patterns
+```typescript
+// validation/index.ts in each module
+export const createCustomerSchema = z.object({
+  name: z.string().min(2, "Tên khách hàng phải có ít nhất 2 ký tự"),
+  // Vietnamese error messages
+});
+export type CreateCustomerFormData = z.infer<typeof createCustomerSchema>;
+```
 
-When adding new features, create them as self-contained modules following the established patterns in `src/modules/auth/`.
+**Layout Structure:**
+
+- `DashboardLayout` wraps all authenticated routes with `SidebarProvider`
+- `AppSidebar` component provides navigation
+- All dashboard routes render inside `<Outlet />` with padding
+
+When creating new features, clone the `src/modules/customer/` structure and follow the established service class + custom hooks + Zod validation pattern.
