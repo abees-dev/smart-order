@@ -107,7 +107,7 @@ export function SupplyFormDialog({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 items-start">
                 <FormField
                   control={form.control}
                   name="name"
@@ -115,11 +115,7 @@ export function SupplyFormDialog({
                     <FormItem>
                       <FormLabel>Tên vật tư *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Nhập tên vật tư"
-                          className="h-10 lg:h-11"
-                          {...field}
-                        />
+                        <Input placeholder="Nhập tên vật tư" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -135,7 +131,6 @@ export function SupplyFormDialog({
                       <FormControl>
                         <Input
                           placeholder="Ví dụ: VT-001"
-                          className="h-10 lg:h-11 font-mono"
                           {...field}
                           onChange={(e) =>
                             field.onChange(e.target.value.toUpperCase())
@@ -153,7 +148,7 @@ export function SupplyFormDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 items-start">
                 <FormField
                   control={form.control}
                   name="category"
@@ -163,7 +158,6 @@ export function SupplyFormDialog({
                       <FormControl>
                         <Input
                           placeholder="Ví dụ: Điện tử, Vật liệu xây dựng..."
-                          className="h-11"
                           {...field}
                         />
                       </FormControl>
@@ -181,7 +175,6 @@ export function SupplyFormDialog({
                       <FormControl>
                         <Input
                           placeholder="Ví dụ: cái, kg, lít..."
-                          className="h-11"
                           {...field}
                         />
                       </FormControl>
@@ -220,7 +213,7 @@ export function SupplyFormDialog({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                 <FormField
                   control={form.control}
                   name="currentStock"
@@ -231,7 +224,6 @@ export function SupplyFormDialog({
                         <Input
                           type="number"
                           min="0"
-                          className="h-11"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>
@@ -254,7 +246,6 @@ export function SupplyFormDialog({
                         <Input
                           type="number"
                           min="0"
-                          className="h-11"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>
@@ -280,7 +271,6 @@ export function SupplyFormDialog({
                         <Input
                           type="number"
                           min="1"
-                          className="h-11"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>
@@ -307,7 +297,7 @@ export function SupplyFormDialog({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <FormField
                   control={form.control}
                   name="purchasePrice"
@@ -319,7 +309,6 @@ export function SupplyFormDialog({
                           type="number"
                           min="0"
                           step="0.01"
-                          className="h-11"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>
@@ -348,7 +337,6 @@ export function SupplyFormDialog({
                           type="number"
                           min="0"
                           step="0.01"
-                          className="h-11"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>
@@ -377,7 +365,7 @@ export function SupplyFormDialog({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <FormField
                   control={form.control}
                   name="supplierId"
@@ -403,11 +391,7 @@ export function SupplyFormDialog({
                     <FormItem>
                       <FormLabel>Vị trí lưu trữ</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ví dụ: Kho A - Kệ 1"
-                          className="h-11"
-                          {...field}
-                        />
+                        <Input placeholder="Ví dụ: Kho A - Kệ 1" {...field} />
                       </FormControl>
                       <FormDescription>Vị trí cụ thể trong kho</FormDescription>
                       <FormMessage />
@@ -425,7 +409,7 @@ export function SupplyFormDialog({
             )}
 
             <DialogFooter className="border-t pt-6 mt-8">
-              <div className="flex flex-col-reverse sm:flex-row gap-3 w-full">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
                 <Button
                   type="button"
                   variant="outline"
