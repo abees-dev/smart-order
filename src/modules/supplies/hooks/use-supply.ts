@@ -431,3 +431,48 @@ export function useSupplyImportActions() {
     cancelImport,
   };
 }
+
+export function useSupplyImportById(importId: string) {
+  const [importRecord, setImportRecord] = useState<SupplyImport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchImportRecord = useCallback(async () => {
+    if (!importId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const record = await SupplyService.getSupplyImportById(importId);
+      setImportRecord(record);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Không tìm thấy phiếu nhập hàng";
+      setError(errorMessage);
+      setImportRecord(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [importId]);
+
+  useEffect(() => {
+    fetchImportRecord();
+  }, [fetchImportRecord]);
+
+  const refetch = useCallback(() => {
+    fetchImportRecord();
+  }, [fetchImportRecord]);
+
+  return {
+    importRecord,
+    loading,
+    error,
+    refetch,
+  };
+}

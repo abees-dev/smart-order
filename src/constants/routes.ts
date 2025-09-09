@@ -22,7 +22,7 @@ export const ROUTES = {
     SUPPLIES: {
       ROOT: "/dashboard/supplies",
       INVENTORY: "/dashboard/supplies/inventory",
-      INVOICES: "/dashboard/supplies/invoices",
+      IMPORTS: "/dashboard/supplies/imports",
     },
   },
 

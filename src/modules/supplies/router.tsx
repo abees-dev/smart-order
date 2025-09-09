@@ -1,5 +1,9 @@
 import { Outlet, type RouteObject } from "react-router-dom";
-import { SuppliesListPage, SupplyImportsListPage } from "./components";
+import {
+  SuppliesListPage,
+  SupplyImportsListPage,
+  SupplyImportDetailPage,
+} from "./components";
 
 const suppliesRouter: RouteObject[] = [
   {
@@ -20,8 +24,12 @@ const suppliesRouter: RouteObject[] = [
         element: <SuppliesListPage />,
       },
       {
-        path: "invoices",
+        path: "imports",
         element: <SupplyImportsListPage />,
+      },
+      {
+        path: "imports/:id",
+        element: <SupplyImportDetailPage />,
       },
     ],
   },

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Eye,
   CheckCircle,
@@ -49,6 +50,7 @@ import type { SupplyImport } from "../types";
 
 export function SupplyImportsListPage() {
   useDocumentTitle();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedImport, setSelectedImport] = useState<SupplyImport | null>(
@@ -83,9 +85,8 @@ export function SupplyImportsListPage() {
   };
 
   const handleViewImport = (importRecord: SupplyImport) => {
-    setSelectedImport(importRecord);
-    // TODO: Open detail dialog
-    console.log("View import:", importRecord.id);
+    // Navigate to detail page instead of opening dialog
+    navigate(`/dashboard/supplies/imports/${importRecord.id}`);
   };
 
   const handleEditImport = (importRecord: SupplyImport) => {
@@ -111,11 +112,6 @@ export function SupplyImportsListPage() {
     } catch (error) {
       console.error("Failed to cancel import:", error);
     }
-  };
-
-  const handlePrintImport = (importRecord: SupplyImport) => {
-    // TODO: Implement print functionality
-    console.log("Print import:", importRecord.id);
   };
 
   const handleDeleteImport = (importRecord: SupplyImport) => {
@@ -275,14 +271,6 @@ export function SupplyImportsListPage() {
                 </DropdownMenuItem>
               </>
             )}
-            {record.status === "completed" && (
-              <>
-                <DropdownMenuItem onClick={() => handlePrintImport(record)}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  In phiếu nhập
-                </DropdownMenuItem>
-              </>
-            )}
             {record.status !== "completed" && (
               <>
                 <DropdownMenuSeparator />
@@ -304,19 +292,6 @@ export function SupplyImportsListPage() {
   if (loading && imports.length === 0) {
     return (
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Phiếu nhập vật tư</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
@@ -434,19 +409,6 @@ export function SupplyImportsListPage() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Phiếu nhập vật tư</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
@@ -458,10 +420,6 @@ export function SupplyImportsListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Xuất Excel
-          </Button>
           <Button size="sm" onClick={handleCreateImport}>
             <Plus className="h-4 w-4 mr-2" />
             Tạo phiếu nhập

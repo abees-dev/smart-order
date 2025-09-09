@@ -6,3 +6,5 @@ export { SupplyFilterSheet } from "./supply-filter-sheet";
 export { SupplyImportFormDialog } from "./supply-import-form-dialog";
 export { SupplyImportsListPage } from "./supply-imports-list-page";
 export { SupplyImportFilterSheet } from "./supply-import-filter-sheet";
+export { SupplyImportDetailDialog } from "./supply-import-detail-dialog";
+export { SupplyImportDetailPage } from "./supply-import-detail-page";

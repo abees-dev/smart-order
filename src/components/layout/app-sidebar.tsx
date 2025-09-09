@@ -79,8 +79,8 @@ export function AppSidebar() {
       icon: Warehouse,
     },
     {
-      title: t("navigation.invoices"),
-      url: ROUTES.DASHBOARD.SUPPLIES.INVOICES,
+      title: t("navigation.imports"),
+      url: ROUTES.DASHBOARD.SUPPLIES.IMPORTS,
       icon: FileText,
     },
   ];
