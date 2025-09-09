@@ -95,6 +95,7 @@
     "deleteCustomerDescription": "Hành động này không thể hoàn tác",
     "deleteCustomerConfirm": "Bạn có chắc chắn muốn xóa khách hàng {{name}}?",
     "customerName": "Tên khách hàng",
+    "customerInfo": "Thông tin khách hàng",
     "customerNamePlaceholder": "Nhập tên khách hàng",
     "email": "Email",
     "emailPlaceholder": "Nhập địa chỉ email",

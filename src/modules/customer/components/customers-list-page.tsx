@@ -15,13 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ResponsiveTable,
+  useResponsiveTableColumns,
+  type ResponsiveTableColumn,
+} from "@/components/tables";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +58,8 @@ export function CustomersListPage() {
     useCustomers(filters, 20);
 
   const { toggleCustomerStatus } = useCustomerActions();
+  const { createColumn, createMobileHiddenColumn } =
+    useResponsiveTableColumns<Customer>();
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -74,6 +73,112 @@ export function CustomersListPage() {
       console.error("Error toggling customer status:", error);
     }
   };
+
+  // Define table columns
+  const columns: ResponsiveTableColumn<Customer>[] = [
+    createColumn({
+      key: "customer",
+      title: t("customers.customerInfo"),
+      render: (_, record) => (
+        <div className="space-y-1">
+          <div className="font-medium">{record.name}</div>
+          <div className="text-sm text-muted-foreground hidden sm:block">
+            {record.email}
+          </div>
+          <div className="text-xs text-muted-foreground sm:hidden">
+            {record.email}
+          </div>
+          <div className="text-xs text-muted-foreground sm:hidden">
+            {record.phone} • {record.city}
+          </div>
+        </div>
+      ),
+    }),
+    createMobileHiddenColumn({
+      key: "email",
+      title: t("customers.email"),
+      dataIndex: "email",
+    }),
+    createMobileHiddenColumn({
+      key: "phone",
+      title: t("customers.phone"),
+      dataIndex: "phone",
+    }),
+    createMobileHiddenColumn({
+      key: "city",
+      title: t("customers.city"),
+      dataIndex: "city",
+    }),
+    createColumn({
+      key: "status",
+      title: t("customers.status"),
+      dataIndex: "isActive",
+      render: (value) => (
+        <Badge variant={value ? "default" : "secondary"} className="text-xs">
+          {value ? t("common.active") : t("common.inactive")}
+        </Badge>
+      ),
+    }),
+    createColumn({
+      key: "actions",
+      title: t("common.actions"),
+      width: 60,
+      align: "center",
+      render: (_, record) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedCustomer(record);
+                setShowDetailDialog(true);
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              {t("common.view")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedCustomer(record);
+                setShowEditDialog(true);
+              }}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              {t("common.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleStatusToggle(record)}>
+              {record.isActive ? (
+                <UserX className="mr-2 h-4 w-4" />
+              ) : (
+                <UserCheck className="mr-2 h-4 w-4" />
+              )}
+              {record.isActive
+                ? t("customers.deactivate")
+                : t("customers.activate")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={() => {
+                setSelectedCustomer(record);
+                setShowDeleteDialog(true);
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t("common.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    }),
+  ];
 
   const handleCustomerCreated = () => {
     setShowCreateDialog(false);
@@ -132,13 +237,13 @@ export function CustomersListPage() {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="default">
               <Filter className="mr-2 h-4 w-4" />
               {t("common.filter")}
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {loading && customers.length === 0 ? (
             <div className="space-y-4">
               <div className="text-center text-muted-foreground">
@@ -152,106 +257,13 @@ export function CustomersListPage() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("customers.customerName")}</TableHead>
-                    <TableHead>{t("customers.email")}</TableHead>
-                    <TableHead>{t("customers.phone")}</TableHead>
-                    <TableHead>{t("customers.city")}</TableHead>
-                    <TableHead>{t("customers.status")}</TableHead>
-                    <TableHead className="w-[100px]">
-                      {t("common.actions")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">
-                        {customer.name}
-                      </TableCell>
-                      <TableCell>{customer.email}</TableCell>
-                      <TableCell>{customer.phone}</TableCell>
-                      <TableCell>{customer.city}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={customer.isActive ? "default" : "secondary"}
-                        >
-                          {customer.isActive
-                            ? t("common.active")
-                            : t("common.inactive")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>
-                              {t("common.actions")}
-                            </DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedCustomer(customer);
-                                setShowDetailDialog(true);
-                              }}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              {t("common.view")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedCustomer(customer);
-                                setShowEditDialog(true);
-                              }}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              {t("common.edit")}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleStatusToggle(customer)}
-                            >
-                              {customer.isActive ? (
-                                <UserX className="mr-2 h-4 w-4" />
-                              ) : (
-                                <UserCheck className="mr-2 h-4 w-4" />
-                              )}
-                              {customer.isActive
-                                ? t("customers.deactivate")
-                                : t("customers.activate")}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => {
-                                setSelectedCustomer(customer);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              {t("common.delete")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {customers.length === 0 && !loading && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    {t("customers.noCustomersFound")}
-                  </p>
-                </div>
-              )}
+              <ResponsiveTable<Customer>
+                columns={columns}
+                dataSource={customers}
+                rowKey="id"
+                loading={loading}
+                emptyText={t("customers.noCustomersFound")}
+              />
 
               {hasMore && (
                 <div className="flex justify-center pt-4">

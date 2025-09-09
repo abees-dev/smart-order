@@ -15,8 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Customer } from "../types";
 
 interface CustomerDetailDialogProps {
@@ -31,6 +39,7 @@ export function CustomerDetailDialog({
   customer,
 }: CustomerDetailDialogProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   if (!customer) return null;
 
@@ -51,9 +60,139 @@ export function CustomerDetailDialog({
     }
   };
 
+  const detailsContent = (
+    <div className="space-y-4">
+      {/* Status Badge */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-semibold">{customer.name}</h3>
+          <p className="text-sm text-muted-foreground">ID: {customer.id}</p>
+        </div>
+        <Badge variant={customer.isActive ? "default" : "secondary"}>
+          {customer.isActive ? t("common.active") : t("common.inactive")}
+        </Badge>
+      </div>
+
+      <Separator />
+
+      {/* Contact Information */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          {t("customers.contactInformation")}
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{customer.email}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{customer.phone}</span>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Address Information */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          {t("customers.addressInformation")}
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-start gap-3">
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+            <div className="text-sm">
+              <div>{customer.address}</div>
+              <div className="text-muted-foreground">
+                {customer.city}, {customer.postalCode}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{customer.country}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Notes */}
+      {customer.notes && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+              {t("customers.notes")}
+            </h4>
+            <div className="flex items-start gap-3">
+              <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <p className="text-sm text-muted-foreground">{customer.notes}</p>
+            </div>
+          </div>
+        </>
+      )}
+
+      <Separator />
+
+      {/* Timestamps */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          {t("customers.timestamps")}
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">
+                {t("customers.createdAt")}:
+              </span>
+              <span className="ml-2">{formatDate(customer.createdAt)}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">
+                {t("customers.updatedAt")}:
+              </span>
+              <span className="ml-2">{formatDate(customer.updatedAt)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              {t("customers.customerDetails")}
+            </DrawerTitle>
+            <DrawerDescription>
+              {t("customers.customerDetailsDescription")}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-4 max-h-[80vh] overflow-y-auto">
+            {detailsContent}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -63,115 +202,7 @@ export function CustomerDetailDialog({
             {t("customers.customerDetailsDescription")}
           </DialogDescription>
         </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Status Badge */}
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold">{customer.name}</h3>
-              <p className="text-sm text-muted-foreground">ID: {customer.id}</p>
-            </div>
-            <Badge variant={customer.isActive ? "default" : "secondary"}>
-              {customer.isActive ? t("common.active") : t("common.inactive")}
-            </Badge>
-          </div>
-
-          <Separator />
-
-          {/* Contact Information */}
-          <div className="space-y-3">
-            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-              {t("customers.contactInformation")}
-            </h4>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{customer.email}</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{customer.phone}</span>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Address Information */}
-          <div className="space-y-3">
-            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-              {t("customers.addressInformation")}
-            </h4>
-
-            <div className="space-y-2">
-              <div className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div className="text-sm">
-                  <div>{customer.address}</div>
-                  <div className="text-muted-foreground">
-                    {customer.city}, {customer.postalCode}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{customer.country}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {customer.notes && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                  {t("customers.notes")}
-                </h4>
-                <div className="flex items-start gap-3">
-                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <p className="text-sm text-muted-foreground">
-                    {customer.notes}
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-
-          <Separator />
-
-          {/* Timestamps */}
-          <div className="space-y-3">
-            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-              {t("customers.timestamps")}
-            </h4>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div className="text-sm">
-                  <span className="text-muted-foreground">
-                    {t("customers.createdAt")}:
-                  </span>
-                  <span className="ml-2">{formatDate(customer.createdAt)}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div className="text-sm">
-                  <span className="text-muted-foreground">
-                    {t("customers.updatedAt")}:
-                  </span>
-                  <span className="ml-2">{formatDate(customer.updatedAt)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {detailsContent}
       </DialogContent>
     </Dialog>
   );

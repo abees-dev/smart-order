@@ -95,6 +95,7 @@
     "deleteCustomerDescription": "This action cannot be undone",
     "deleteCustomerConfirm": "Are you sure you want to delete customer {{name}}?",
     "customerName": "Customer Name",
+    "customerInfo": "Customer Info",
     "customerNamePlaceholder": "Enter customer name",
     "email": "Email",
     "emailPlaceholder": "Enter email address",
