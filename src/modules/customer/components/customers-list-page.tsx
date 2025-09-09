@@ -82,22 +82,31 @@ export function CustomersListPage() {
       render: (_, record) => (
         <div className="space-y-1">
           <div className="font-medium">{record.name}</div>
-          <div className="text-sm text-muted-foreground hidden sm:block">
-            {record.email}
-          </div>
-          <div className="text-xs text-muted-foreground sm:hidden">
-            {record.email}
-          </div>
+          {record.email && (
+            <>
+              <div className="text-sm text-muted-foreground hidden sm:block">
+                {record.email}
+              </div>
+              <div className="text-xs text-muted-foreground sm:hidden">
+                {record.email}
+              </div>
+            </>
+          )}
           <div className="text-xs text-muted-foreground sm:hidden">
             {record.phone} • {record.city}
           </div>
+          {record.contactPerson && (
+            <div className="text-xs text-muted-foreground">
+              {t("customers.contactPerson")}: {record.contactPerson}
+            </div>
+          )}
         </div>
       ),
     }),
     createMobileHiddenColumn({
       key: "email",
       title: t("customers.email"),
-      dataIndex: "email",
+      render: (_, record) => record.email || "-",
     }),
     createMobileHiddenColumn({
       key: "phone",

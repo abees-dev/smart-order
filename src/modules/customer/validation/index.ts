@@ -8,7 +8,9 @@ export const createCustomerSchema = z.object({
   email: z
     .string()
     .email("Email không hợp lệ")
-    .max(255, "Email không được vượt quá 255 ký tự"),
+    .max(255, "Email không được vượt quá 255 ký tự")
+    .optional()
+    .or(z.literal("")),
   phone: z
     .string()
     .min(10, "Số điện thoại phải có ít nhất 10 số")
@@ -25,18 +27,20 @@ export const createCustomerSchema = z.object({
     .string()
     .min(2, "Thành phố phải có ít nhất 2 ký tự")
     .max(100, "Thành phố không được vượt quá 100 ký tự"),
-  postalCode: z
-    .string()
-    .min(3, "Mã bưu điện phải có ít nhất 3 ký tự")
-    .max(10, "Mã bưu điện không được vượt quá 10 ký tự"),
   country: z
     .string()
     .min(2, "Quốc gia phải có ít nhất 2 ký tự")
     .max(100, "Quốc gia không được vượt quá 100 ký tự"),
+  contactPerson: z
+    .string()
+    .max(100, "Người liên hệ không được vượt quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
   notes: z
     .string()
     .max(500, "Ghi chú không được vượt quá 500 ký tự")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
 });
 
 export const updateCustomerSchema = createCustomerSchema.partial().extend({

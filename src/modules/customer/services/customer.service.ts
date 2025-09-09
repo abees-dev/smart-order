@@ -117,11 +117,39 @@ export class CustomerService {
     }
   }
 
+  // Helper method to clean data for Firebase
+  private static cleanCustomerData(
+    data: CreateCustomerData
+  ): Partial<CreateCustomerData> {
+    const cleaned: Partial<CreateCustomerData> = {};
+
+    // Always include required fields
+    cleaned.name = data.name;
+    cleaned.phone = data.phone;
+    cleaned.address = data.address;
+    cleaned.city = data.city;
+    cleaned.country = data.country;
+
+    // Only include optional fields if they have values
+    if (data.email && data.email.trim() !== "") {
+      cleaned.email = data.email;
+    }
+    if (data.contactPerson && data.contactPerson.trim() !== "") {
+      cleaned.contactPerson = data.contactPerson;
+    }
+    if (data.notes && data.notes.trim() !== "") {
+      cleaned.notes = data.notes;
+    }
+
+    return cleaned;
+  }
+
   static async createCustomer(data: CreateCustomerData): Promise<Customer> {
     try {
       const now = Timestamp.now();
+      const cleanedData = this.cleanCustomerData(data);
       const customerData = {
-        ...data,
+        ...cleanedData,
         isActive: true,
         createdAt: now,
         updatedAt: now,
@@ -132,11 +160,49 @@ export class CustomerService {
       return {
         id: docRef.id,
         ...customerData,
-      };
+      } as Customer;
     } catch (error) {
       console.error("Error creating customer:", error);
       throw new Error("Không thể tạo khách hàng mới");
     }
+  }
+
+  // Helper method to clean update data for Firebase
+  private static cleanUpdateData(
+    data: UpdateCustomerData
+  ): Partial<UpdateCustomerData> {
+    const cleaned: Partial<UpdateCustomerData> = {};
+
+    // Handle all possible fields
+    if (data.name !== undefined) cleaned.name = data.name;
+    if (data.phone !== undefined) cleaned.phone = data.phone;
+    if (data.address !== undefined) cleaned.address = data.address;
+    if (data.city !== undefined) cleaned.city = data.city;
+    if (data.country !== undefined) cleaned.country = data.country;
+    if (data.isActive !== undefined) cleaned.isActive = data.isActive;
+
+    // Only include optional fields if they have values
+    if (data.email !== undefined) {
+      if (data.email && data.email.trim() !== "") {
+        cleaned.email = data.email;
+      }
+      // If email is empty string, we want to remove it from Firebase
+      // We'll handle this by setting it to firebase.firestore.FieldValue.delete()
+    }
+
+    if (data.contactPerson !== undefined) {
+      if (data.contactPerson && data.contactPerson.trim() !== "") {
+        cleaned.contactPerson = data.contactPerson;
+      }
+    }
+
+    if (data.notes !== undefined) {
+      if (data.notes && data.notes.trim() !== "") {
+        cleaned.notes = data.notes;
+      }
+    }
+
+    return cleaned;
   }
 
   static async updateCustomer(
@@ -145,8 +211,9 @@ export class CustomerService {
   ): Promise<Customer> {
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
+      const cleanedData = this.cleanUpdateData(data);
       const updateData = {
-        ...data,
+        ...cleanedData,
         updatedAt: Timestamp.now(),
       };
 

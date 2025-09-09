@@ -82,15 +82,24 @@ export function CustomerDetailDialog({
         </h4>
 
         <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{customer.email}</span>
-          </div>
+          {customer.email && (
+            <div className="flex items-center gap-3">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{customer.email}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <Phone className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">{customer.phone}</span>
           </div>
+
+          {customer.contactPerson && (
+            <div className="flex items-center gap-3">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{customer.contactPerson}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -107,9 +116,7 @@ export function CustomerDetailDialog({
             <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
             <div className="text-sm">
               <div>{customer.address}</div>
-              <div className="text-muted-foreground">
-                {customer.city}, {customer.postalCode}
-              </div>
+              <div className="text-muted-foreground">{customer.city}</div>
             </div>
           </div>
 

@@ -63,8 +63,8 @@ export function CustomerFormDialog({
       phone: "",
       address: "",
       city: "",
-      postalCode: "",
       country: "Vietnam",
+      contactPerson: "",
       notes: "",
     },
   });
@@ -75,12 +75,12 @@ export function CustomerFormDialog({
       if (customer) {
         form.reset({
           name: customer.name,
-          email: customer.email,
+          email: customer.email || "",
           phone: customer.phone,
           address: customer.address,
           city: customer.city,
-          postalCode: customer.postalCode,
           country: customer.country,
+          contactPerson: customer.contactPerson || "",
           notes: customer.notes || "",
         });
       } else {
@@ -90,8 +90,8 @@ export function CustomerFormDialog({
           phone: "",
           address: "",
           city: "",
-          postalCode: "",
           country: "Vietnam",
+          contactPerson: "",
           notes: "",
         });
       }
@@ -100,10 +100,18 @@ export function CustomerFormDialog({
 
   const onSubmit = async (data: CreateCustomerFormData) => {
     try {
+      // Convert empty strings to undefined for optional fields
+      const cleanedData = {
+        ...data,
+        email: data.email?.trim() || undefined,
+        contactPerson: data.contactPerson?.trim() || undefined,
+        notes: data.notes?.trim() || undefined,
+      };
+
       if (isEditing && customer) {
-        await updateCustomer(customer.id, data);
+        await updateCustomer(customer.id, cleanedData);
       } else {
-        await createCustomer(data);
+        await createCustomer(cleanedData);
       }
       onSuccess();
     } catch (error) {
@@ -209,13 +217,13 @@ export function CustomerFormDialog({
 
           <FormField
             control={form.control}
-            name="postalCode"
+            name="contactPerson"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("customers.postalCode")}</FormLabel>
+                <FormLabel>{t("customers.contactPerson")}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder={t("customers.postalCodePlaceholder")}
+                    placeholder={t("customers.contactPersonPlaceholder")}
                     {...field}
                   />
                 </FormControl>

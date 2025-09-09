@@ -3,12 +3,12 @@ import type { Timestamp } from "firebase/firestore";
 export interface Customer {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone: string;
   address: string;
   city: string;
-  postalCode: string;
   country: string;
+  contactPerson?: string;
   notes?: string;
   isActive: boolean;
   createdAt: Timestamp;
@@ -17,12 +17,12 @@ export interface Customer {
 
 export interface CreateCustomerData {
   name: string;
-  email: string;
+  email?: string;
   phone: string;
   address: string;
   city: string;
-  postalCode: string;
   country: string;
+  contactPerson?: string;
   notes?: string;
 }
 
