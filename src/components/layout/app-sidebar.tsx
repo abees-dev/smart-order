@@ -6,6 +6,7 @@ import {
   Package,
   ShoppingCart,
   Archive,
+  Building2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -45,6 +46,11 @@ export function AppSidebar() {
       title: t("navigation.customers"),
       url: "/dashboard/customers",
       icon: Users,
+    },
+    {
+      title: t("navigation.suppliers"),
+      url: "/dashboard/suppliers",
+      icon: Building2,
     },
     {
       title: t("navigation.supplies"),
