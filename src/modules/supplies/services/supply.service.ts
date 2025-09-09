@@ -364,16 +364,20 @@ export class SupplyService {
       const itemsWithDetails = await Promise.all(
         data.items.map(async (item) => {
           const supply = await this.getSupplyById(item.supplyId);
+          const subtotalPrice = item.quantity * item.unitPrice;
+          const vatAmount = subtotalPrice * (item.vatRate / 100);
+          const totalPrice = subtotalPrice + vatAmount;
+
           return {
             ...item,
             supplyName: supply!.name,
             sku: supply!.sku,
-            totalPrice: item.quantity * item.unitPrice,
+            totalPrice,
           };
         })
       );
 
-      // Calculate total amount
+      // Calculate total amount from all items (already includes VAT per item)
       const totalAmount = itemsWithDetails.reduce(
         (sum, item) => sum + item.totalPrice,
         0

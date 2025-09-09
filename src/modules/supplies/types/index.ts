@@ -105,6 +105,7 @@ export interface SupplyImportItem {
   sku: string;
   quantity: number;
   unitPrice: number;
+  vatRate: number;
   totalPrice: number;
 }
 

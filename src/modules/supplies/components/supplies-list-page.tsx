@@ -434,11 +434,13 @@ export function SuppliesListPage() {
           onSuccess={handleSupplyDeleted}
         />
 
-        <SupplyImportFormDialog
-          open={isImportOpen}
-          onOpenChange={setIsImportOpen}
-          onSuccess={refreshSupplies}
-        />
+        {isImportOpen && (
+          <SupplyImportFormDialog
+            open={isImportOpen}
+            onOpenChange={setIsImportOpen}
+            onSuccess={refreshSupplies}
+          />
+        )}
 
         <SupplyFilterSheet
           open={isFilterOpen}
