@@ -1,4 +1,5 @@
 export { CustomersListPage } from "./customers-list-page";
-export { CustomerFormDialog } from "./customer-form-dialog";
-export { CustomerDetailDialog } from "./customer-detail-dialog";
-export { DeleteCustomerDialog } from "./delete-customer-dialog";
+export * from "./customer-form-dialog";
+export * from "./customer-detail-dialog";
+export * from "./delete-customer-dialog";
+export * from "./customer-filter-sheet";

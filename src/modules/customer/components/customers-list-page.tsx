@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   Plus,
   Search,
-  Filter,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -33,6 +32,7 @@ import { useCustomers, useCustomerActions } from "../hooks/use-customer";
 import { CustomerFormDialog } from "./customer-form-dialog";
 import { CustomerDetailDialog } from "./customer-detail-dialog";
 import { DeleteCustomerDialog } from "./delete-customer-dialog";
+import { CustomerFilterSheet } from "./customer-filter-sheet";
 import type { Customer, CustomerFilters } from "../types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
@@ -206,6 +206,14 @@ export function CustomersListPage() {
     refreshCustomers();
   };
 
+  const handleFiltersChange = (newFilters: CustomerFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({});
+  };
+
   if (error) {
     return (
       <div className="p-6">
@@ -246,10 +254,11 @@ export function CustomersListPage() {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="default">
-              <Filter className="mr-2 h-4 w-4" />
-              {t("common.filter")}
-            </Button>
+            <CustomerFilterSheet
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onClearFilters={handleClearFilters}
+            />
           </div>
         </CardHeader>
         <CardContent className="p-3 sm:p-6">

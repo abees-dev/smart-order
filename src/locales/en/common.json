@@ -56,7 +56,8 @@
     "filter": "Filter",
     "retry": "Retry",
     "loadMore": "Load More",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "all": "All"
   },
   "orders": {
     "title": "Orders",
@@ -120,6 +121,18 @@
     "addressInformation": "Address Information",
     "timestamps": "Timestamps",
     "createdAt": "Created At",
-    "updatedAt": "Updated At"
+    "updatedAt": "Updated At",
+    "filterCustomers": "Filter Customers",
+    "filterCustomersDescription": "Use the filters below to find customers",
+    "searchByName": "Search by name",
+    "filterByCity": "Filter by city",
+    "filterByCountry": "Filter by country",
+    "filterByStatus": "Filter by status",
+    "selectCity": "Select city",
+    "selectCountry": "Select country",
+    "selectStatus": "Select status",
+    "clearFilters": "Clear Filters",
+    "applyFilters": "Apply Filters",
+    "activeFilters": "Active Filters"
   }
 }

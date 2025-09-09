@@ -56,7 +56,8 @@
     "filter": "Lọc",
     "retry": "Thử lại",
     "loadMore": "Tải thêm",
-    "deleting": "Đang xóa..."
+    "deleting": "Đang xóa...",
+    "all": "Tất cả"
   },
   "orders": {
     "title": "Đơn hàng",
@@ -120,6 +121,18 @@
     "addressInformation": "Thông tin địa chỉ",
     "timestamps": "Thời gian",
     "createdAt": "Ngày tạo",
-    "updatedAt": "Ngày cập nhật"
+    "updatedAt": "Ngày cập nhật",
+    "filterCustomers": "Lọc khách hàng",
+    "filterCustomersDescription": "Sử dụng các bộ lọc dưới đây để tìm kiếm khách hàng",
+    "searchByName": "Tìm theo tên",
+    "filterByCity": "Lọc theo thành phố",
+    "filterByCountry": "Lọc theo quốc gia",
+    "filterByStatus": "Lọc theo trạng thái",
+    "selectCity": "Chọn thành phố",
+    "selectCountry": "Chọn quốc gia",
+    "selectStatus": "Chọn trạng thái",
+    "clearFilters": "Xóa bộ lọc",
+    "applyFilters": "Áp dụng bộ lọc",
+    "activeFilters": "Bộ lọc đang áp dụng"
   }
 }
