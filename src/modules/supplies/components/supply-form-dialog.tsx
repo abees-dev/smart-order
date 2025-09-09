@@ -7,6 +7,7 @@ import {
   DollarSign,
   MapPin,
   AlertTriangle,
+  Edit3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,63 +31,94 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SupplierSelectField } from "@/components/forms";
 import { useSupplyActions } from "../hooks/use-supply";
-import { createSupplySchema, type CreateSupplyFormData } from "../validation";
+import {
+  createSupplySchema,
+  updateSupplySchema,
+  type CreateSupplyFormData,
+  type UpdateSupplyFormData,
+} from "../validation";
+import type { Supply } from "../types";
 
 interface SupplyFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  supply?: Supply;
+  mode?: "create" | "edit";
 }
 
 export function SupplyFormDialog({
   open,
   onOpenChange,
   onSuccess,
+  supply,
+  mode = "create",
 }: SupplyFormDialogProps) {
-  const { createSupply, loading, error } = useSupplyActions();
+  const { createSupply, updateSupply, loading, error } = useSupplyActions();
+  const isEditMode = mode === "edit" && supply;
 
-  const form = useForm<CreateSupplyFormData>({
-    resolver: zodResolver(createSupplySchema),
+  const form = useForm<CreateSupplyFormData | UpdateSupplyFormData>({
+    resolver: zodResolver(isEditMode ? updateSupplySchema : createSupplySchema),
     defaultValues: {
-      name: "",
-      sku: "",
-      description: "",
-      category: "",
-      unit: "",
-      currentStock: 0,
-      minStock: 0,
-      maxStock: 0,
-      purchasePrice: 0,
-      salePrice: 0,
-      supplierId: "",
-      location: "",
+      name: supply?.name ?? "",
+      sku: supply?.sku ?? "",
+      description: supply?.description ?? "",
+      category: supply?.category ?? "",
+      unit: supply?.unit ?? "",
+      currentStock: supply?.currentStock ?? 0,
+      minStock: supply?.minStock ?? 0,
+      maxStock: supply?.maxStock ?? 0,
+      purchasePrice: supply?.purchasePrice ?? 0,
+      salePrice: supply?.salePrice ?? 0,
+      supplierId: supply?.supplierId ?? "",
+      location: supply?.location ?? "",
     },
   });
 
-  const onSubmit = async (data: CreateSupplyFormData) => {
+  const onSubmit = async (
+    data: CreateSupplyFormData | UpdateSupplyFormData
+  ) => {
     try {
-      await createSupply(data);
+      if (isEditMode && supply) {
+        await updateSupply(supply.id, data as UpdateSupplyFormData);
+      } else {
+        await createSupply(data as CreateSupplyFormData);
+      }
       form.reset();
       onSuccess();
     } catch (error) {
-      console.error("Error creating supply:", error);
+      console.error(
+        `Error ${isEditMode ? "updating" : "creating"} supply:`,
+        error
+      );
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        onOpenChange(open);
+      }}
+    >
       <DialogContent className="w-[95vw] sm:max-w-[600px] lg:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-4 lg:pb-6 border-b">
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="p-1.5 lg:p-2 bg-primary/10 rounded-lg">
-              <Package className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
+              {isEditMode ? (
+                <Edit3 className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
+              ) : (
+                <Package className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
+              )}
             </div>
             <div>
               <DialogTitle className="text-lg lg:text-xl">
-                Thêm vật tư mới
+                {isEditMode ? "Cập nhật vật tư" : "Thêm vật tư mới"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground hidden sm:block">
-                Tạo một vật tư mới trong hệ thống quản lý kho
+                {isEditMode
+                  ? "Cập nhật thông tin vật tư trong hệ thống quản lý kho"
+                  : "Tạo một vật tư mới trong hệ thống quản lý kho"}
               </DialogDescription>
             </div>
           </div>
@@ -425,7 +457,13 @@ export function SupplyFormDialog({
                   className="flex-1 sm:flex-none"
                 >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {loading ? "Đang tạo..." : "Tạo vật tư"}
+                  {loading
+                    ? isEditMode
+                      ? "Đang cập nhật..."
+                      : "Đang tạo..."
+                    : isEditMode
+                    ? "Cập nhật vật tư"
+                    : "Tạo vật tư"}
                 </Button>
               </div>
             </DialogFooter>

@@ -49,6 +49,7 @@ export function SuppliesListPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
   const [supplyToDelete, setSupplyToDelete] = useState<Supply | null>(null);
+  const [editingSupply, setEditingSupply] = useState<Supply | null>(null);
 
   const { supplies, loading, error, filters, updateFilters, refreshSupplies } =
     useSupplies();
@@ -73,8 +74,14 @@ export function SuppliesListPage() {
     setIsFilterOpen(false);
   };
 
-  const handleSupplyCreated = () => {
+  const handleEditSupply = (supply: Supply) => {
+    setEditingSupply(supply);
+    setIsFormOpen(true);
+  };
+
+  const handleSupplyFormSuccess = () => {
     setIsFormOpen(false);
+    setEditingSupply(null);
     refreshSupplies();
   };
 
@@ -251,10 +258,7 @@ export function SuppliesListPage() {
                 Xem chi tiết
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
-                  setSelectedSupply(supply);
-                  // Add edit mode trigger here
-                }}
+                onClick={() => handleEditSupply(supply)}
                 className="flex items-center gap-2"
               >
                 <Edit className="h-4 w-4" />
@@ -409,11 +413,20 @@ export function SuppliesListPage() {
           </CardContent>
         </Card>
 
-        <SupplyFormDialog
-          open={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          onSuccess={handleSupplyCreated}
-        />
+        {isFormOpen && (
+          <SupplyFormDialog
+            open={isFormOpen}
+            onOpenChange={(open) => {
+              setIsFormOpen(open);
+              if (!open) {
+                setEditingSupply(null);
+              }
+            }}
+            onSuccess={handleSupplyFormSuccess}
+            supply={editingSupply || undefined}
+            mode={editingSupply ? "edit" : "create"}
+          />
+        )}
 
         <SupplyDetailDialog
           supply={selectedSupply}

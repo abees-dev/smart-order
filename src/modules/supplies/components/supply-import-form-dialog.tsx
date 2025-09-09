@@ -410,6 +410,7 @@ export function SupplyImportFormDialog({
         open={showSupplyForm}
         onOpenChange={setShowSupplyForm}
         onSuccess={handleSupplyCreated}
+        mode="create"
       />
     </Dialog>
   );
