@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2, Package } from "lucide-react";
@@ -20,12 +21,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSupplyImportActions } from "../hooks/use-supply";
+import { useSupplyImportActions, useSupplies } from "../hooks/use-supply";
 import {
   createSupplyImportSchema,
   type CreateSupplyImportFormData,
 } from "../validation";
+import { SupplyFormDialog } from "./supply-form-dialog";
 
 interface SupplyImportFormDialogProps {
   open: boolean;
@@ -39,6 +48,8 @@ export function SupplyImportFormDialog({
   onSuccess,
 }: SupplyImportFormDialogProps) {
   const { createImport, loading, error } = useSupplyImportActions();
+  const { supplies, loading: suppliesLoading, refreshSupplies } = useSupplies();
+  const [showSupplyForm, setShowSupplyForm] = useState(false);
 
   const form = useForm<CreateSupplyImportFormData>({
     resolver: zodResolver(createSupplyImportSchema),
@@ -72,6 +83,13 @@ export function SupplyImportFormDialog({
       console.error("Error creating supply import:", error);
     }
   };
+
+  const handleSupplyCreated = () => {
+    refreshSupplies();
+    setShowSupplyForm(false);
+  };
+
+  console.log("Supplies:", supplies);
 
   const addItem = () => {
     append({
@@ -157,10 +175,6 @@ export function SupplyImportFormDialog({
                   <CardTitle className="text-lg">
                     Danh sách vật tư nhập
                   </CardTitle>
-                  <Button type="button" onClick={addItem} variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm vật tư
-                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -183,19 +197,103 @@ export function SupplyImportFormDialog({
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
                       <FormField
                         control={form.control}
                         name={`items.${index}.supplyId`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mã vật tư *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Mã vật tư" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const selectedSupply = supplies.find(
+                            (s) => s.id === field.value
+                          );
+                          return (
+                            <FormItem className="md:col-span-2">
+                              <FormLabel>Chọn vật tư *</FormLabel>
+                              <div className="flex gap-2">
+                                <FormControl className="flex-1">
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      // Auto-fill supply info when selected
+                                      const selectedSupply = supplies.find(
+                                        (s) => s.id === value
+                                      );
+                                      if (selectedSupply) {
+                                        form.setValue(
+                                          `items.${index}.unitPrice`,
+                                          selectedSupply.purchasePrice
+                                        );
+                                        const quantity = form.getValues(
+                                          `items.${index}.quantity`
+                                        );
+                                        form.setValue(
+                                          `items.${index}.totalPrice`,
+                                          quantity *
+                                            selectedSupply.purchasePrice
+                                        );
+                                      }
+                                    }}
+                                    disabled={suppliesLoading}
+                                  >
+                                    <SelectTrigger style={{ width: "240px" }}>
+                                      <SelectValue
+                                        placeholder={
+                                          suppliesLoading
+                                            ? "Đang tải..."
+                                            : "Chọn vật tư"
+                                        }
+                                      >
+                                        {field.value && selectedSupply && (
+                                          <div className="flex items-center justify-between w-[190px]">
+                                            <span className="font-medium text-sm truncate">
+                                              {selectedSupply.name}{" "}
+                                              hihihihihihhihii
+                                            </span>
+                                          </div>
+                                        )}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {supplies.map((supply) => (
+                                        <SelectItem
+                                          key={supply.id}
+                                          value={supply.id}
+                                        >
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">
+                                              {supply.name}
+                                            </span>
+                                            <span className="text-sm text-muted-foreground">
+                                              {supply.sku} - {supply.unit} -
+                                              Giá:{" "}
+                                              {supply.purchasePrice.toLocaleString(
+                                                "vi-VN"
+                                              )}
+                                              đ
+                                            </span>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </div>
+                              {selectedSupply && (
+                                <div className="text-sm text-muted-foreground mt-1">
+                                  Tồn kho: {selectedSupply.currentStock}{" "}
+                                  {selectedSupply.unit}
+                                  {selectedSupply.currentStock <=
+                                    selectedSupply.minStock && (
+                                    <span className="text-orange-500 ml-2">
+                                      (Sắp hết hàng)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <FormField
@@ -303,6 +401,12 @@ export function SupplyImportFormDialog({
           </form>
         </Form>
       </DialogContent>
+
+      <SupplyFormDialog
+        open={showSupplyForm}
+        onOpenChange={setShowSupplyForm}
+        onSuccess={handleSupplyCreated}
+      />
     </Dialog>
   );
 }

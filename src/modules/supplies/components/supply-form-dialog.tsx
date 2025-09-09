@@ -76,8 +76,12 @@ export function SupplyFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form
+            noValidate
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <FormField
                 control={form.control}
                 name="name"
@@ -95,7 +99,7 @@ export function SupplyFormDialog({
               <FormField
                 control={form.control}
                 name="sku"
-                render={({ field }) => (
+                render={({ field, formState: { errors } }) => (
                   <FormItem>
                     <FormLabel>Mã SKU *</FormLabel>
                     <FormControl>
@@ -107,9 +111,11 @@ export function SupplyFormDialog({
                         }
                       />
                     </FormControl>
-                    <FormDescription>
-                      Mã định danh duy nhất cho vật tư
-                    </FormDescription>
+                    {!errors.sku && (
+                      <FormDescription>
+                        Mã định danh duy nhất cho vật tư
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -134,7 +140,7 @@ export function SupplyFormDialog({
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <FormField
                 control={form.control}
                 name="category"
@@ -164,7 +170,7 @@ export function SupplyFormDialog({
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
               <FormField
                 control={form.control}
                 name="currentStock"
@@ -229,11 +235,11 @@ export function SupplyFormDialog({
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <FormField
                 control={form.control}
                 name="purchasePrice"
-                render={({ field }) => (
+                render={({ field, formState: { errors } }) => (
                   <FormItem>
                     <FormLabel>Giá mua *</FormLabel>
                     <FormControl>
@@ -248,9 +254,11 @@ export function SupplyFormDialog({
                         }
                       />
                     </FormControl>
-                    <FormDescription>
-                      Giá mua vào từ nhà cung cấp
-                    </FormDescription>
+                    {!errors.purchasePrice && (
+                      <FormDescription>
+                        Giá mua vào từ nhà cung cấp
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -259,7 +267,7 @@ export function SupplyFormDialog({
               <FormField
                 control={form.control}
                 name="salePrice"
-                render={({ field }) => (
+                render={({ field, formState: { errors } }) => (
                   <FormItem>
                     <FormLabel>Giá bán *</FormLabel>
                     <FormControl>
@@ -274,7 +282,11 @@ export function SupplyFormDialog({
                         }
                       />
                     </FormControl>
-                    <FormDescription>Giá bán ra cho khách hàng</FormDescription>
+                    {!errors.salePrice && (
+                      <FormDescription>
+                        Giá bán ra cho khách hàng
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
