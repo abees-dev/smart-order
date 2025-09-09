@@ -4,18 +4,15 @@ import { Outlet } from "react-router-dom";
 
 const DashboardLayout = () => {
   return (
-    <div>
-      <SidebarProvider>
-        <AppSidebar />
-        <div className="flex-1">
-          <SidebarTrigger />
-          <div className="p-4">
-            <Outlet />
-          </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <div className="flex-1">
+        <SidebarTrigger />
+        <div className="p-4">
+          <Outlet />
         </div>
-      </SidebarProvider>
-      <Outlet />
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 

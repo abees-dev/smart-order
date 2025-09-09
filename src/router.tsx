@@ -1,5 +1,6 @@
 import { createBrowserRouter, Link } from "react-router-dom";
 import authRouter from "./modules/auth/router";
+import { customerRouter } from "./modules/customer";
 import DashboardLayout from "./layout/dashboard-layout";
 
 const router = createBrowserRouter(
@@ -18,6 +19,7 @@ const router = createBrowserRouter(
             </div>
           ),
         },
+        ...customerRouter,
       ],
     },
     {
