@@ -54,8 +54,8 @@ export class SupplyService {
       if (filters.category) {
         constraints.push(where("category", "==", filters.category));
       }
-      if (filters.supplier) {
-        constraints.push(where("supplier", "==", filters.supplier));
+      if (filters.supplierId) {
+        constraints.push(where("supplierId", "==", filters.supplierId));
       }
       if (filters.location) {
         constraints.push(where("location", "==", filters.location));

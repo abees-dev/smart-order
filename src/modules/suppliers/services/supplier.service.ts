@@ -89,7 +89,7 @@ export class SupplierService {
   static async searchSuppliers(
     searchTerm: string,
     filters: SupplierFilters = {},
-    pageSize = 10
+    pageSize = 50
   ): Promise<Supplier[]> {
     try {
       const constraints: QueryConstraint[] = [];
@@ -107,34 +107,64 @@ export class SupplierService {
 
       // Add ordering
       constraints.push(orderBy("name"));
-      constraints.push(limit(pageSize));
+      constraints.push(limit(pageSize * 2)); // Fetch more for better search results
 
       const q = query(this.collectionRef, ...constraints);
       const querySnapshot = await getDocs(q);
 
-      const suppliers: Supplier[] = [];
+      const allSuppliers: Supplier[] = [];
       querySnapshot.forEach((doc) => {
         const supplier = {
           id: doc.id,
           ...doc.data(),
         } as Supplier;
-
-        // Client-side filtering for search term
-        if (
-          supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          supplier.phone.includes(searchTerm) ||
-          (supplier.email &&
-            supplier.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (supplier.contactPerson &&
-            supplier.contactPerson
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()))
-        ) {
-          suppliers.push(supplier);
-        }
+        allSuppliers.push(supplier);
       });
 
-      return suppliers;
+      // Advanced search logic with scoring
+      const searchTermLower = searchTerm.toLowerCase().trim();
+      const results = allSuppliers
+        .map((supplier) => {
+          let score = 0;
+          const nameMatch = supplier.name.toLowerCase();
+          const phoneMatch = supplier.phone || "";
+          const emailMatch = (supplier.email || "").toLowerCase();
+          const contactMatch = (supplier.contactPerson || "").toLowerCase();
+
+          // Exact match gets highest score
+          if (nameMatch === searchTermLower) score += 100;
+          else if (nameMatch.startsWith(searchTermLower)) score += 80;
+          else if (nameMatch.includes(searchTermLower)) score += 60;
+
+          // Phone number exact match
+          if (phoneMatch.includes(searchTerm)) score += 90;
+
+          // Email match
+          if (emailMatch === searchTermLower) score += 70;
+          else if (emailMatch.includes(searchTermLower)) score += 50;
+
+          // Contact person match
+          if (contactMatch === searchTermLower) score += 60;
+          else if (contactMatch.includes(searchTermLower)) score += 40;
+
+          // Fuzzy search for name (for typos)
+          if (score === 0) {
+            const words = searchTermLower.split(" ");
+            for (const word of words) {
+              if (word.length > 2 && nameMatch.includes(word)) {
+                score += 30;
+              }
+            }
+          }
+
+          return { supplier, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, pageSize)
+        .map(({ supplier }) => supplier);
+
+      return results;
     } catch (error) {
       console.error("Error searching suppliers:", error);
       throw new Error("Không thể tìm kiếm nhà cung cấp");
@@ -262,11 +292,8 @@ export class SupplierService {
 
   static async getActiveSuppliers(): Promise<Supplier[]> {
     try {
-      const q = query(
-        this.collectionRef,
-        where("isActive", "==", true),
-        orderBy("name")
-      );
+      // Try simpler query first - just filter by isActive without orderBy
+      const q = query(this.collectionRef, where("isActive", "==", true));
       const querySnapshot = await getDocs(q);
 
       const suppliers: Supplier[] = [];
@@ -277,10 +304,50 @@ export class SupplierService {
         } as Supplier);
       });
 
+      // Sort on client side to avoid composite index issues
+      suppliers.sort((a, b) => a.name.localeCompare(b.name));
+
       return suppliers;
     } catch (error) {
       console.error("Error getting active suppliers:", error);
-      throw new Error("Không thể tải danh sách nhà cung cấp đang hoạt động");
+
+      try {
+        return await this.getAllSuppliersNoFilter().then((suppliers) =>
+          suppliers.filter((s) => s.isActive === true)
+        );
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        throw new Error("Không thể tải danh sách nhà cung cấp đang hoạt động");
+      }
+    }
+  }
+
+  // Debug method to get all suppliers without any filter
+  static async getAllSuppliersNoFilter(): Promise<Supplier[]> {
+    try {
+      const q = query(this.collectionRef, orderBy("name"));
+      const querySnapshot = await getDocs(q);
+
+      const suppliers: Supplier[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log("📋 Supplier data:", {
+          id: doc.id,
+          name: data.name,
+          isActive: data.isActive,
+          hasIsActive: "isActive" in data,
+        });
+
+        suppliers.push({
+          id: doc.id,
+          ...data,
+        } as Supplier);
+      });
+
+      return suppliers;
+    } catch (error) {
+      console.error("Error getting all suppliers:", error);
+      throw new Error("Không thể tải danh sách nhà cung cấp");
     }
   }
 }

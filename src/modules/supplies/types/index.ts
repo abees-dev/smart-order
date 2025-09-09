@@ -12,7 +12,7 @@ export interface Supply {
   maxStock: number; // maximum stock level
   purchasePrice: number; // giá mua
   salePrice: number; // giá bán
-  supplier?: string;
+  supplierId?: string;
   location?: string; // storage location
   expiryDate?: Timestamp;
   isActive: boolean;
@@ -31,7 +31,7 @@ export interface CreateSupplyData {
   maxStock: number;
   purchasePrice: number;
   salePrice: number;
-  supplier?: string;
+  supplierId?: string;
   location?: string;
   expiryDate?: Timestamp;
 }
@@ -42,7 +42,7 @@ export interface UpdateSupplyData extends Partial<CreateSupplyData> {
 
 export interface SupplyFilters {
   category?: string;
-  supplier?: string;
+  supplierId?: string;
   location?: string;
   isActive?: boolean;
   lowStock?: boolean; // filter for supplies below minimum stock
@@ -90,7 +90,7 @@ export interface SupplyImport {
   id: string;
   importDate: Timestamp;
   invoiceNumber: string;
-  supplier: string;
+  supplierId: string;
   totalAmount: number;
   status: "pending" | "completed" | "cancelled";
   notes?: string;
@@ -110,7 +110,7 @@ export interface SupplyImportItem {
 
 export interface CreateSupplyImportData {
   invoiceNumber: string;
-  supplier: string;
+  supplierId: string;
   notes?: string;
   items: Omit<SupplyImportItem, "supplyName" | "sku">[];
 }
@@ -121,7 +121,7 @@ export interface UpdateSupplyImportData
 }
 
 export interface SupplyImportFilters {
-  supplier?: string;
+  supplierId?: string;
   status?: "pending" | "completed" | "cancelled";
   dateFrom?: Timestamp;
   dateTo?: Timestamp;

@@ -47,11 +47,7 @@ export const createSupplySchema = z
       .number()
       .min(0, "Giá bán không được âm")
       .max(99999999, "Giá bán quá lớn"),
-    supplier: z
-      .string()
-      .max(100, "Nhà cung cấp không được vượt quá 100 ký tự")
-      .optional()
-      .or(z.literal("")),
+    supplierId: z.string().optional().or(z.literal("")),
     location: z
       .string()
       .max(100, "Vị trí lưu trữ không được vượt quá 100 ký tự")
@@ -73,7 +69,7 @@ export const updateSupplySchema = createSupplySchema.partial().extend({
 
 export const supplyFiltersSchema = z.object({
   category: z.string().optional(),
-  supplier: z.string().optional(),
+  supplierId: z.string().optional(),
   location: z.string().optional(),
   isActive: z.boolean().optional(),
   lowStock: z.boolean().optional(),
@@ -129,10 +125,7 @@ export const createSupplyImportSchema = z.object({
     .string()
     .min(1, "Số hóa đơn là bắt buộc")
     .max(50, "Số hóa đơn không được vượt quá 50 ký tự"),
-  supplier: z
-    .string()
-    .min(1, "Nhà cung cấp là bắt buộc")
-    .max(100, "Nhà cung cấp không được vượt quá 100 ký tự"),
+  supplierId: z.string().min(1, "Nhà cung cấp là bắt buộc"),
   notes: z
     .string()
     .max(500, "Ghi chú không được vượt quá 500 ký tự")
@@ -150,7 +143,7 @@ export const updateSupplyImportSchema = createSupplyImportSchema
   });
 
 export const supplyImportFiltersSchema = z.object({
-  supplier: z.string().optional(),
+  supplierId: z.string().optional(),
   status: z.enum(["pending", "completed", "cancelled"]).optional(),
   search: z.string().optional(),
 });

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SupplierSelectField } from "@/components/forms";
 import { useSupplyActions } from "../hooks/use-supply";
 import { createSupplySchema, type CreateSupplyFormData } from "../validation";
 
@@ -50,7 +51,7 @@ export function SupplyFormDialog({
       maxStock: 0,
       purchasePrice: 0,
       salePrice: 0,
-      supplier: "",
+      supplierId: "",
       location: "",
     },
   });
@@ -296,15 +297,19 @@ export function SupplyFormDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="supplier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nhà cung cấp</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Tên nhà cung cấp" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                name="supplierId"
+                render={({ field, fieldState }) => (
+                  <SupplierSelectField
+                    field={field}
+                    fieldState={fieldState}
+                    label="Nhà cung cấp"
+                    placeholder="Chọn nhà cung cấp"
+                    allowCreate
+                    onCreateNew={() => {
+                      // TODO: Open supplier creation dialog
+                      console.log("Open supplier creation dialog");
+                    }}
+                  />
                 )}
               />
 
