@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
   base: "./",
+
   build: {
     rollupOptions: {
       output: {
@@ -19,6 +20,13 @@ export default defineConfig({
         chunkFileNames: "assets/[name].js",
         assetFileNames: "assets/[name].[ext]",
       },
+    },
+  },
+  server: {
+    port: 4000,
+    https: {
+      key: "./localhost-key.pem",
+      cert: "./localhost.pem",
     },
   },
 });
