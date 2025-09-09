@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import {
   Plus,
-  Search,
-  Filter,
   Package,
   AlertTriangle,
   TrendingUp,
@@ -43,7 +41,6 @@ import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 export function SuppliesListPage() {
   useDocumentTitle();
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -63,11 +60,6 @@ export function SuppliesListPage() {
   const { getSupplierName } = useSuppliersByIds(supplierIds);
 
   const { createColumn } = useResponsiveTableColumns<Supply>();
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    updateFilters({ ...filters, search: value || undefined });
-  };
 
   const handleFilterChange = (newFilters: SupplyFilters) => {
     updateFilters(newFilters);

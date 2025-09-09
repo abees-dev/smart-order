@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import {
   Loader2,
   Edit3,
@@ -8,7 +9,10 @@ import {
   MapPin,
   AlertTriangle,
   DollarSign,
-  Info,
+  TrendingUp,
+  Calendar,
+  FileText,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +24,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -30,8 +42,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { SupplierSelectField } from "@/components/forms";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useSupplyActions } from "../hooks/use-supply";
 import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { updateSupplySchema, type UpdateSupplyFormData } from "../validation";
@@ -50,6 +63,7 @@ export function SupplyDetailDialog({
   onOpenChange,
   onSuccess,
 }: SupplyDetailDialogProps) {
+  const isMobile = useIsMobile();
   const [isEditing, setIsEditing] = useState(false);
   const { updateSupply, loading, error } = useSupplyActions();
 
@@ -105,524 +119,647 @@ export function SupplyDetailDialog({
 
   const stockStatus = getStockStatus();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "";
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return new Intl.DateTimeFormat("vi-VN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    } catch {
+      return "";
+    }
+  };
+
   if (!supply) return null;
+
+  const detailsContent = (
+    <div className="space-y-4">
+      {/* Status Badge */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-semibold">{supply.name}</h3>
+          <p className="text-sm text-muted-foreground">
+            SKU: {supply.sku} • ID: {supply.id}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={supply.isActive ? "default" : "secondary"}>
+            {supply.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+          </Badge>
+          {stockStatus && (
+            <Badge
+              variant={stockStatus.color}
+              className="flex items-center gap-1"
+            >
+              {stockStatus.color === "destructive" && (
+                <AlertTriangle className="h-3 w-3" />
+              )}
+              {stockStatus.color === "outline" && (
+                <AlertTriangle className="h-3 w-3" />
+              )}
+              {stockStatus.color === "default" && (
+                <Package className="h-3 w-3" />
+              )}
+              {stockStatus.label}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Stock Information */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          Thông tin tồn kho
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="font-semibold">{supply.currentStock}</span>{" "}
+              {supply.unit}
+              <span className="text-muted-foreground ml-2">(Hiện tại)</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span>Tối thiểu: </span>
+              <span className="font-semibold">
+                {supply.minStock} {supply.unit}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span>Tối đa: </span>
+              <span className="font-semibold">
+                {supply.maxStock} {supply.unit}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Pricing Information */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          Thông tin giá cả
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Giá mua:</span>
+              <span className="ml-2 font-semibold">
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(supply.purchasePrice)}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Giá bán:</span>
+              <span className="ml-2 font-semibold">
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(supply.salePrice)}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Lợi nhuận:</span>
+              <span className="ml-2 font-semibold">
+                {Math.round(
+                  ((supply.salePrice - supply.purchasePrice) /
+                    supply.purchasePrice) *
+                    100
+                )}
+                %
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* General Information */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          Thông tin chung
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{supply.category}</span>
+          </div>
+
+          {supply.description && (
+            <div className="flex items-start gap-3">
+              <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                {supply.description}
+              </p>
+            </div>
+          )}
+
+          {supply.supplierId && (
+            <div className="flex items-center gap-3">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {getSupplierName(supply.supplierId)}
+              </span>
+            </div>
+          )}
+
+          {supply.location && (
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{supply.location}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Timestamps */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          Thông tin thời gian
+        </h4>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Ngày tạo:</span>
+              <span className="ml-2">{formatDate(supply.createdAt)}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Cập nhật cuối:</span>
+              <span className="ml-2">{formatDate(supply.updatedAt)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const editFormContent = (
+    <Form {...form}>
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
+        {/* Basic Information Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted">
+            <Package className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm text-primary">
+              Thông tin cơ bản
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên vật tư *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nhập tên vật tư" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="sku"
+              render={({ field, formState: { errors } }) => (
+                <FormItem>
+                  <FormLabel>Mã SKU *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ví dụ: VT-001"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(e.target.value.toUpperCase())
+                      }
+                    />
+                  </FormControl>
+                  {!errors.sku && (
+                    <FormDescription>
+                      Mã định danh duy nhất cho vật tư
+                    </FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Danh mục *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ví dụ: Điện tử, Vật liệu xây dựng..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="unit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Đơn vị tính *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ví dụ: cái, kg, lít..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mô tả</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Mô tả chi tiết về vật tư, công dụng, đặc điểm..."
+                    rows={3}
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Stock Management Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm text-primary">
+              Quản lý tồn kho
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            <FormField
+              control={form.control}
+              name="currentStock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tồn kho hiện tại *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="minStock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tồn kho tối thiểu *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Cảnh báo khi tồn kho dưới mức này
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="maxStock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tồn kho tối đa *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Mức tồn kho tối đa trong kho
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Pricing Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted">
+            <DollarSign className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm text-primary">
+              Thông tin giá cả
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <FormField
+              control={form.control}
+              name="purchasePrice"
+              render={({ field, formState: { errors } }) => (
+                <FormItem>
+                  <FormLabel>Giá mua *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  {!errors.purchasePrice && (
+                    <FormDescription>
+                      Giá mua vào từ nhà cung cấp (VND)
+                    </FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="salePrice"
+              render={({ field, formState: { errors } }) => (
+                <FormItem>
+                  <FormLabel>Giá bán *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  {!errors.salePrice && (
+                    <FormDescription>
+                      Giá bán ra cho khách hàng (VND)
+                    </FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Additional Information Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted">
+            <MapPin className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm text-primary">
+              Thông tin bổ sung
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <FormField
+              control={form.control}
+              name="supplierId"
+              render={({ field, fieldState }) => (
+                <SupplierSelectField
+                  field={field}
+                  fieldState={fieldState}
+                  label="Nhà cung cấp"
+                  placeholder="Chọn nhà cung cấp"
+                  allowCreate
+                  onCreateNew={() => {
+                    // TODO: Open supplier creation dialog
+                    console.log("Open supplier creation dialog");
+                  }}
+                />
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vị trí lưu trữ</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ví dụ: Kho A - Kệ 1" {...field} />
+                  </FormControl>
+                  <FormDescription>Vị trí cụ thể trong kho</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+      </form>
+    </Form>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Chi tiết vật tư
+            </DrawerTitle>
+            <DrawerDescription>
+              Thông tin chi tiết về vật tư trong hệ thống
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-4 max-h-[80vh] overflow-y-auto">
+            {!isEditing ? detailsContent : editFormContent}
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 p-4 border-t">
+            {!isEditing ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="flex-1"
+                >
+                  Đóng
+                </Button>
+                <Button onClick={() => setIsEditing(true)} className="flex-1">
+                  <Edit3 className="mr-2 h-4 w-4" />
+                  Chỉnh sửa
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1"
+                  disabled={loading}
+                >
+                  Hủy bỏ
+                </Button>
+                <Button
+                  onClick={form.handleSubmit(onSubmit)}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading ? "Đang cập nhật..." : "Cập nhật vật tư"}
+                </Button>
+              </>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="pb-6 border-b">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="space-y-2">
-              <DialogTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Package className="h-6 w-6 text-primary" />
-                </div>
-                {supply.name}
-              </DialogTitle>
-              <DialogDescription className="text-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
-                    {supply.sku}
-                  </span>
-                  <span>•</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {supply.category}
-                  </Badge>
-                  {supply.location && (
-                    <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 text-xs">
-                        <MapPin className="h-3 w-3" />
-                        {supply.location}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </DialogDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              {stockStatus && (
-                <Badge
-                  variant={stockStatus.color}
-                  className="flex items-center gap-1 px-3 py-1"
-                >
-                  {stockStatus.color === "destructive" && (
-                    <AlertTriangle className="h-3 w-3" />
-                  )}
-                  {stockStatus.color === "outline" && (
-                    <AlertTriangle className="h-3 w-3" />
-                  )}
-                  {stockStatus.color === "default" && (
-                    <Package className="h-3 w-3" />
-                  )}
-                  {stockStatus.label}
-                </Badge>
-              )}
-              {!isEditing && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  Chỉnh sửa
-                </Button>
-              )}
-            </div>
-          </div>
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Chi tiết vật tư
+          </DialogTitle>
+          <DialogDescription>
+            Thông tin chi tiết về vật tư trong hệ thống
+          </DialogDescription>
         </DialogHeader>
-
-        {!isEditing ? (
-          <div className="space-y-6">
-            {/* Enhanced Stock Information */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-l-4 border-l-blue-500">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Package className="h-5 w-5 text-blue-600" />
-                    Thông tin tồn kho
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-600 font-medium mb-1">
-                        Tồn kho hiện tại
-                      </p>
-                      <p className="text-3xl font-bold text-blue-700">
-                        {supply.currentStock}
-                      </p>
-                      <p className="text-sm text-blue-600">{supply.unit}</p>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          Tối thiểu:
-                        </span>
-                        <span className="font-semibold">
-                          {supply.minStock} {supply.unit}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          Tối đa:
-                        </span>
-                        <span className="font-semibold">
-                          {supply.maxStock} {supply.unit}
-                        </span>
-                      </div>
-                      <div className="w-full">
-                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                          <span>0</span>
-                          <span>{supply.maxStock}</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-3">
-                          <div
-                            className={`h-3 rounded-full transition-all ${
-                              supply.currentStock / supply.maxStock <= 0.2
-                                ? "bg-red-500"
-                                : supply.currentStock / supply.maxStock <= 0.5
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                            }`}
-                            style={{
-                              width: `${Math.min(
-                                (supply.currentStock / supply.maxStock) * 100,
-                                100
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-green-500">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-green-600" />
-                    Thông tin giá cả
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                      <span className="text-sm font-medium text-red-600">
-                        Giá mua:
-                      </span>
-                      <span className="text-lg font-bold text-red-700">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(supply.purchasePrice)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm font-medium text-green-600">
-                        Giá bán:
-                      </span>
-                      <span className="text-lg font-bold text-green-700">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(supply.salePrice)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                      <span className="text-sm font-medium text-purple-600">
-                        Lợi nhuận:
-                      </span>
-                      <span className="text-lg font-bold text-purple-700">
-                        {Math.round(
-                          ((supply.salePrice - supply.purchasePrice) /
-                            supply.purchasePrice) *
-                            100
-                        )}
-                        %
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm font-medium text-blue-600">
-                        Giá trị kho:
-                      </span>
-                      <span className="text-lg font-bold text-blue-700">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(supply.currentStock * supply.purchasePrice)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* General Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Thông tin chung</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {supply.description && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mô tả</p>
-                    <p className="text-sm">{supply.description}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {supply.supplierId && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Nhà cung cấp
-                      </p>
-                      <p className="text-sm">
-                        {getSupplierName(supply.supplierId)}
-                      </p>
-                    </div>
-                  )}
-
-                  {supply.location && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Vị trí lưu trữ
-                      </p>
-                      <p className="text-sm">{supply.location}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground">Trạng thái</p>
-                  <Badge variant={supply.isActive ? "default" : "outline"}>
-                    {supply.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-muted-foreground">
-                  <div>
-                    <p>
-                      Ngày tạo:{" "}
-                      {supply.createdAt.toDate().toLocaleDateString("vi-VN")}
-                    </p>
-                  </div>
-                  <div>
-                    <p>
-                      Cập nhật cuối:{" "}
-                      {supply.updatedAt.toDate().toLocaleDateString("vi-VN")}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tên vật tư *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nhập tên vật tư" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mã SKU *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ví dụ: VT-001"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(e.target.value.toUpperCase())
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mô tả</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Mô tả chi tiết về vật tư..."
-                        rows={3}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Danh mục *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ví dụ: Văn phòng phẩm" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Đơn vị tính *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ví dụ: cái, kg, lít" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="currentStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tồn kho hiện tại *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="minStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tồn kho tối thiểu *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="maxStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tồn kho tối đa *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="purchasePrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Giá mua *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="salePrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Giá bán *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="supplierId"
-                  render={({ field, fieldState }) => (
-                    <SupplierSelectField
-                      field={field}
-                      fieldState={fieldState}
-                      label="Nhà cung cấp"
-                      placeholder="Chọn nhà cung cấp"
-                      allowCreate
-                      onCreateNew={() => {
-                        // TODO: Open supplier creation dialog
-                        console.log("Open supplier creation dialog");
-                      }}
-                    />
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vị trí lưu trữ</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ví dụ: Kho A - Kệ 1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-            </form>
-          </Form>
-        )}
-
-        <DialogFooter>
+        {!isEditing ? detailsContent : editFormContent}
+        <DialogFooter className="border-t pt-6">
           {!isEditing ? (
-            <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1 sm:flex-none"
+              >
                 Đóng
               </Button>
-              <Button onClick={() => setIsEditing(true)}>
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="flex-1 sm:flex-none"
+              >
                 <Edit3 className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </Button>
-            </>
+            </div>
           ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Hủy
+            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditing(false)}
+                className="flex-1 sm:flex-none"
+                disabled={loading}
+              >
+                Hủy bỏ
               </Button>
-              <Button onClick={form.handleSubmit(onSubmit)} disabled={loading}>
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={loading}
+                className="flex-1 sm:flex-none"
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Cập nhật
+                {loading ? "Đang cập nhật..." : "Cập nhật vật tư"}
               </Button>
-            </>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
