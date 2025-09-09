@@ -239,26 +239,6 @@ export class SupplyService {
     }
   }
 
-  static async getSuppliers(): Promise<string[]> {
-    try {
-      const q = query(this.suppliesRef, where("isActive", "==", true));
-      const querySnapshot = await getDocs(q);
-
-      const suppliers = new Set<string>();
-      querySnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        if (data.supplier) {
-          suppliers.add(data.supplier);
-        }
-      });
-
-      return Array.from(suppliers).sort();
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-      throw new Error("Không thể tải danh sách nhà cung cấp");
-    }
-  }
-
   // Stock Movement methods
   static async addStockMovement(
     data: CreateStockMovementData
@@ -403,7 +383,7 @@ export class SupplyService {
       const importData: Omit<SupplyImport, "id"> = {
         importDate: now,
         invoiceNumber: data.invoiceNumber,
-        supplier: data.supplier,
+        supplierId: data.supplierId,
         totalAmount,
         status: "pending",
         notes: data.notes,
@@ -465,7 +445,7 @@ export class SupplyService {
           unitPrice: item.unitPrice,
           totalValue: item.totalPrice,
           invoiceNumber: importData.invoiceNumber,
-          reason: `Nhập kho từ ${importData.supplier}`,
+          reason: `Nhập kho từ nhà cung cấp ID: ${importData.supplierId}`,
           performedBy: "system",
           createdAt: Timestamp.now(),
         });
@@ -500,8 +480,8 @@ export class SupplyService {
     try {
       const constraints: QueryConstraint[] = [];
 
-      if (filters.supplier) {
-        constraints.push(where("supplier", "==", filters.supplier));
+      if (filters.supplierId) {
+        constraints.push(where("supplierId", "==", filters.supplierId));
       }
       if (filters.status) {
         constraints.push(where("status", "==", filters.status));
@@ -532,7 +512,7 @@ export class SupplyService {
         imports = imports.filter(
           (imp) =>
             imp.invoiceNumber.toLowerCase().includes(searchTerm) ||
-            imp.supplier.toLowerCase().includes(searchTerm)
+            imp.supplierId.toLowerCase().includes(searchTerm)
         );
       }
 

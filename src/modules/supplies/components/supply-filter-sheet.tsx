@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSupplySearch } from "../hooks/use-supply";
+import { useSuppliers } from "@/modules/suppliers";
 import type { SupplyFilters } from "../types";
 
 interface SupplyFilterSheetProps {
@@ -37,7 +38,10 @@ export function SupplyFilterSheet({
   onFiltersChange,
 }: SupplyFilterSheetProps) {
   const [localFilters, setLocalFilters] = useState<SupplyFilters>(filters);
-  const { categories, suppliers, loading } = useSupplySearch();
+  const { categories, loading: searchLoading } = useSupplySearch();
+  const { suppliers, loading: suppliersLoading } = useSuppliers();
+
+  const loading = searchLoading || suppliersLoading;
 
   useEffect(() => {
     setLocalFilters(filters);
@@ -124,8 +128,8 @@ export function SupplyFilterSheet({
           <div className="space-y-2">
             <Label htmlFor="supplier">Nhà cung cấp</Label>
             <Select
-              value={localFilters.supplier || ""}
-              onValueChange={(value) => handleFilterChange("supplier", value)}
+              value={localFilters.supplierId || ""}
+              onValueChange={(value) => handleFilterChange("supplierId", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn nhà cung cấp" />
@@ -133,8 +137,8 @@ export function SupplyFilterSheet({
               <SelectContent>
                 <SelectItem value="">Tất cả nhà cung cấp</SelectItem>
                 {suppliers.map((supplier) => (
-                  <SelectItem key={supplier} value={supplier}>
-                    {supplier}
+                  <SelectItem key={supplier.id} value={supplier.id}>
+                    {supplier.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -224,14 +228,16 @@ export function SupplyFilterSheet({
                   </Badge>
                 )}
 
-                {localFilters.supplier && (
+                {localFilters.supplierId && (
                   <Badge variant="outline" className="gap-1">
-                    Nhà cung cấp: {localFilters.supplier}
+                    Nhà cung cấp:{" "}
+                    {suppliers.find((s) => s.id === localFilters.supplierId)
+                      ?.name || localFilters.supplierId}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-auto p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleFilterChange("supplier", "")}
+                      onClick={() => handleFilterChange("supplierId", "")}
                     >
                       <X className="h-3 w-3" />
                     </Button>

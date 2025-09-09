@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Eye, CheckCircle, XCircle, Clock, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useSupplyImports } from "../hooks/use-supply";
+import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import {
   ResponsiveTable,
   useResponsiveTableColumns,
@@ -20,6 +21,14 @@ export function SupplyImportsListPage() {
 
   const { imports, loading, error, filters, updateFilters } =
     useSupplyImports();
+
+  // Get supplier IDs from imports and fetch supplier data
+  const supplierIds = useMemo(
+    () => imports.map((imp) => imp.supplierId),
+    [imports]
+  );
+
+  const { getSupplierName } = useSuppliersByIds(supplierIds);
 
   const { createColumn } = useResponsiveTableColumns<SupplyImport>();
 
@@ -64,8 +73,9 @@ export function SupplyImportsListPage() {
     createColumn({
       key: "supplier",
       title: "Nhà cung cấp",
-      dataIndex: "supplier",
-      render: (value) => <div className="text-sm">{value as string}</div>,
+      render: (_, importItem) => (
+        <div className="text-sm">{getSupplierName(importItem.supplierId)}</div>
+      ),
     }),
     createColumn({
       key: "status",

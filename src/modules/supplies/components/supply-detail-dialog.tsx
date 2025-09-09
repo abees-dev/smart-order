@@ -23,7 +23,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SupplierSelectField } from "@/components/forms";
 import { useSupplyActions } from "../hooks/use-supply";
+import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { updateSupplySchema, type UpdateSupplyFormData } from "../validation";
 import type { Supply } from "../types";
 
@@ -43,6 +45,11 @@ export function SupplyDetailDialog({
   const [isEditing, setIsEditing] = useState(false);
   const { updateSupply, loading, error } = useSupplyActions();
 
+  // Get supplier name for display
+  const { getSupplierName } = useSuppliersByIds(
+    supply?.supplierId ? [supply.supplierId] : []
+  );
+
   const form = useForm<UpdateSupplyFormData>({
     resolver: zodResolver(updateSupplySchema),
     values: supply
@@ -57,7 +64,7 @@ export function SupplyDetailDialog({
           maxStock: supply.maxStock,
           purchasePrice: supply.purchasePrice,
           salePrice: supply.salePrice,
-          supplier: supply.supplier || "",
+          supplierId: supply.supplierId || "",
           location: supply.location || "",
           isActive: supply.isActive,
         }
@@ -177,12 +184,14 @@ export function SupplyDetailDialog({
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {supply.supplier && (
+                  {supply.supplierId && (
                     <div>
                       <p className="text-sm text-muted-foreground">
                         Nhà cung cấp
                       </p>
-                      <p className="text-sm">{supply.supplier}</p>
+                      <p className="text-sm">
+                        {getSupplierName(supply.supplierId)}
+                      </p>
                     </div>
                   )}
 
@@ -423,15 +432,19 @@ export function SupplyDetailDialog({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="supplier"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nhà cung cấp</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Tên nhà cung cấp" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  name="supplierId"
+                  render={({ field, fieldState }) => (
+                    <SupplierSelectField
+                      field={field}
+                      fieldState={fieldState}
+                      label="Nhà cung cấp"
+                      placeholder="Chọn nhà cung cấp"
+                      allowCreate
+                      onCreateNew={() => {
+                        // TODO: Open supplier creation dialog
+                        console.log("Open supplier creation dialog");
+                      }}
+                    />
                   )}
                 />
 

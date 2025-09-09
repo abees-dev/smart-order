@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SupplierSelectField } from "@/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSupplyImportActions, useSupplies } from "../hooks/use-supply";
 import {
@@ -55,7 +56,7 @@ export function SupplyImportFormDialog({
     resolver: zodResolver(createSupplyImportSchema),
     defaultValues: {
       invoiceNumber: "",
-      supplier: "",
+      supplierId: "",
       notes: "",
       items: [
         {
@@ -137,15 +138,19 @@ export function SupplyImportFormDialog({
 
                 <FormField
                   control={form.control}
-                  name="supplier"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nhà cung cấp *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Tên nhà cung cấp" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  name="supplierId"
+                  render={({ field, fieldState }) => (
+                    <SupplierSelectField
+                      field={field}
+                      fieldState={fieldState}
+                      label="Nhà cung cấp *"
+                      placeholder="Chọn nhà cung cấp"
+                      allowCreate
+                      onCreateNew={() => {
+                        // TODO: Open supplier creation dialog
+                        console.log("Open supplier creation dialog");
+                      }}
+                    />
                   )}
                 />
 
@@ -246,8 +251,7 @@ export function SupplyImportFormDialog({
                                         {field.value && selectedSupply && (
                                           <div className="flex items-center justify-between w-[190px]">
                                             <span className="font-medium text-sm truncate">
-                                              {selectedSupply.name}{" "}
-                                              hihihihihihhihii
+                                              {selectedSupply.name}
                                             </span>
                                           </div>
                                         )}

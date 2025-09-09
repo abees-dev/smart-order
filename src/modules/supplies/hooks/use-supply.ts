@@ -182,7 +182,6 @@ export function useSupplyActions() {
 
 export function useSupplySearch() {
   const [categories, setCategories] = useState<string[]>([]);
-  const [suppliers, setSuppliers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -191,13 +190,8 @@ export function useSupplySearch() {
     setError(null);
 
     try {
-      const [categoriesData, suppliersData] = await Promise.all([
-        SupplyService.getCategories(),
-        SupplyService.getSuppliers(),
-      ]);
-
+      const categoriesData = await SupplyService.getCategories();
       setCategories(categoriesData);
-      setSuppliers(suppliersData);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Đã có lỗi xảy ra");
     } finally {
@@ -211,7 +205,6 @@ export function useSupplySearch() {
 
   return {
     categories,
-    suppliers,
     loading,
     error,
     refetch: fetchOptions,

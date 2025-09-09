@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSuppliers } from "@/modules/suppliers";
 import { SupplierService } from "@/modules/suppliers/services/supplier.service";
 import type { Supplier, SupplierFilters } from "@/modules/suppliers";
@@ -25,11 +25,24 @@ export function useSupplierSelect(
   selectedSupplierId?: string,
   options: UseSupplierSelectOptions = {}
 ): UseSupplierSelectReturn {
+  // Memoize options to prevent unnecessary re-renders
+  const memoizedOptions = useMemo(
+    () => options,
+    [
+      options.pageSize,
+      options.activeOnly,
+      options.initialFilters?.search,
+      options.initialFilters?.city,
+      options.initialFilters?.country,
+      options.initialFilters?.isActive,
+    ]
+  );
+
   const {
     initialFilters = {},
     pageSize = 50, // Higher limit for select dropdown
     activeOnly = true,
-  } = options;
+  } = memoizedOptions;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedId, setSelectedId] = useState(selectedSupplierId);
@@ -44,14 +57,25 @@ export function useSupplierSelect(
     setSearchTerm(term);
   }, []);
 
+  // Memoize initialFilters to ensure stable reference
+  const memoizedInitialFilters = useMemo(
+    () => initialFilters,
+    [
+      initialFilters.search,
+      initialFilters.city,
+      initialFilters.country,
+      initialFilters.isActive,
+    ]
+  );
+
   // Build filters - memoize to prevent unnecessary re-renders
   const filters: SupplierFilters = useMemo(
     () => ({
-      ...initialFilters,
+      ...memoizedInitialFilters,
       search: searchTerm || undefined,
       ...(activeOnly && { isActive: true }),
     }),
-    [initialFilters, searchTerm, activeOnly]
+    [memoizedInitialFilters, searchTerm, activeOnly]
   );
 
   // Fetch suppliers
@@ -94,37 +118,38 @@ export function useSuppliersByIds(supplierIds: (string | undefined)[]) {
   const [suppliers, setSuppliers] = useState<Record<string, Supplier>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fetchedIdsRef = useRef<Set<string>>(new Set());
+  const isFetchingRef = useRef(false);
 
-  // Get unique, non-undefined IDs
-  const uniqueIds = useMemo(() => {
+  // Use a ref to store the previous supplier IDs key to detect changes
+  const prevIdsKeyRef = useRef<string>("");
+
+  // Create a stable key from supplier IDs
+  const currentIdsKey = useMemo(() => {
     const ids = supplierIds.filter((id): id is string => !!id);
-    return Array.from(new Set(ids));
+    const uniqueIds = Array.from(new Set(ids));
+    return uniqueIds.sort().join(",");
   }, [supplierIds]);
 
-  const fetchSuppliers = useCallback(async () => {
-    if (uniqueIds.length === 0) {
-      setSuppliers({});
+  const fetchSuppliers = useCallback(async (idsToFetch: string[]) => {
+    if (idsToFetch.length === 0 || isFetchingRef.current) {
       return;
     }
 
-    // Check if we already have all the suppliers
-    const missingIds = uniqueIds.filter((id) => !suppliers[id]);
-    if (missingIds.length === 0) {
-      return;
-    }
-
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
       const fetchedSuppliers = await SupplierService.getSuppliersByIds(
-        missingIds
+        idsToFetch
       );
 
       setSuppliers((prev) => {
         const newSuppliers = { ...prev };
         fetchedSuppliers.forEach((supplier) => {
           newSuppliers[supplier.id] = supplier;
+          fetchedIdsRef.current.add(supplier.id);
         });
         return newSuppliers;
       });
@@ -136,12 +161,37 @@ export function useSuppliersByIds(supplierIds: (string | undefined)[]) {
       );
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [uniqueIds, suppliers]);
+  }, []);
 
   useEffect(() => {
-    fetchSuppliers();
-  }, [fetchSuppliers]);
+    // Only proceed if the IDs have actually changed
+    if (prevIdsKeyRef.current === currentIdsKey) {
+      return;
+    }
+
+    prevIdsKeyRef.current = currentIdsKey;
+
+    // Parse the current IDs
+    const currentIds = currentIdsKey
+      ? currentIdsKey.split(",").filter(Boolean)
+      : [];
+
+    if (currentIds.length === 0) {
+      setSuppliers({});
+      fetchedIdsRef.current.clear();
+      return;
+    }
+
+    // Only fetch IDs we haven't fetched before
+    const missingIds = currentIds.filter(
+      (id) => !fetchedIdsRef.current.has(id)
+    );
+    if (missingIds.length > 0) {
+      fetchSuppliers(missingIds);
+    }
+  });
 
   // Helper function to get supplier name by ID
   const getSupplierName = useCallback(

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DocumentSnapshot } from "firebase/firestore";
 import { SupplierService } from "../services/supplier.service";
 import type {
@@ -10,7 +10,7 @@ import type {
   UpdateSupplierData,
 } from "../types";
 
-export function useSuppliers(filters: SupplierFilters = {}, pageSize = 10) {
+export function useSuppliers(filters: SupplierFilters = {}, pageSize = 100) {
   const [state, setState] = useState<SupplierListState>({
     suppliers: [],
     loading: true, // Start with loading true
@@ -20,11 +20,14 @@ export function useSuppliers(filters: SupplierFilters = {}, pageSize = 10) {
     pageSize,
   });
 
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const lastDocRef = useRef<DocumentSnapshot | null>(null);
+  
+  // Use JSON.stringify to create stable dependency
+  const filtersString = JSON.stringify(filters);
+  const pageSizeValue = pageSize;
 
-  const loadSuppliers = useCallback(
-    async (reset = false) => {
+  useEffect(() => {
+    const loadSuppliers = async () => {
       setState((prev) => ({
         ...prev,
         loading: true,
@@ -32,26 +35,23 @@ export function useSuppliers(filters: SupplierFilters = {}, pageSize = 10) {
       }));
 
       try {
-        const {
-          suppliers,
-          hasMore: newHasMore,
-          lastDoc: newLastDoc,
-        } = await SupplierService.getAllSuppliers(
-          filters,
-          pageSize,
-          reset ? undefined : lastDoc || undefined
-        );
+        lastDocRef.current = null; // Reset for new filters
+        const { suppliers, lastDoc: newLastDoc } =
+          await SupplierService.getAllSuppliers(
+            filters,
+            pageSize,
+            undefined
+          );
 
         setState((prev) => ({
           ...prev,
-          suppliers: reset ? suppliers : [...prev.suppliers, ...suppliers],
+          suppliers: suppliers,
           loading: false,
-          total: reset ? suppliers.length : prev.total + suppliers.length,
-          page: reset ? 1 : prev.page + 1,
+          total: suppliers.length,
+          page: 1,
         }));
 
-        setLastDoc(newLastDoc || null);
-        setHasMore(newHasMore);
+        lastDocRef.current = newLastDoc || null;
       } catch (error) {
         setState((prev) => ({
           ...prev,
@@ -59,24 +59,38 @@ export function useSuppliers(filters: SupplierFilters = {}, pageSize = 10) {
           error: error instanceof Error ? error.message : "Có lỗi xảy ra",
         }));
       }
-    },
-    [filters, pageSize, lastDoc]
-  );
+    };
+
+    loadSuppliers();
+  }, [filtersString, pageSizeValue]);
 
   const refreshSuppliers = useCallback(() => {
-    setLastDoc(null);
-    setHasMore(true);
-    loadSuppliers(true);
-  }, [loadSuppliers]);
+    lastDocRef.current = null;
+    setState((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+    }));
 
-  const loadMore = useCallback(() => {
-    if (!hasMore || state.loading) return;
-    loadSuppliers(false);
-  }, [hasMore, state.loading, loadSuppliers]);
-
-  useEffect(() => {
-    refreshSuppliers();
-  }, [filters]);
+    SupplierService.getAllSuppliers(filters, pageSize, undefined)
+      .then(({ suppliers, lastDoc: newLastDoc }) => {
+        setState((prev) => ({
+          ...prev,
+          suppliers: suppliers,
+          loading: false,
+          total: suppliers.length,
+          page: 1,
+        }));
+        lastDocRef.current = newLastDoc || null;
+      })
+      .catch((error) => {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : "Có lỗi xảy ra",
+        }));
+      });
+  }, [filters, pageSize]);
 
   return {
     suppliers: state.suppliers,
@@ -85,8 +99,6 @@ export function useSuppliers(filters: SupplierFilters = {}, pageSize = 10) {
     total: state.total,
     page: state.page,
     pageSize: state.pageSize,
-    hasMore,
-    loadMore,
     refreshSuppliers,
   };
 }
@@ -187,13 +199,27 @@ export function useSupplierDetail(id: string | null) {
   }, []);
 
   useEffect(() => {
-    if (id) {
-      loadSupplier(id);
-    } else {
-      setSupplier(null);
-      setError(null);
-    }
-  }, [id, loadSupplier]);
+    const loadData = async () => {
+      if (id) {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const supplierData = await SupplierService.getSupplierById(id);
+          setSupplier(supplierData);
+        } catch (error) {
+          setError(error instanceof Error ? error.message : "Có lỗi xảy ra");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setSupplier(null);
+        setError(null);
+      }
+    };
+
+    loadData();
+  }, [id]);
 
   return {
     supplier,
@@ -268,8 +294,22 @@ export function useActiveSuppliers() {
   }, []);
 
   useEffect(() => {
-    loadActiveSuppliers();
-  }, [loadActiveSuppliers]);
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const activeSuppliers = await SupplierService.getActiveSuppliers();
+        setSuppliers(activeSuppliers);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Có lỗi xảy ra");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   return {
     suppliers,
