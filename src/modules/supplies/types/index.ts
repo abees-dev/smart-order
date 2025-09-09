@@ -1,0 +1,129 @@
+import type { Timestamp } from "firebase/firestore";
+
+export interface Supply {
+  id: string;
+  name: string;
+  sku: string;
+  description?: string;
+  category: string;
+  unit: string; // e.g., "kg", "piece", "liter", etc.
+  currentStock: number;
+  minStock: number; // minimum stock level for alerts
+  maxStock: number; // maximum stock level
+  purchasePrice: number; // giá mua
+  salePrice: number; // giá bán
+  supplier?: string;
+  location?: string; // storage location
+  expiryDate?: Timestamp;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface CreateSupplyData {
+  name: string;
+  sku: string;
+  description?: string;
+  category: string;
+  unit: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  purchasePrice: number;
+  salePrice: number;
+  supplier?: string;
+  location?: string;
+  expiryDate?: Timestamp;
+}
+
+export interface UpdateSupplyData extends Partial<CreateSupplyData> {
+  isActive?: boolean;
+}
+
+export interface SupplyFilters {
+  category?: string;
+  supplier?: string;
+  location?: string;
+  isActive?: boolean;
+  lowStock?: boolean; // filter for supplies below minimum stock
+  search?: string; // search by name or SKU
+}
+
+export interface SupplyListState {
+  supplies: Supply[];
+  loading: boolean;
+  error: string | null;
+  hasMore: boolean;
+  total: number;
+}
+
+export interface SupplyFormState {
+  loading: boolean;
+  error: string | null;
+}
+
+export interface StockMovement {
+  id: string;
+  supplyId: string;
+  type: "in" | "out" | "adjustment" | "import"; // thêm type "import"
+  quantity: number;
+  unitPrice?: number; // giá nhập cho từng lần nhập
+  totalValue?: number; // tổng giá trị giao dịch
+  invoiceNumber?: string; // số hóa đơn
+  reason?: string;
+  performedBy?: string;
+  createdAt: Timestamp;
+}
+
+export interface CreateStockMovementData {
+  supplyId: string;
+  type: "in" | "out" | "adjustment" | "import";
+  quantity: number;
+  unitPrice?: number;
+  totalValue?: number;
+  invoiceNumber?: string;
+  reason?: string;
+  performedBy?: string;
+}
+
+export interface SupplyImport {
+  id: string;
+  importDate: Timestamp;
+  invoiceNumber: string;
+  supplier: string;
+  totalAmount: number;
+  status: "pending" | "completed" | "cancelled";
+  notes?: string;
+  items: SupplyImportItem[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface SupplyImportItem {
+  supplyId: string;
+  supplyName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface CreateSupplyImportData {
+  invoiceNumber: string;
+  supplier: string;
+  notes?: string;
+  items: Omit<SupplyImportItem, "supplyName" | "sku">[];
+}
+
+export interface UpdateSupplyImportData
+  extends Partial<CreateSupplyImportData> {
+  status?: "pending" | "completed" | "cancelled";
+}
+
+export interface SupplyImportFilters {
+  supplier?: string;
+  status?: "pending" | "completed" | "cancelled";
+  dateFrom?: Timestamp;
+  dateTo?: Timestamp;
+  search?: string;
+}

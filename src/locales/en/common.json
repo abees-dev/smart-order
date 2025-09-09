@@ -25,6 +25,7 @@
     "orders": "Orders",
     "products": "Products",
     "customers": "Customers",
+    "supplies": "Supplies",
     "reports": "Reports",
     "settings": "Settings"
   },
