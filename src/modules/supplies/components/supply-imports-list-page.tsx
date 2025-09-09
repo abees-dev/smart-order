@@ -654,13 +654,13 @@ export function SupplyImportsListPage() {
         onSuccess={handleDialogSuccess}
       />
 
-      {/* TODO: Add edit dialog when available */}
+      {/* Edit Dialog */}
       {showEditDialog && selectedImport && (
         <SupplyImportFormDialog
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
           onSuccess={handleDialogSuccess}
-          // TODO: Pass selected import data when edit functionality is available
+          editImport={selectedImport}
         />
       )}
     </div>

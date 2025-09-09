@@ -36,38 +36,58 @@ import {
   type CreateSupplyImportFormData,
 } from "../validation";
 import { SupplyFormDialog } from "./supply-form-dialog";
+import type { SupplyImport } from "../types";
 
 interface SupplyImportFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editImport?: SupplyImport | null;
 }
 
 export function SupplyImportFormDialog({
   open,
   onOpenChange,
   onSuccess,
+  editImport = null,
 }: SupplyImportFormDialogProps) {
-  const { createImport, loading, error } = useSupplyImportActions();
+  const { createImport, updateImport, loading, error } =
+    useSupplyImportActions();
   const { supplies, loading: suppliesLoading, refreshSupplies } = useSupplies();
   const [showSupplyForm, setShowSupplyForm] = useState(false);
 
+  const isEditing = !!editImport;
+
   const form = useForm<CreateSupplyImportFormData>({
     resolver: zodResolver(createSupplyImportSchema),
-    defaultValues: {
-      invoiceNumber: "",
-      supplierId: "",
-      notes: "",
-      items: [
-        {
-          supplyId: "",
-          quantity: 1,
-          unitPrice: 0,
-          vatRate: 0,
-          totalPrice: 0,
-        },
-      ],
-    },
+    defaultValues:
+      isEditing && editImport
+        ? {
+            invoiceNumber: editImport.invoiceNumber,
+            supplierId: editImport.supplierId,
+            notes: editImport.notes || "",
+            items: editImport.items.map((item) => ({
+              supplyId: item.supplyId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              vatRate: item.vatRate,
+              totalPrice: item.totalPrice,
+            })),
+          }
+        : {
+            invoiceNumber: "",
+            supplierId: "",
+            notes: "",
+            items: [
+              {
+                supplyId: "",
+                quantity: 1,
+                unitPrice: 0,
+                vatRate: 0,
+                totalPrice: 0,
+              },
+            ],
+          },
     mode: "onChange", // Enable real-time validation
   });
 
@@ -90,7 +110,11 @@ export function SupplyImportFormDialog({
         return;
       }
 
-      await createImport(data);
+      if (isEditing && editImport) {
+        await updateImport(editImport.id, data);
+      } else {
+        await createImport(data);
+      }
 
       // Reset form and close dialog
       form.reset({
@@ -111,7 +135,7 @@ export function SupplyImportFormDialog({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating supply import:", error);
+      console.error("Error saving supply import:", error);
       // Error is already handled by the hook
     }
   };
@@ -156,11 +180,14 @@ export function SupplyImportFormDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Tạo phiếu nhập vật tư
+            {isEditing
+              ? "Chỉnh sửa phiếu nhập vật tư"
+              : "Tạo phiếu nhập vật tư"}
           </DialogTitle>
           <DialogDescription>
-            Tạo phiếu nhập kho mới cho vật tư. Vui lòng điền đầy đủ thông tin số
-            hóa đơn, nhà cung cấp và danh sách vật tư cần nhập.
+            {isEditing
+              ? "Cập nhật thông tin phiếu nhập vật tư và các sản phẩm."
+              : "Tạo phiếu nhập kho mới cho vật tư. Vui lòng điền đầy đủ thông tin số hóa đơn, nhà cung cấp và danh sách vật tư cần nhập."}
           </DialogDescription>
         </DialogHeader>
 
@@ -707,7 +734,13 @@ export function SupplyImportFormDialog({
                 className="min-w-32"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {loading ? "Đang tạo..." : "Tạo phiếu nhập"}
+                {loading
+                  ? isEditing
+                    ? "Đang cập nhật..."
+                    : "Đang tạo..."
+                  : isEditing
+                  ? "Cập nhật phiếu nhập"
+                  : "Tạo phiếu nhập"}
               </Button>
             </DialogFooter>
           </form>

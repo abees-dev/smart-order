@@ -26,6 +26,7 @@ import type {
   CreateStockMovementData,
   SupplyImport,
   CreateSupplyImportData,
+  UpdateSupplyImportData,
   SupplyImportFilters,
 } from "../types";
 
@@ -559,6 +560,48 @@ export class SupplyService {
     } catch (error) {
       console.error("Error fetching supply import:", error);
       throw new Error("Không thể tải thông tin phiếu nhập kho");
+    }
+  }
+
+  static async updateSupplyImport(
+    importId: string,
+    data: UpdateSupplyImportData
+  ): Promise<void> {
+    try {
+      const importRef = doc(db, SUPPLY_IMPORTS_COLLECTION, importId);
+      const importDoc = await getDoc(importRef);
+
+      if (!importDoc.exists()) {
+        throw new Error("Không tìm thấy phiếu nhập kho");
+      }
+
+      const importData = importDoc.data() as SupplyImport;
+      if (importData.status !== "pending") {
+        throw new Error("Chỉ có thể chỉnh sửa phiếu nhập kho đang chờ xử lý");
+      }
+
+      // Calculate total amount if items are updated
+      let totalAmount = importData.totalAmount;
+      if (data.items) {
+        totalAmount = data.items.reduce(
+          (sum: number, item) => sum + item.totalPrice,
+          0
+        );
+      }
+
+      const updateData = {
+        ...data,
+        totalAmount,
+        updatedAt: Timestamp.now(),
+      };
+
+      await updateDoc(importRef, updateData);
+    } catch (error) {
+      console.error("Error updating supply import:", error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Không thể cập nhật phiếu nhập kho");
     }
   }
 

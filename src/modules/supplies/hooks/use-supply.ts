@@ -407,6 +407,25 @@ export function useSupplyImportActions() {
     }
   }, []);
 
+  const updateImport = useCallback(
+    async (importId: string, data: CreateSupplyImportData) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        await SupplyService.updateSupplyImport(importId, data);
+        setLoading(false);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Đã có lỗi xảy ra";
+        setError(errorMessage);
+        setLoading(false);
+        throw error;
+      }
+    },
+    []
+  );
+
   const cancelImport = useCallback(async (importId: string) => {
     setLoading(true);
     setError(null);
@@ -427,6 +446,7 @@ export function useSupplyImportActions() {
     loading,
     error,
     createImport,
+    updateImport,
     completeImport,
     cancelImport,
   };
