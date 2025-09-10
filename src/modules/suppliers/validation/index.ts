@@ -11,12 +11,12 @@ export const createSupplierSchema = z.object({
     .max(255, "Email không được vượt quá 255 ký tự")
     .optional()
     .or(z.literal("")),
-  phone: z.string().optional().default(""),
+  phone: z.string().optional().or(z.literal("")),
   address: z
     .string()
     .min(5, "Địa chỉ phải có ít nhất 5 ký tự")
     .max(255, "Địa chỉ không được vượt quá 255 ký tự"),
-  city: z.string().optional().default(""),
+  city: z.string().optional().or(z.literal("")),
   country: z
     .string()
     .min(2, "Quốc gia phải có ít nhất 2 ký tự")

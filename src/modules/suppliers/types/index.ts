@@ -22,9 +22,9 @@ export interface Supplier {
 export interface CreateSupplierData {
   name: string;
   email?: string;
-  phone: string;
+  phone?: string;
   address: string;
-  city: string;
+  city?: string;
   country: string;
   contactPerson?: string;
   taxNumber?: string;
