@@ -48,17 +48,17 @@ export function SupplierSelect({
   useEffect(() => {
     const loadSelectedSupplier = async () => {
       if (!value) return;
-      
+
       // Check if we already have this supplier in our list
-      const existingSupplier = suppliers.find(s => s.id === value);
+      const existingSupplier = suppliers.find((s) => s.id === value);
       if (existingSupplier) return;
 
       try {
         const supplier = await SupplierService.getSupplierById(value);
         if (supplier) {
-          setSuppliers(prev => {
+          setSuppliers((prev) => {
             // Add to suppliers if not already present
-            const exists = prev.some(s => s.id === value);
+            const exists = prev.some((s) => s.id === value);
             if (exists) return prev;
             return [supplier, ...prev];
           });
@@ -81,9 +81,11 @@ export function SupplierSelect({
         const allSuppliers = await SupplierService.getActiveSuppliers();
         // Show first 50 suppliers when no search term
 
-        setSuppliers(prev => {
+        setSuppliers((prev) => {
           // Merge with existing suppliers, avoid duplicates
-          const existing = prev.filter(p => !allSuppliers.some(a => a.id === p.id));
+          const existing = prev.filter(
+            (p) => !allSuppliers.some((a) => a.id === p.id)
+          );
           return [...existing, ...allSuppliers.slice(0, 50)];
         });
       } catch (error) {
@@ -101,7 +103,9 @@ export function SupplierSelect({
   }, [isOpen]);
 
   // Find selected supplier
-  const selectedSupplier = value ? suppliers.find((supplier) => supplier.id === value) : null;
+  const selectedSupplier = value
+    ? suppliers.find((supplier) => supplier.id === value)
+    : null;
 
   // Reset search when dropdown closes and focus input when opened
   const handleOpenChange = useCallback((open: boolean) => {
@@ -227,10 +231,13 @@ export function SupplierSelectField({
     };
   };
 } & Omit<SupplierSelectProps, "value" | "onValueChange" | "error">) {
-  const handleValueChange = useCallback((value: string) => {
-    field.onChange(value);
-    field.onBlur?.();
-  }, [field]);
+  const handleValueChange = useCallback(
+    (value: string) => {
+      field.onChange(value);
+      field.onBlur?.();
+    },
+    [field]
+  );
 
   return (
     <SupplierSelect

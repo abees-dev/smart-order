@@ -22,7 +22,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -56,8 +55,7 @@ export function SuppliersListPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
 
-  const { suppliers, loading, error, hasMore, loadMore, refreshSuppliers } =
-    useSuppliers(filters);
+  const { suppliers, loading, error, refreshSuppliers } = useSuppliers(filters);
 
   const { toggleSupplierStatus } = useSupplierForm();
 
@@ -286,17 +284,6 @@ export function SuppliersListPage() {
                 loading={loading}
                 rowKey="id"
               />
-              {hasMore && (
-                <div className="p-4 text-center border-t">
-                  <Button
-                    variant="outline"
-                    onClick={loadMore}
-                    disabled={loading}
-                  >
-                    {loading ? t("common.loading") : t("common.loadMore")}
-                  </Button>
-                </div>
-              )}
             </>
           )}
         </CardContent>
