@@ -3,6 +3,7 @@ import authRouter from "./modules/auth/router";
 import { customerRouter } from "./modules/customer";
 import { suppliesRouter } from "./modules/supplies";
 import { suppliersRouter } from "./modules/suppliers";
+import { productRouter } from "./modules/product";
 import DashboardLayout from "./layout/dashboard-layout";
 import { ROUTES } from "./constants/routes";
 
@@ -25,6 +26,7 @@ const router = createBrowserRouter(
         ...customerRouter,
         ...suppliersRouter,
         ...suppliesRouter,
+        ...productRouter,
       ],
     },
     {
