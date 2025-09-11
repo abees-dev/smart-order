@@ -22,6 +22,7 @@ import type {
   UpdateCustomerData,
   CustomerFilters,
 } from "../types";
+import { normalizeText } from "@/modules/supplies/utils/text";
 
 const COLLECTION_NAME = "customers";
 
@@ -153,6 +154,7 @@ export class CustomerService {
         isActive: true,
         createdAt: now,
         updatedAt: now,
+        search: normalizeText(cleanedData.name || ""),
       };
 
       const docRef = await addDoc(this.collectionRef, customerData);

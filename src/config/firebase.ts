@@ -29,9 +29,4 @@ googleProvider.setCustomParameters({
 googleProvider.addScope("email");
 googleProvider.addScope("profile");
 
-// Validate Firebase configuration in development
-if (import.meta.env.DEV) {
-  console.log("Firebase initialized with project:", firebaseConfig.projectId);
-}
-
 export { auth, db, googleProvider };
