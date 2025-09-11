@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileX } from "lucide-react";
 
@@ -167,6 +167,8 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     return <EmptyState />;
   }
 
+  const actionsColumn = columns.find((col) => col.key === "actions");
+
   // Mobile Card View
   if (isMobile && mobileCardRender) {
     return (
@@ -181,6 +183,11 @@ export function ResponsiveTable<T = Record<string, unknown>>({
             onClick={() => onRowClick?.(record, index)}
           >
             <CardContent className="p-5">
+              {actionsColumn && actionsColumn.render && (
+                <div className="flex justify-end">
+                  {actionsColumn?.render(record, record, index)}
+                </div>
+              )}
               {mobileCardRender(record, index)}
             </CardContent>
           </Card>

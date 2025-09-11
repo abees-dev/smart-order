@@ -73,7 +73,6 @@ export function SuppliersListPage() {
       title: t("suppliers.phone"),
       dataIndex: "phone",
       responsive: false,
-      className: "font-mono text-sm",
     }),
     createColumn({
       key: "email",

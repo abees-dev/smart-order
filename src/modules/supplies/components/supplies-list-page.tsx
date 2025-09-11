@@ -85,7 +85,7 @@ export function SuppliesListPage() {
               <span className="px-2 py-1 bg-muted rounded-md text-xs mr-2">
                 {record.category}
               </span>
-              <span className="font-mono text-xs bg-muted/50 px-2 py-1 rounded">
+              <span className="text-xs bg-muted/50 px-2 py-1 rounded">
                 {record.sku}
               </span>
             </div>
@@ -190,7 +190,7 @@ export function SuppliesListPage() {
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1 flex-1">
-            <div className="font-mono text-xs bg-muted/50 px-2 py-1 rounded w-fit">
+            <div className="text-xs bg-muted/50 px-2 py-1 rounded w-fit">
               {record.sku}
             </div>
             <h3 className="font-semibold text-base line-clamp-2">

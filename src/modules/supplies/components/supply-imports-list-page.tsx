@@ -167,7 +167,7 @@ export function SupplyImportsListPage() {
       render: (_, record: SupplyImport) => (
         <div className="space-y-1">
           <div className="font-semibold text-foreground">
-            <span className="font-mono bg-muted px-2 py-1 rounded text-xs mr-2">
+            <span className="bg-muted px-2 py-1 rounded text-xs mr-2">
               {record.invoiceNumber}
             </span>
           </div>
@@ -257,7 +257,7 @@ export function SupplyImportsListPage() {
     <div className="space-y-3">
       <div className="flex items-start justify-between">
         <div className="space-y-1 flex-1">
-          <div className="font-mono text-xs bg-muted/50 px-2 py-1 rounded w-fit">
+          <div className="text-xs bg-muted/50 px-2 py-1 rounded w-fit">
             {record.invoiceNumber}
           </div>
           <div className="flex items-center gap-2">

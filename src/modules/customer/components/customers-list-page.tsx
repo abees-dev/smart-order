@@ -83,7 +83,6 @@ export function CustomersListPage() {
       title: t("customers.phone"),
       dataIndex: "phone",
       responsive: false,
-      className: "font-mono text-sm",
     }),
     createColumn({
       key: "city",
