@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { DocumentSnapshot } from "firebase/firestore";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CustomerService } from "../services/customer.service";
 import type {
   Customer,
@@ -11,9 +12,11 @@ import type {
 } from "../types";
 
 export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
+  const isMobile = useIsMobile();
+
   const [state, setState] = useState<CustomerListState>({
     customers: [],
-    loading: true, // Start with loading true
+    loading: true,
     error: null,
     total: 0,
     page: 1,
@@ -22,9 +25,10 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
 
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const loadCustomers = useCallback(
-    async (reset = false) => {
+    async (reset = false, targetPage = 1) => {
       setState((prev) => ({
         ...prev,
         loading: true,
@@ -32,22 +36,42 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
       }));
 
       try {
-        const {
-          customers,
-          hasMore: newHasMore,
-          lastDoc: newLastDoc,
-        } = await CustomerService.getAllCustomers(
-          filters,
-          pageSize,
-          reset ? undefined : lastDoc || undefined
-        );
+        let result;
+
+        if (isMobile) {
+          // Mobile: Use infinite loading with Firestore pagination
+          result = await CustomerService.getAllCustomers(
+            filters,
+            pageSize,
+            reset ? undefined : lastDoc || undefined
+          );
+        } else {
+          // Desktop: Use traditional pagination
+          result = await CustomerService.getCustomersWithPagination(
+            filters,
+            pageSize,
+            targetPage
+          );
+        }
+
+        const customers = result.customers;
+        const newHasMore = result.hasMore;
+        const newLastDoc = result.lastDoc;
+        const newTotal =
+          "total" in result ? (result.total as number) : undefined;
 
         setState((prev) => ({
           ...prev,
-          customers: reset ? customers : [...prev.customers, ...customers],
+          customers:
+            isMobile && !reset ? [...prev.customers, ...customers] : customers,
           loading: false,
-          total: reset ? customers.length : prev.total + customers.length,
-          page: reset ? 1 : prev.page + 1,
+          total:
+            newTotal !== undefined
+              ? newTotal
+              : reset
+              ? customers.length
+              : prev.total + customers.length,
+          page: isMobile ? (reset ? 1 : prev.page + 1) : targetPage,
         }));
 
         setHasMore(newHasMore);
@@ -64,23 +88,36 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
         return { success: false, error };
       }
     },
-    // Removed lastDoc from dependencies to avoid infinite loop
-    [filters, pageSize]
+    [filters, pageSize, lastDoc, isMobile]
   );
 
   const refreshCustomers = useCallback(async () => {
     setLastDoc(null);
     setHasMore(true);
-    await loadCustomers(true);
+    await loadCustomers(true, 1);
   }, [loadCustomers]);
 
   const loadMore = useCallback(async () => {
-    if (!state.loading && hasMore) {
-      await loadCustomers(false);
+    if (!state.loading && hasMore && isMobile && !loadingMore) {
+      setLoadingMore(true);
+      try {
+        await loadCustomers(false);
+      } finally {
+        setLoadingMore(false);
+      }
     }
-  }, [state.loading, hasMore, loadCustomers]);
+  }, [state.loading, hasMore, isMobile, loadingMore, loadCustomers]);
 
-  // Use useEffect with proper dependencies to avoid infinite loop
+  const changePage = useCallback(
+    async (newPage: number) => {
+      if (!isMobile) {
+        await loadCustomers(true, newPage);
+      }
+    },
+    [isMobile, loadCustomers]
+  );
+
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
       setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -88,17 +125,27 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
       setHasMore(true);
 
       try {
-        const {
-          customers,
-          hasMore: newHasMore,
-          lastDoc: newLastDoc,
-        } = await CustomerService.getAllCustomers(filters, pageSize);
+        let result;
+
+        if (isMobile) {
+          result = await CustomerService.getAllCustomers(filters, pageSize);
+        } else {
+          result = await CustomerService.getCustomersWithPagination(
+            filters,
+            pageSize,
+            1
+          );
+        }
+
+        const { customers, hasMore: newHasMore, lastDoc: newLastDoc } = result;
+        const total =
+          "total" in result ? (result.total as number) : customers.length;
 
         setState({
           customers,
           loading: false,
           error: null,
-          total: customers.length,
+          total,
           page: 1,
           pageSize,
         });
@@ -115,13 +162,16 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
     };
 
     loadData();
-  }, [JSON.stringify(filters), pageSize]);
+  }, [JSON.stringify(filters), pageSize, isMobile]);
 
   return {
     ...state,
     hasMore,
     loadMore,
     refreshCustomers,
+    changePage,
+    isMobile,
+    loadingMore,
   };
 }
 

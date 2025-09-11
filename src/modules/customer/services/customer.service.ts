@@ -14,6 +14,7 @@ import {
   Timestamp,
   DocumentSnapshot,
   QueryConstraint,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import type {
@@ -94,6 +95,110 @@ export class CustomerService {
       return {
         customers: [],
         hasMore: false,
+        lastDoc: undefined,
+      };
+    }
+  }
+
+  static async getCustomersWithPagination(
+    filters: CustomerFilters = {},
+    pageSize = 10,
+    page = 1
+  ): Promise<{
+    customers: Customer[];
+    hasMore: boolean;
+    total: number;
+    lastDoc?: DocumentSnapshot;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [];
+
+      // Add filters
+      if (filters.city) {
+        constraints.push(where("city", "==", filters.city));
+      }
+      if (filters.country) {
+        constraints.push(where("country", "==", filters.country));
+      }
+      if (filters.isActive !== undefined) {
+        constraints.push(where("isActive", "==", filters.isActive));
+      }
+
+      // Add search filter (simple text search on name)
+      if (filters.search) {
+        constraints.push(where("name", ">=", filters.search));
+        constraints.push(where("name", "<=", filters.search + "\uf8ff"));
+        constraints.push(orderBy("name"));
+      } else {
+        // Add ordering only when not searching
+        constraints.push(orderBy("createdAt", "desc"));
+      }
+
+      // Get total count
+      const countQuery = query(this.collectionRef, ...constraints);
+      const countSnapshot = await getCountFromServer(countQuery);
+      const total = countSnapshot.data().count;
+
+      // Get paginated data
+      const skip = (page - 1) * pageSize;
+      constraints.push(limit(pageSize));
+
+      // For pagination in Firestore, we need to use cursor-based pagination
+      // Since traditional offset doesn't exist, we'll simulate it by getting documents up to the skip point
+      let querySnapshot;
+      if (skip > 0) {
+        const skipQuery = query(
+          this.collectionRef,
+          ...constraints.slice(0, -1),
+          limit(skip)
+        );
+        const skipSnapshot = await getDocs(skipQuery);
+        if (skipSnapshot.docs.length > 0) {
+          const lastSkipDoc = skipSnapshot.docs[skipSnapshot.docs.length - 1];
+          const paginatedQuery = query(
+            this.collectionRef,
+            ...constraints.slice(0, -1),
+            startAfter(lastSkipDoc),
+            limit(pageSize)
+          );
+          querySnapshot = await getDocs(paginatedQuery);
+        } else {
+          // If no documents to skip, return empty result
+          return {
+            customers: [],
+            hasMore: false,
+            total,
+            lastDoc: undefined,
+          };
+        }
+      } else {
+        const paginatedQuery = query(this.collectionRef, ...constraints);
+        querySnapshot = await getDocs(paginatedQuery);
+      }
+
+      const customers: Customer[] = [];
+      querySnapshot.forEach((doc) => {
+        customers.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Customer);
+      });
+
+      const hasMore = skip + customers.length < total;
+      const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+      return {
+        customers,
+        hasMore,
+        total,
+        lastDoc: newLastDoc,
+      };
+    } catch (error) {
+      console.error("Error getting customers with pagination:", error);
+      return {
+        customers: [],
+        hasMore: false,
+        total: 0,
         lastDoc: undefined,
       };
     }

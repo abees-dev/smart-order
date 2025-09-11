@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 export interface TableAction<T> {
   key: string;
@@ -42,7 +43,7 @@ export interface EnhancedTableProps<T>
   // Actions
   actions?: TableAction<T>[];
 
-  // Pagination
+  // Pagination for desktop
   pagination?: {
     current: number;
     pageSize: number;
@@ -57,10 +58,13 @@ export interface EnhancedTableProps<T>
   title?: string;
   description?: string;
 
-  // Loading more data
+  // Infinite loading for mobile
   hasMore?: boolean;
   onLoadMore?: () => void;
   loadingMore?: boolean;
+
+  // Device detection
+  isMobile?: boolean;
 }
 
 export function EnhancedTable<T = Record<string, unknown>>({
@@ -77,8 +81,18 @@ export function EnhancedTable<T = Record<string, unknown>>({
   hasMore = false,
   onLoadMore,
   loadingMore = false,
+  isMobile = false,
   ...tableProps
 }: EnhancedTableProps<T>) {
+  // Infinite scroll for mobile
+  const { triggerRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: loadingMore,
+    onLoadMore: onLoadMore || (() => {}),
+    threshold: 0.1,
+    rootMargin: "100px",
+  });
+
   // Add actions column if actions are provided
   const enhancedColumns = React.useMemo(() => {
     if (actions.length === 0) return columns;
@@ -187,33 +201,44 @@ export function EnhancedTable<T = Record<string, unknown>>({
       {/* Table */}
       <ResponsiveTable<T> {...tableProps} columns={enhancedColumns} />
 
-      {/* Load More Button */}
-      {hasMore && onLoadMore && (
-        <div className="flex justify-center pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={(e) => {
-              e.preventDefault();
-              onLoadMore();
-            }}
-            disabled={loadingMore}
-            className="min-w-[120px]"
-          >
-            {loadingMore ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Đang tải...
-              </>
-            ) : (
-              "Tải thêm"
-            )}
-          </Button>
-        </div>
+      {/* Infinite Scroll Trigger and Loading for Mobile */}
+      {isMobile && (
+        <>
+          {/* Invisible trigger element for infinite scroll */}
+          {hasMore && <div ref={triggerRef} className="h-1" />}
+
+          {/* Loading indicator */}
+          {loadingMore && (
+            <div className="flex items-center justify-center py-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span className="text-sm">Đang tải thêm dữ liệu...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Fallback load more button (optional, for when auto-scroll fails) */}
+          {hasMore && onLoadMore && !loadingMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onLoadMore();
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Hoặc nhấn để tải thêm
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Pagination */}
-      {pagination && (
+      {/* Pagination - Only show on desktop */}
+      {!isMobile && pagination && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Hiển thị {(pagination.current - 1) * pagination.pageSize + 1} -{" "}

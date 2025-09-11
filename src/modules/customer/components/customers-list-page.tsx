@@ -35,8 +35,20 @@ export function CustomersListPage() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { customers, loading, error, hasMore, loadMore, refreshCustomers } =
-    useCustomers(filters, 20);
+  const {
+    customers,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    refreshCustomers,
+    total,
+    page,
+    pageSize,
+    changePage,
+    isMobile,
+    loadingMore,
+  } = useCustomers(filters, 7);
 
   useCustomerActions();
   const { createColumn, createStatusColumn } =
@@ -220,7 +232,18 @@ export function CustomersListPage() {
         actions={tableActions}
         hasMore={hasMore}
         onLoadMore={loadMore}
-        loadingMore={loading}
+        isMobile={isMobile}
+        loadingMore={loadingMore}
+        pagination={
+          !isMobile
+            ? {
+                current: page,
+                pageSize: pageSize,
+                total: total,
+                onChange: (newPage: number) => changePage(newPage),
+              }
+            : undefined
+        }
         searchable
         searchPlaceholder={t("customers.searchPlaceholder")}
         onSearchChange={handleSearch}
