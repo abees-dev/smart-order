@@ -241,53 +241,51 @@ export function SuppliersListPage() {
       </Card>
 
       {/* Suppliers Table */}
-      <Card>
-        <CardContent className="p-0">
-          {loading && suppliers.length === 0 ? (
-            <div className="p-6 space-y-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                  </div>
+      <div>
+        {loading && suppliers.length === 0 ? (
+          <div className="p-6 space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
                 </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="p-6 text-center">
-              <p className="text-destructive">{error}</p>
-              <Button
-                variant="outline"
-                onClick={refreshSuppliers}
-                className="mt-2"
-              >
-                {t("common.retry")}
-              </Button>
-            </div>
-          ) : suppliers.length === 0 ? (
-            <div className="p-6 text-center">
-              <p className="text-muted-foreground mb-4">
-                {t("suppliers.noSuppliers")}
-              </p>
-              <Button onClick={handleCreateSupplier}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t("suppliers.addFirst")}
-              </Button>
-            </div>
-          ) : (
-            <>
-              <ResponsiveTable
-                dataSource={suppliers}
-                columns={columns}
-                loading={loading}
-                rowKey="id"
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center">
+            <p className="text-destructive">{error}</p>
+            <Button
+              variant="outline"
+              onClick={refreshSuppliers}
+              className="mt-2"
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : suppliers.length === 0 ? (
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">
+              {t("suppliers.noSuppliers")}
+            </p>
+            <Button onClick={handleCreateSupplier}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("suppliers.addFirst")}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <ResponsiveTable
+              dataSource={suppliers}
+              columns={columns}
+              loading={loading}
+              rowKey="id"
+            />
+          </>
+        )}
+      </div>
 
       {/* Dialogs */}
       <SupplierFormDialog

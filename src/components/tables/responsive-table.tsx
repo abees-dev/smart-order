@@ -10,6 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FileX } from "lucide-react";
 
 export interface ResponsiveTableColumn<T> {
   key: string;
@@ -33,6 +35,7 @@ export interface ResponsiveTableProps<T> {
   className?: string;
   mobileCardRender?: (record: T, index: number) => React.ReactNode;
   showHeader?: boolean;
+  loadingRows?: number;
 }
 
 export function ResponsiveTable<T = Record<string, unknown>>({
@@ -45,6 +48,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
   className,
   mobileCardRender,
   showHeader = true,
+  loadingRows = 5,
 }: ResponsiveTableProps<T>) {
   const isMobile = useIsMobile();
 
@@ -85,20 +89,82 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     []
   );
 
-  if (loading) {
+  // Loading Skeleton Component
+  const LoadingSkeleton = () => {
+    if (isMobile && mobileCardRender) {
+      return (
+        <div className={cn("space-y-3", className)}>
+          {Array.from({ length: loadingRows }).map((_, index) => (
+            <Card key={index} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <div className="flex items-center space-x-2">
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
+      <Table className={className}>
+        {showHeader && (
+          <TableHeader>
+            <TableRow>
+              {responsiveColumns.map((column) => (
+                <TableHead key={column.key}>
+                  <Skeleton className="h-4 w-full" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+        )}
+        <TableBody>
+          {Array.from({ length: loadingRows }).map((_, index) => (
+            <TableRow key={index}>
+              {responsiveColumns.map((column) => (
+                <TableCell key={column.key}>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     );
+  };
+
+  // Enhanced Empty State Component
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center p-12 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/30 mb-4">
+        <FileX className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium text-foreground">
+          Không có dữ liệu
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          {typeof emptyText === "string"
+            ? emptyText
+            : "Chưa có dữ liệu để hiển thị"}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <LoadingSkeleton />;
   }
 
   if (dataSource.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-muted-foreground">{emptyText}</div>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   // Mobile Card View
@@ -109,12 +175,12 @@ export function ResponsiveTable<T = Record<string, unknown>>({
           <Card
             key={getRowKey(record, index)}
             className={cn(
-              "cursor-pointer transition-colors",
-              onRowClick && "hover:bg-muted/50"
+              "group transition-all duration-200 border-border/50 hover:border-border hover:shadow-md",
+              onRowClick && "cursor-pointer active:scale-[0.98]"
             )}
             onClick={() => onRowClick?.(record, index)}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-5">
               {mobileCardRender(record, index)}
             </CardContent>
           </Card>
@@ -128,12 +194,12 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     <Table className={className}>
       {showHeader && (
         <TableHeader>
-          <TableRow>
+          <TableRow className="hover:bg-transparent">
             {responsiveColumns.map((column) => (
               <TableHead
                 key={column.key}
                 className={cn(
-                  "px-2 sm:px-4 py-3",
+                  "text-xs uppercase font-bold tracking-wider",
                   column.align === "center" && "text-center",
                   column.align === "right" && "text-right",
                   column.className
@@ -150,15 +216,20 @@ export function ResponsiveTable<T = Record<string, unknown>>({
         {dataSource.map((record, index) => (
           <TableRow
             key={getRowKey(record, index)}
-            className={cn(onRowClick && "cursor-pointer", "hover:bg-muted/50")}
+            className={cn(
+              "transition-all duration-200",
+              onRowClick && "cursor-pointer active:bg-muted/60",
+              "group"
+            )}
             onClick={() => onRowClick?.(record, index)}
           >
             {responsiveColumns.map((column) => (
               <TableCell
                 key={column.key}
                 className={cn(
-                  "px-2 sm:px-4 py-3 align-top",
-                  column.key === "customer" && "whitespace-normal",
+                  "relative",
+                  column.key === "customer" &&
+                    "whitespace-normal min-w-[200px]",
                   column.key !== "customer" && "whitespace-nowrap",
                   column.align === "center" && "text-center",
                   column.align === "right" && "text-right",
