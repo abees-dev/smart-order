@@ -8,10 +8,8 @@ import {
   Package,
   Plus,
   Download,
-  TrendingUp,
   FileText,
   Search,
-  MoreHorizontal,
   Edit,
   Trash2,
 } from "lucide-react";
@@ -21,13 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -40,9 +32,10 @@ import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useSupplyImports, useSupplyImportActions } from "../hooks/use-supply";
 import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import {
-  ResponsiveTable,
-  useResponsiveTableColumns,
+  EnhancedTable,
+  useEnhancedTableColumns,
   type ResponsiveTableColumn,
+  type TableAction,
 } from "@/components/tables";
 import { SupplyImportFilterSheet } from "./supply-import-filter-sheet";
 import { SupplyImportFormDialog } from "./supply-import-form-dialog";
@@ -77,7 +70,8 @@ export function SupplyImportsListPage() {
 
   const { getSupplierName } = useSuppliersByIds(supplierIds);
 
-  const { createColumn } = useResponsiveTableColumns<SupplyImport>();
+  const { createColumn, createCurrencyColumn } =
+    useEnhancedTableColumns<SupplyImport>();
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -165,141 +159,150 @@ export function SupplyImportsListPage() {
     }
   };
 
+  // Define table columns
   const columns: ResponsiveTableColumn<SupplyImport>[] = [
     createColumn({
-      key: "invoiceNumber",
-      title: "Số hóa đơn",
-      dataIndex: "invoiceNumber",
-      width: 150,
-      render: (value) => (
-        <div className="font-medium text-sm">{value as string}</div>
-      ),
-    }),
-    createColumn({
-      key: "supplier",
-      title: "Nhà cung cấp",
-      width: 200,
-      render: (_, importItem) => (
-        <div className="text-sm font-medium text-gray-700">
-          {getSupplierName(importItem.supplierId) || "Chưa xác định"}
+      key: "import",
+      title: "Thông tin phiếu nhập",
+      render: (_, record: SupplyImport) => (
+        <div className="space-y-1">
+          <div className="font-semibold text-foreground">
+            <span className="font-mono bg-muted px-2 py-1 rounded text-xs mr-2">
+              {record.invoiceNumber}
+            </span>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Nhà cung cấp:{" "}
+            {getSupplierName(record.supplierId) || "Chưa xác định"}
+          </div>
+          <div className="flex items-center gap-2 sm:hidden">
+            {getStatusBadge(record.status)}
+          </div>
+          <div className="text-sm font-semibold text-blue-600 sm:hidden">
+            {new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+              notation: "compact",
+            }).format(record.totalAmount)}
+          </div>
+          <div className="text-xs text-muted-foreground sm:hidden">
+            {record.createdAt.toDate().toLocaleDateString("vi-VN")}
+          </div>
         </div>
       ),
     }),
     createColumn({
       key: "status",
       title: "Trạng thái",
-      dataIndex: "status",
-      width: 140,
-      render: (value) => getStatusBadge(value as string),
+      responsive: false,
+      align: "center",
+      render: (_, record: SupplyImport) => getStatusBadge(record.status),
     }),
-    createColumn({
-      key: "totalAmount",
-      title: "Tổng giá trị",
-      dataIndex: "totalAmount",
-      align: "right",
-      width: 150,
-      render: (value) => (
-        <div className="font-semibold text-blue-600">
-          {new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-            notation: "compact",
-            maximumFractionDigits: 1,
-          }).format(value as number)}
-        </div>
-      ),
-    }),
+    createCurrencyColumn("totalAmount", "Tổng giá trị"),
     createColumn({
       key: "createdAt",
       title: "Ngày tạo",
-      dataIndex: "createdAt",
-      width: 120,
-      render: (value) => (
-        <div className="text-sm text-gray-600">
-          {(value as { toDate: () => Date })
-            .toDate()
-            .toLocaleDateString("vi-VN")}
+      responsive: false,
+      render: (_, record: SupplyImport) => (
+        <div className="text-sm text-muted-foreground">
+          {record.createdAt.toDate().toLocaleDateString("vi-VN")}
         </div>
-      ),
-    }),
-    createColumn({
-      key: "actions",
-      title: "Thao tác",
-      width: 80,
-      render: (_, record) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handleViewImport(record)}>
-              <Eye className="h-4 w-4 mr-2" />
-              Xem chi tiết
-            </DropdownMenuItem>
-            {record.status === "pending" && (
-              <>
-                <DropdownMenuItem onClick={() => handleEditImport(record)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Chỉnh sửa
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleCompleteImport(record)}
-                  className="text-green-600"
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? (
-                    <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Hoàn thành
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCancelImport(record)}
-                  className="text-red-600"
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? (
-                    <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <XCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Hủy phiếu nhập
-                </DropdownMenuItem>
-              </>
-            )}
-            {record.status !== "completed" && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleDeleteImport(record)}
-                  className="text-red-600"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Xóa
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
       ),
     }),
   ];
 
+  // Define table actions
+  const tableActions: TableAction<SupplyImport>[] = [
+    {
+      key: "view",
+      label: "Xem chi tiết",
+      icon: Eye,
+      onClick: (record) => handleViewImport(record),
+    },
+    {
+      key: "edit",
+      label: "Chỉnh sửa",
+      icon: Edit,
+      onClick: (record) => handleEditImport(record),
+      show: (record) => record.status === "pending",
+    },
+    {
+      key: "complete",
+      label: "Hoàn thành",
+      icon: CheckCircle,
+      variant: "default",
+      onClick: (record) => handleCompleteImport(record),
+      show: (record) => record.status === "pending",
+    },
+    {
+      key: "cancel",
+      label: "Hủy phiếu nhập",
+      icon: XCircle,
+      variant: "destructive",
+      onClick: (record) => handleCancelImport(record),
+      show: (record) => record.status === "pending",
+    },
+    {
+      key: "delete",
+      label: "Xóa",
+      icon: Trash2,
+      variant: "destructive",
+      onClick: (record) => handleDeleteImport(record),
+      show: (record) => record.status !== "completed",
+    },
+  ];
+
+  // Mobile card renderer
+  const mobileCardRender = (record: SupplyImport) => (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1 flex-1">
+          <div className="font-mono text-xs bg-muted/50 px-2 py-1 rounded w-fit">
+            {record.invoiceNumber}
+          </div>
+          <div className="flex items-center gap-2">
+            {getStatusBadge(record.status)}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2 text-sm">
+        <div>
+          <span className="text-muted-foreground">Nhà cung cấp:</span>
+          <p className="font-medium">
+            {getSupplierName(record.supplierId) || "Chưa xác định"}
+          </p>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Tổng giá trị:</span>
+          <p className="font-semibold text-blue-600">
+            {new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(record.totalAmount)}
+          </p>
+        </div>
+
+        <div>
+          <span className="text-muted-foreground">Ngày tạo:</span>
+          <p className="font-medium">
+            {record.createdAt.toDate().toLocaleDateString("vi-VN")}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading && imports.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Danh sách phiếu nhập vật tư
-            </h1>
-            <p className="text-muted-foreground">
-              Theo dõi các phiếu nhập vật tư vào kho
+            <h1 className="text-lg font-semibold">Phiếu nhập vật tư</h1>
+            <p className="text-sm text-muted-foreground">
+              Quản lý phiếu nhập kho
             </p>
           </div>
           <div className="flex gap-2">
@@ -315,7 +318,7 @@ export function SupplyImportsListPage() {
         </div>
 
         {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -358,7 +361,7 @@ export function SupplyImportsListPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Breadcrumb */}
         <Breadcrumb>
           <BreadcrumbList>
@@ -373,13 +376,11 @@ export function SupplyImportsListPage() {
         </Breadcrumb>
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Danh sách phiếu nhập vật tư
-            </h1>
-            <p className="text-muted-foreground">
-              Theo dõi các phiếu nhập vật tư vào kho
+            <h1 className="text-lg font-semibold">Phiếu nhập vật tư</h1>
+            <p className="text-sm text-muted-foreground">
+              Quản lý phiếu nhập kho
             </p>
           </div>
         </div>
@@ -408,15 +409,13 @@ export function SupplyImportsListPage() {
     .reduce((sum, imp) => sum + imp.totalAmount, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Danh sách phiếu nhập vật tư
-          </h1>
-          <p className="text-muted-foreground">
-            Theo dõi các phiếu nhập vật tư vào kho
+          <h1 className="text-lg font-semibold">Phiếu nhập vật tư</h1>
+          <p className="text-sm text-muted-foreground">
+            Quản lý phiếu nhập kho
           </p>
         </div>
         <div className="flex gap-2">
@@ -428,68 +427,61 @@ export function SupplyImportsListPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Tổng phiếu nhập
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="hover:shadow-sm transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Tổng phiếu
             </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{imports.length}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              Tất cả phiếu
-            </div>
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{imports.length}</div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang chờ</CardTitle>
-            <Clock className="h-4 w-4 text-orange-500" />
+        <Card className="hover:shadow-sm transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Đang chờ
+            </CardTitle>
+            <Clock className="h-3 w-3 text-orange-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold text-orange-600">
               {pendingCount}
             </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              Cần xử lý
-            </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đã hoàn thành</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+        <Card className="hover:shadow-sm transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Hoàn thành
+            </CardTitle>
+            <CheckCircle className="h-3 w-3 text-green-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold text-green-600">
               {completedCount}
             </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              Thành công
-            </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng giá trị</CardTitle>
-            <FileText className="h-4 w-4 text-blue-500" />
+        <Card className="hover:shadow-sm transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Tổng giá trị
+            </CardTitle>
+            <FileText className="h-3 w-3 text-blue-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-blue-600">
+          <CardContent className="pb-2">
+            <div className="text-lg font-bold text-blue-600">
               {new Intl.NumberFormat("vi-VN", {
                 style: "currency",
                 currency: "VND",
                 notation: "compact",
               }).format(totalValue)}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              Đã nhập kho
             </div>
           </CardContent>
         </Card>
@@ -497,15 +489,15 @@ export function SupplyImportsListPage() {
 
       {/* Search and Filter Toolbar */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm kiếm theo số hóa đơn hoặc nhà cung cấp..."
+                placeholder="Tìm kiếm số hóa đơn, nhà cung cấp..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-9"
               />
             </div>
             <div className="flex gap-2">
@@ -595,49 +587,23 @@ export function SupplyImportsListPage() {
       </Card>
 
       {/* Import Table */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">
-              Phiếu nhập vật tư ({imports.length})
-            </CardTitle>
-            {imports.length > 0 && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                Hiển thị {imports.length} kết quả
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ResponsiveTable
-            dataSource={imports}
-            columns={columns}
-            loading={loading}
-            emptyText={
-              <div className="text-center py-12">
-                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <div className="text-lg font-medium mb-2">
-                  {searchTerm
-                    ? "Không tìm thấy phiếu nhập nào"
-                    : "Chưa có phiếu nhập nào"}
-                </div>
-                <div className="text-muted-foreground mb-4">
-                  {searchTerm
-                    ? `Không có phiếu nhập nào khớp với "${searchTerm}"`
-                    : "Tạo phiếu nhập đầu tiên để bắt đầu quản lý vật tư."}
-                </div>
-                {!searchTerm && (
-                  <Button onClick={handleCreateImport}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Tạo phiếu nhập đầu tiên
-                  </Button>
-                )}
-              </div>
-            }
-            rowKey="id"
-          />
-        </CardContent>
-      </Card>
+      <div>
+        <EnhancedTable<SupplyImport>
+          title=""
+          columns={columns}
+          dataSource={imports}
+          actions={tableActions}
+          loading={loading}
+          searchable={false}
+          emptyText={
+            searchTerm
+              ? "Không tìm thấy phiếu nhập nào"
+              : "Chưa có phiếu nhập nào"
+          }
+          mobileCardRender={mobileCardRender}
+          rowKey="id"
+        />
+      </div>
 
       {/* Action Error Alert */}
       {actionError && (
