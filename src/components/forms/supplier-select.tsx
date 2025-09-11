@@ -1,13 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   FormControl,
   FormItem,
   FormLabel,
@@ -16,6 +9,7 @@ import {
 import { SupplierService } from "@/modules/suppliers/services/supplier.service";
 import type { Supplier } from "@/modules/suppliers";
 import { cn } from "@/lib/utils";
+import SelectSearch from "../ui/select-search";
 
 interface SupplierSelectProps {
   value?: string;
@@ -41,7 +35,6 @@ export function SupplierSelect({
   error,
 }: SupplierSelectProps) {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
   // Load selected supplier by ID when value changes
@@ -55,6 +48,7 @@ export function SupplierSelect({
 
       try {
         const supplier = await SupplierService.getSupplierById(value);
+        console.log("Loaded selected supplier:", supplier);
         if (supplier) {
           setSuppliers((prev) => {
             // Add to suppliers if not already present
@@ -79,6 +73,7 @@ export function SupplierSelect({
 
         // Use improved getActiveSuppliers method - get more initially
         const allSuppliers = await SupplierService.getActiveSuppliers();
+
         // Show first 50 suppliers when no search term
 
         setSuppliers((prev) => {
@@ -97,28 +92,20 @@ export function SupplierSelect({
     };
 
     // Load suppliers when dropdown is opened
-    if (isOpen) {
+
+    if (suppliers.length === 0) {
       loadSuppliers();
     }
-  }, [isOpen]);
-
-  // Find selected supplier
-  const selectedSupplier = value
-    ? suppliers.find((supplier) => supplier.id === value)
-    : null;
-
-  // Reset search when dropdown closes and focus input when opened
-  const handleOpenChange = useCallback((open: boolean) => {
-    setIsOpen(open);
   }, []);
 
   const handleValueChange = useCallback(
     (selectedValue: string) => {
       onValueChange?.(selectedValue);
-      setIsOpen(false);
     },
     [onValueChange]
   );
+
+  console.log("SupplierSelect render, suppliers:", suppliers);
 
   return (
     <FormItem className={className}>
@@ -128,58 +115,15 @@ export function SupplierSelect({
         </FormLabel>
       )}
       <FormControl>
-        <Select
-          value={value || ""}
-          onValueChange={handleValueChange}
-          disabled={disabled}
-          open={isOpen}
-          onOpenChange={handleOpenChange}
-        >
-          <SelectTrigger
-            className={cn(error && "border-destructive", "w-full")}
-          >
-            <SelectValue placeholder={placeholder || t("Chọn nhà cung cấp")}>
-              {value && selectedSupplier ? (
-                <div className="flex items-center gap-2 w-[220px]">
-                  <span className="font-medium truncate">
-                    {selectedSupplier.name}
-                  </span>
-                </div>
-              ) : value ? (
-                <div className="flex items-center gap-2 w-[220px]">
-                  <span className="font-medium truncate text-muted-foreground">
-                    Đang tải...
-                  </span>
-                </div>
-              ) : null}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent
-            onCloseAutoFocus={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => {
-              e.preventDefault();
-              setIsOpen(false);
-            }}
-          >
-            {/* Loading state */}
-            {loading && (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                {t("Đang tải...")}
-              </div>
-            )}
-
-            {/* No results */}
-            {!loading && suppliers.length === 0 && (
-              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                Không có nhà cung cấp nào"
-              </div>
-            )}
-
-            {/* Supplier options */}
-            {!loading &&
-              suppliers.map((supplier) => {
+        <div>
+          <SelectSearch
+            options={suppliers.map((supplier) => ({
+              value: supplier.id,
+              label: supplier.name,
+              disabled: !supplier.isActive,
+              renderOption: () => {
                 return (
-                  <SelectItem key={supplier.id} value={supplier.id}>
+                  <div>
                     <div className="flex flex-col items-start gap-1 w-full">
                       <div className="flex items-center gap-2 w-full">
                         <span className={cn("font-medium")}>
@@ -203,11 +147,20 @@ export function SupplierSelect({
                         )}
                       </div>
                     </div>
-                  </SelectItem>
+                  </div>
                 );
-              })}
-          </SelectContent>
-        </Select>
+              },
+            }))}
+            value={value}
+            onValueChange={handleValueChange}
+            placeholder={placeholder || t("Chọn nhà cung cấp...")}
+            searchPlaceholder={t("Tìm kiếm nhà cung cấp...")}
+            emptyMessage={t("Không tìm thấy nhà cung cấp.")}
+            loading={loading}
+            disabled={disabled}
+            className={cn("w-full", error && "border-destructive")}
+          />
+        </div>
       </FormControl>
       {error && <FormMessage>{error}</FormMessage>}
     </FormItem>

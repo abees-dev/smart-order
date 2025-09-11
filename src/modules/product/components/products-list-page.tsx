@@ -6,7 +6,6 @@ import {
   Pencil,
   Trash2,
   MoreHorizontal,
-  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,6 +214,7 @@ export function ProductsListPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* <SupplierSelect /> */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Sản phẩm</h1>

@@ -310,15 +310,7 @@ export class SupplierService {
       return suppliers;
     } catch (error) {
       console.error("Error getting active suppliers:", error);
-
-      try {
-        return await this.getAllSuppliersNoFilter().then((suppliers) =>
-          suppliers.filter((s) => s.isActive === true)
-        );
-      } catch (fallbackError) {
-        console.error("Fallback also failed:", fallbackError);
-        throw new Error("Không thể tải danh sách nhà cung cấp đang hoạt động");
-      }
+      throw new Error("Không thể tải danh sách nhà cung cấp đang hoạt động");
     }
   }
 
@@ -331,12 +323,6 @@ export class SupplierService {
       const suppliers: Supplier[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log("📋 Supplier data:", {
-          id: doc.id,
-          name: data.name,
-          isActive: data.isActive,
-          hasIsActive: "isActive" in data,
-        });
 
         suppliers.push({
           id: doc.id,
