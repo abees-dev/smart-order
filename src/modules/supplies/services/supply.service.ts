@@ -40,7 +40,7 @@ export class SupplyService {
 
   static async getAllSupplies(
     filters: SupplyFilters = {},
-    pageSize = 10,
+    pageSize = 100,
     lastDoc?: DocumentSnapshot
   ): Promise<{
     supplies: Supply[];
@@ -69,7 +69,7 @@ export class SupplyService {
       }
 
       // Add ordering and pagination
-      constraints.push(orderBy("name"));
+      constraints.push(orderBy("createdAt", "asc"));
       constraints.push(limit(pageSize + 1)); // Get one extra to check if there are more
 
       if (lastDoc) {

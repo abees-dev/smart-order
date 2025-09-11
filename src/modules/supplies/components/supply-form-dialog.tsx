@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { SupplierSelectField } from "@/components/forms";
+import { FormSelectField, SupplierSelectField } from "@/components/forms";
 import { useSupplyActions } from "../hooks/use-supply";
 import {
   createSupplySchema,
@@ -38,6 +38,7 @@ import {
   type UpdateSupplyFormData,
 } from "../validation";
 import type { Supply } from "../types";
+import { SUPPLY_CATEGORIES } from "../utils/supply-categrory";
 
 interface SupplyFormDialogProps {
   open: boolean;
@@ -73,6 +74,8 @@ export function SupplyFormDialog({
       location: supply?.location ?? "",
     },
   });
+
+  console.log("Form default values:", supply);
 
   const onSubmit = async (
     data: CreateSupplyFormData | UpdateSupplyFormData
@@ -183,17 +186,17 @@ export function SupplyFormDialog({
                 <FormField
                   control={form.control}
                   name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Danh mục *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ví dụ: Điện tử, Vật liệu xây dựng..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  render={({ field, fieldState }) => (
+                    <FormSelectField
+                      fieldState={fieldState}
+                      field={field}
+                      label="Danh mục *"
+                      placeholder="Chọn danh mục"
+                      options={SUPPLY_CATEGORIES.map((cat) => ({
+                        value: cat.id,
+                        label: cat.name,
+                      }))}
+                    />
                   )}
                 />
 

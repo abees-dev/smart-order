@@ -15,6 +15,7 @@ import { SupplyDetailDialog } from "./supply-detail-dialog";
 import { DeleteSupplyDialog } from "./delete-supply-dialog";
 import type { Supply, SupplyFilters } from "../types";
 import { useSuppliersByIds } from "@/hooks/use-supplier-select";
+import { SUPPLY_CATEGORY_MAP } from "../utils/supply-categrory";
 
 export function SuppliesListPage() {
   useDocumentTitle();
@@ -45,6 +46,7 @@ export function SuppliesListPage() {
   const handleFormSuccess = () => {
     refreshSupplies();
     setSelectedSupply(null);
+    setShowFormDialog(false);
   };
 
   const handleDeleteSuccess = () => {
@@ -83,7 +85,7 @@ export function SuppliesListPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <span className="px-2 py-1 bg-muted rounded-md text-xs mr-2">
-                {record.category}
+                {SUPPLY_CATEGORY_MAP[record.category] || record.category}
               </span>
               <span className="text-xs bg-muted/50 px-2 py-1 rounded">
                 {record.sku}
@@ -198,7 +200,7 @@ export function SuppliesListPage() {
             </h3>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
-                {record.category}
+                {SUPPLY_CATEGORY_MAP[record.category] || record.category}
               </Badge>
               <Badge variant={status.color} className="text-xs">
                 {status.label}
@@ -286,23 +288,28 @@ export function SuppliesListPage() {
       />
 
       {/* Dialogs */}
-      <SupplyFormDialog
-        open={showFormDialog}
-        onOpenChange={setShowFormDialog}
-        onSuccess={handleFormSuccess}
-        supply={selectedSupply || undefined}
-        mode={selectedSupply ? "edit" : "create"}
-      />
 
-      <SupplyDetailDialog
-        open={showDetailDialog}
-        onOpenChange={setShowDetailDialog}
-        supply={selectedSupply}
-        onSuccess={() => {
-          setShowDetailDialog(false);
-          refreshSupplies();
-        }}
-      />
+      {showFormDialog && (
+        <SupplyFormDialog
+          open={showFormDialog}
+          onOpenChange={setShowFormDialog}
+          onSuccess={handleFormSuccess}
+          supply={selectedSupply || undefined}
+          mode={selectedSupply ? "edit" : "create"}
+        />
+      )}
+
+      {showDetailDialog && (
+        <SupplyDetailDialog
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+          supply={selectedSupply}
+          onSuccess={() => {
+            setShowDetailDialog(false);
+            refreshSupplies();
+          }}
+        />
+      )}
 
       <DeleteSupplyDialog
         open={showDeleteDialog}
@@ -310,6 +317,15 @@ export function SuppliesListPage() {
         supply={selectedSupply}
         onSuccess={handleDeleteSuccess}
       />
+
+      {showDeleteDialog && (
+        <DeleteSupplyDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          supply={selectedSupply}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 }

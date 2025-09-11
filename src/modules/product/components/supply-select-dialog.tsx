@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Supply } from "@/modules/supplies/types";
+import { normalizeText } from "@/modules/supplies/utils/text";
 
 interface SupplySelectDialogProps {
   supplies: Supply[];
@@ -35,8 +36,8 @@ export function SupplySelectDialog({
 
   const filteredSupplies = supplies.filter((supply) => {
     const matchesSearch =
-      supply.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supply.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      normalizeText(supply.name).includes(normalizeText(searchTerm)) ||
+      normalizeText(supply.sku).includes(normalizeText(searchTerm));
     const matchesCategory =
       selectedCategory === "all" || supply.category === selectedCategory;
 

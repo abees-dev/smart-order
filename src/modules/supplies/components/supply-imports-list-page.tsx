@@ -56,7 +56,6 @@ export function SupplyImportsListPage() {
     useSupplyImports();
 
   const {
-    loading: actionLoading,
     error: actionError,
     completeImport,
     cancelImport,
