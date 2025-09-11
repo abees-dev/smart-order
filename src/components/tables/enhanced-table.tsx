@@ -191,8 +191,12 @@ export function EnhancedTable<T = Record<string, unknown>>({
       {hasMore && onLoadMore && (
         <div className="flex justify-center pt-4">
           <Button
+            type="button"
             variant="outline"
-            onClick={onLoadMore}
+            onClick={(e) => {
+              e.preventDefault();
+              onLoadMore();
+            }}
             disabled={loadingMore}
             className="min-w-[120px]"
           >

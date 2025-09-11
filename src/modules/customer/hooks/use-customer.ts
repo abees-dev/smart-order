@@ -52,27 +52,31 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
 
         setHasMore(newHasMore);
         setLastDoc(newLastDoc || null);
+
+        return { success: true };
       } catch (error) {
         setState((prev) => ({
           ...prev,
           loading: false,
           error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
         }));
+
+        return { success: false, error };
       }
     },
     // Removed lastDoc from dependencies to avoid infinite loop
     [filters, pageSize]
   );
 
-  const refreshCustomers = useCallback(() => {
+  const refreshCustomers = useCallback(async () => {
     setLastDoc(null);
     setHasMore(true);
-    loadCustomers(true);
+    await loadCustomers(true);
   }, [loadCustomers]);
 
-  const loadMore = useCallback(() => {
+  const loadMore = useCallback(async () => {
     if (!state.loading && hasMore) {
-      loadCustomers(false);
+      await loadCustomers(false);
     }
   }, [state.loading, hasMore, loadCustomers]);
 
