@@ -83,6 +83,9 @@ export function CustomersListPage() {
       title: t("customers.phone"),
       dataIndex: "phone",
       responsive: false,
+      render: (value: unknown) => (
+        <span className="text-sm">{(value as string) || "-"}</span>
+      ),
     }),
     createColumn({
       key: "city",
