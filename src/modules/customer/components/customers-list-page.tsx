@@ -234,6 +234,7 @@ export function CustomersListPage() {
         onLoadMore={loadMore}
         isMobile={isMobile}
         loadingMore={loadingMore}
+        searchValue={filters.search || ""}
         pagination={
           !isMobile
             ? {
