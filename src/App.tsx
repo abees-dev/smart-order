@@ -1,7 +1,6 @@
 import { RouterProvider } from "react-router-dom";
 import { Suspense } from "react";
 import router from "./router";
-import SelectSearchExample from "./components/ui/select-search-example";
 // import { useDocumentTitle } from "./hooks/use-document-title";
 
 function App() {
@@ -15,7 +14,6 @@ function App() {
         </div>
       }
     >
-      {/* <SelectSearchExample /> */}
       <RouterProvider router={router} />
     </Suspense>
   );
