@@ -103,7 +103,13 @@ export function CustomersListPage() {
       key: "city",
       title: t("customers.city"),
       dataIndex: "city",
-      responsive: false,
+      responsive: true,
+      width: 150,
+      render: (value: unknown) => (
+        <div className="text-sm truncate" style={{ width: "240px" }}>
+          {(value as string) || "-"}
+        </div>
+      ),
     }),
     createStatusColumn("isActive", t("customers.status")),
   ];
