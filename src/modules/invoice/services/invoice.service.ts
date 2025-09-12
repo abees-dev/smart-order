@@ -27,6 +27,7 @@ import { ProductService } from "@/modules/product/services/product.service";
 import { SupplyService } from "@/modules/supplies/services/supply.service";
 
 const INVOICES_COLLECTION = "invoices";
+const STOCK_MOVEMENTS_COLLECTION = "stock_movements";
 
 export class InvoiceService {
   private static invoicesRef = collection(db, INVOICES_COLLECTION);
@@ -373,6 +374,37 @@ export class InvoiceService {
         }
       }
 
+      // If changing to cancelled and was previously exported, restore stock
+      if (newStatus === "cancelled" && currentStatus === "exported") {
+        updateData.cancelledAt = now;
+
+        // Restore stock for supplies that were reduced
+        for (const item of currentInvoice.items) {
+          if (item.type === "supply") {
+            // Direct supply restoration
+            await this.restoreSupplyStock(item.itemId, item.quantity, batch);
+          } else if (item.type === "product") {
+            // Get product details to find required supplies
+            const product = await ProductService.getProductById(item.itemId);
+            if (product && product.supplies) {
+              for (const productSupply of product.supplies) {
+                const requiredQuantity = productSupply.quantity * item.quantity;
+                await this.restoreSupplyStock(
+                  productSupply.supplyId,
+                  requiredQuantity,
+                  batch
+                );
+              }
+            }
+          }
+        }
+      }
+
+      // If changing to cancelled from other statuses (not exported)
+      if (newStatus === "cancelled" && currentStatus !== "exported") {
+        updateData.cancelledAt = now;
+      }
+
       batch.update(docRef, updateData);
       await batch.commit();
     } catch (error) {
@@ -409,12 +441,42 @@ export class InvoiceService {
     });
 
     // Create stock movement record
-    const stockMovementRef = doc(collection(db, "stockMovements"));
+    const stockMovementRef = doc(collection(db, STOCK_MOVEMENTS_COLLECTION));
     batch.set(stockMovementRef, {
       supplyId,
       type: "out",
       quantity,
       reason: "Xuất kho theo hóa đơn",
+      performedBy: "system",
+      createdAt: Timestamp.now(),
+    });
+  }
+
+  // Helper method to restore supply stock (when cancelling exported invoice)
+  private static async restoreSupplyStock(
+    supplyId: string,
+    quantity: number,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    batch: any
+  ): Promise<void> {
+    const supply = await SupplyService.getSupplyById(supplyId);
+    if (!supply) {
+      throw new Error(`Không tìm thấy vật tư với ID: ${supplyId}`);
+    }
+
+    const supplyRef = doc(db, "supplies", supplyId);
+    batch.update(supplyRef, {
+      currentStock: supply.currentStock + quantity,
+      updatedAt: Timestamp.now(),
+    });
+
+    // Create stock movement record for restoration
+    const stockMovementRef = doc(collection(db, STOCK_MOVEMENTS_COLLECTION));
+    batch.set(stockMovementRef, {
+      supplyId,
+      type: "in",
+      quantity,
+      reason: "Hoàn lại tồn kho do hủy hóa đơn",
       performedBy: "system",
       createdAt: Timestamp.now(),
     });

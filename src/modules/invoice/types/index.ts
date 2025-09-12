@@ -36,6 +36,7 @@ export interface Invoice {
   notes?: string;
   createdBy?: string;
   exportedAt?: Timestamp; // thời gian xuất kho
+  cancelledAt?: Timestamp; // thời gian hủy
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
