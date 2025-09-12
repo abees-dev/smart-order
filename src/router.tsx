@@ -1,4 +1,4 @@
-import { createBrowserRouter, Link } from "react-router-dom";
+import { createBrowserRouter, Link, Navigate } from "react-router-dom";
 import authRouter from "./modules/auth/router";
 import { customerRouter } from "./modules/customer";
 import { suppliesRouter } from "./modules/supplies";
@@ -33,11 +33,7 @@ const router = createBrowserRouter(
     },
     {
       path: "/",
-      element: (
-        <div>
-          Home - <Link to={ROUTES.AUTH.LOGIN}>Go to Login</Link>
-        </div>
-      ),
+      element: <Navigate to={ROUTES.DASHBOARD.ROOT} />,
     },
   ],
   {

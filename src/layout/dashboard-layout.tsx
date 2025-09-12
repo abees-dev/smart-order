@@ -15,6 +15,7 @@ const LayoutItem = () => {
       <div className="flex-1">
         <SidebarTrigger />
         <div
+          className="px-6"
           style={{
             width:
               isMobile || isCollapsed
