@@ -58,7 +58,14 @@ export function ProductDetailDialog({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
-            <DialogTitle className="text-xl">{product.name}</DialogTitle>
+            <div className="space-y-1">
+              <DialogTitle className="text-xl">{product.name}</DialogTitle>
+              <div className="text-sm text-muted-foreground">
+                <span className="font-mono bg-muted px-2 py-1 rounded">
+                  {product.productCode}
+                </span>
+              </div>
+            </div>
           </div>
         </DialogHeader>
 

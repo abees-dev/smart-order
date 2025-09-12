@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import type { Supply } from "@/modules/supplies/types";
 import { normalizeText } from "@/modules/supplies/utils/text";
+import { SUPPLY_CATEGORY_MAP } from "@/modules/supplies/utils/supply-categrory";
 
 interface SupplySelectDialogProps {
   supplies: Supply[];
@@ -106,7 +107,9 @@ export function SupplySelectDialog({
                       <div>
                         <p className="font-medium">{supply.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          SKU: {supply.sku} • Danh mục: {supply.category}
+                          SKU: {supply.sku} • Danh mục:{" "}
+                          {SUPPLY_CATEGORY_MAP[supply.category] ||
+                            supply.category}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Đơn vị: {supply.unit} • Tồn kho: {supply.currentStock}
@@ -114,7 +117,7 @@ export function SupplySelectDialog({
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
-                          {supply.salePrice.toLocaleString("vi-VN")} ₫
+                          {supply.purchasePrice.toLocaleString("vi-VN")} ₫
                         </p>
                       </div>
                     </div>

@@ -5,10 +5,12 @@ export interface ProductSupply {
   supplyName: string;
   quantity: number;
   unit: string;
+  purchasePrice?: number; // optional purchase price at the time of adding the supply
 }
 
 export interface Product {
   id: string;
+  productCode: string; // Mã sản phẩm - unique identifier
   name: string;
   description?: string; // Supports markdown
   category: string;
@@ -21,6 +23,7 @@ export interface Product {
 }
 
 export interface CreateProductData {
+  productCode: string;
   name: string;
   description?: string;
   category: string;
@@ -37,7 +40,8 @@ export interface ProductFilters {
   category?: string;
   isActive?: boolean;
   hasSupplies?: boolean;
-  search?: string; // search by name
+  search?: string; // search by name or productCode
+  searchBy?: "name" | "productCode" | "both"; // specify what to search by
 }
 
 export interface ProductListState {

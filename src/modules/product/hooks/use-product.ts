@@ -322,3 +322,45 @@ export function useActiveProducts() {
 
   return { products, loading, error, refreshProducts: fetchActiveProducts };
 }
+
+export function useProductCodeValidation() {
+  const checkProductCode = useCallback(
+    async (productCode: string, excludeId?: string) => {
+      try {
+        const exists = await ProductService.isProductCodeExists(
+          productCode,
+          excludeId
+        );
+        return !exists; // Return true if valid (not exists)
+      } catch (error) {
+        console.error("Error checking product code:", error);
+        return false; // Assume invalid on error
+      }
+    },
+    []
+  );
+
+  const getProductByCode = useCallback(async (productCode: string) => {
+    try {
+      return await ProductService.getProductByCode(productCode);
+    } catch (error) {
+      console.error("Error getting product by code:", error);
+      return null;
+    }
+  }, []);
+
+  const searchByCode = useCallback(async (productCode: string) => {
+    try {
+      return await ProductService.searchByProductCode(productCode);
+    } catch (error) {
+      console.error("Error searching by product code:", error);
+      return [];
+    }
+  }, []);
+
+  return {
+    checkProductCode,
+    getProductByCode,
+    searchByCode,
+  };
+}

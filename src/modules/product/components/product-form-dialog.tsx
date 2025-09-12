@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   Edit3,
   Trash2,
-  Eye,
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useProductActions } from "../hooks/use-product";
+import {
+  useProductActions,
+  useProductCodeValidation,
+} from "../hooks/use-product";
 import { useSupplySelect } from "../hooks/use-supply-select";
 import { SupplySelectDialog } from "./supply-select-dialog";
 import {
@@ -43,8 +45,6 @@ import {
   type UpdateProductFormData,
 } from "../validation";
 import type { Product, ProductSupply } from "../types";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import type { Supply } from "@/modules/supplies/types";
 
 interface ProductFormDialogProps {
@@ -65,10 +65,10 @@ export function ProductFormDialog({
   const [supplies, setSupplies] = useState<ProductSupply[]>(
     product?.supplies || []
   );
-  const [showPreview, setShowPreview] = useState(false);
   const isEditMode = mode === "edit" && product;
 
   const { createProduct, updateProduct, state } = useProductActions();
+  const { checkProductCode } = useProductCodeValidation();
   const { supplies: availableSupplies, loading: suppliesLoading } =
     useSupplySelect();
 
@@ -77,6 +77,7 @@ export function ProductFormDialog({
       isEditMode ? updateProductSchema : createProductSchema
     ),
     defaultValues: {
+      productCode: product?.productCode ?? "",
       name: product?.name ?? "",
       description: product?.description ?? "",
       category: product?.category ?? "",
@@ -93,6 +94,14 @@ export function ProductFormDialog({
       const productData = {
         ...data,
         supplies,
+        price: Number(
+          data.price ||
+            supplies.reduce(
+              (total, supply) =>
+                total + (supply.purchasePrice || 0) * supply.quantity,
+              0
+            )
+        ),
       };
 
       let result: Product;
@@ -132,6 +141,7 @@ export function ProductFormDialog({
           supplyName: supply.name,
           quantity: 1,
           unit: supply.unit,
+          purchasePrice: supply.purchasePrice,
         },
       ]);
     }
@@ -150,8 +160,6 @@ export function ProductFormDialog({
   const handleRemoveSupply = (supplyId: string) => {
     setSupplies(supplies.filter((s) => s.supplyId !== supplyId));
   };
-
-  const description = form.watch("description");
 
   return (
     <Dialog
@@ -198,7 +206,49 @@ export function ProductFormDialog({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4 items-start">
+                <FormField
+                  control={form.control}
+                  name="productCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mã sản phẩm *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ví dụ: SP001, CAFE-01"
+                          {...field}
+                          onChange={(e) => {
+                            // Convert to uppercase for consistency
+                            field.onChange(e.target.value.toUpperCase());
+                          }}
+                          onBlur={async (e) => {
+                            field.onBlur();
+                            const value = e.target.value.trim();
+                            if (value) {
+                              const isValid = await checkProductCode(
+                                value,
+                                product?.id
+                              );
+                              if (!isValid) {
+                                form.setError("productCode", {
+                                  type: "manual",
+                                  message: "Mã sản phẩm đã tồn tại",
+                                });
+                              } else {
+                                form.clearErrors("productCode");
+                              }
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Mã duy nhất để nhận diện sản phẩm
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="name"
@@ -237,37 +287,16 @@ export function ProductFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      Mô tả (hỗ trợ Markdown)
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowPreview(!showPreview)}
-                        className="h-6 px-2"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        {showPreview ? "Chỉnh sửa" : "Xem trước"}
-                      </Button>
+                      Mô tả
                     </FormLabel>
                     <FormControl>
-                      {showPreview && description ? (
-                        <div className="border rounded-md p-3 min-h-32 bg-muted/50 prose prose-sm max-w-none">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {description}
-                          </ReactMarkdown>
-                        </div>
-                      ) : (
-                        <Textarea
-                          placeholder="Mô tả chi tiết về sản phẩm... (hỗ trợ Markdown)"
-                          rows={4}
-                          className="resize-none"
-                          {...field}
-                        />
-                      )}
+                      <Textarea
+                        placeholder="Mô tả chi tiết về sản phẩm... "
+                        rows={4}
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Hỗ trợ định dạng Markdown để tạo mô tả phong phú
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -294,7 +323,7 @@ export function ProductFormDialog({
                         <Input
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="1"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>
@@ -322,9 +351,18 @@ export function ProductFormDialog({
                         <Input
                           type="number"
                           min="0"
-                          step="0.01"
+                          step={"1"}
                           placeholder="0"
                           {...field}
+                          value={
+                            field.value ||
+                            supplies.reduce(
+                              (total, supply) =>
+                                total +
+                                (supply.purchasePrice || 0) * supply.quantity,
+                              0
+                            )
+                          }
                           onChange={(e) =>
                             field.onChange(parseFloat(e.target.value) || 0)
                           }
@@ -384,8 +422,8 @@ export function ProductFormDialog({
                       <div className="flex items-center gap-2">
                         <Input
                           type="number"
-                          step="0.01"
-                          min="0.01"
+                          step="1"
+                          min="0"
                           value={supply.quantity}
                           onChange={(e) =>
                             handleUpdateSupplyQuantity(

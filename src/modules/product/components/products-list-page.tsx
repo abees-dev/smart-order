@@ -76,6 +76,11 @@ export function ProductsListPage() {
       render: (_, record: Product) => (
         <div className="space-y-1">
           <div className="font-semibold text-foreground">{record.name}</div>
+          <div className="text-xs text-muted-foreground mb-1">
+            <span className="font-mono bg-muted px-2 py-1 rounded">
+              {record.productCode}
+            </span>
+          </div>
           <div className="text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-muted rounded-md text-xs">
               {record.category}
@@ -97,6 +102,16 @@ export function ProductsListPage() {
             )}
           </div>
         </div>
+      ),
+    }),
+    createColumn({
+      key: "productCode",
+      title: t("products.productCode") || "Mã sản phẩm",
+      responsive: false,
+      render: (_, record: Product) => (
+        <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+          {record.productCode}
+        </span>
       ),
     }),
     createColumn({

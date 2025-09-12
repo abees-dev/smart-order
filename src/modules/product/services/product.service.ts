@@ -305,4 +305,75 @@ export class ProductService {
       throw new Error("Không thể tải danh sách sản phẩm hoạt động");
     }
   }
+
+  // Check if product code already exists
+  static async isProductCodeExists(
+    productCode: string,
+    excludeId?: string
+  ): Promise<boolean> {
+    try {
+      const q = query(
+        this.productsRef,
+        where("productCode", "==", productCode)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (excludeId) {
+        // When updating, exclude the current product from the check
+        return querySnapshot.docs.some((doc) => doc.id !== excludeId);
+      }
+
+      return !querySnapshot.empty;
+    } catch (error) {
+      console.error("Error checking product code:", error);
+      throw new Error("Không thể kiểm tra mã sản phẩm");
+    }
+  }
+
+  // Search products by product code
+  static async searchByProductCode(productCode: string): Promise<Product[]> {
+    try {
+      const q = query(
+        this.productsRef,
+        where("productCode", ">=", productCode),
+        where("productCode", "<=", productCode + "\uf8ff"),
+        orderBy("productCode")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const products: Product[] = [];
+
+      querySnapshot.forEach((doc) => {
+        products.push({ id: doc.id, ...doc.data() } as Product);
+      });
+
+      return products;
+    } catch (error) {
+      console.error("Error searching products by code:", error);
+      throw new Error("Không thể tìm kiếm sản phẩm theo mã");
+    }
+  }
+
+  // Get product by product code (exact match)
+  static async getProductByCode(productCode: string): Promise<Product | null> {
+    try {
+      const q = query(
+        this.productsRef,
+        where("productCode", "==", productCode)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as Product;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error getting product by code:", error);
+      throw new Error("Không thể tải sản phẩm theo mã");
+    }
+  }
 }

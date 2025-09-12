@@ -8,6 +8,14 @@ export const productSupplySchema = z.object({
 });
 
 export const createProductSchema = z.object({
+  productCode: z
+    .string()
+    .min(2, "Mã sản phẩm phải có ít nhất 2 ký tự")
+    .max(20, "Mã sản phẩm không được quá 20 ký tự")
+    .regex(
+      /^[A-Z0-9-_]+$/i,
+      "Mã sản phẩm chỉ được chứa chữ cái, số, dấu gạch ngang và gạch dưới"
+    ),
   name: z.string().min(2, "Tên sản phẩm phải có ít nhất 2 ký tự"),
   description: z.string().optional(),
   category: z.string().min(2, "Danh mục phải có ít nhất 2 ký tự"),
@@ -25,6 +33,7 @@ export const productFilterSchema = z.object({
   isActive: z.boolean().optional(),
   hasSupplies: z.boolean().optional(),
   search: z.string().optional(),
+  searchBy: z.enum(["name", "productCode", "both"]).optional().default("both"),
 });
 
 export type CreateProductFormData = z.infer<typeof createProductSchema>;
