@@ -31,6 +31,7 @@ export interface FormSelectProps {
   className?: string;
   error?: string;
   renderOption?: (option: SelectOption) => React.ReactNode;
+  clearable?: boolean; // allow clearing the selection
 }
 
 export function FormSelect({
@@ -46,6 +47,7 @@ export function FormSelect({
   loading = false,
   className,
   error,
+  clearable,
   renderOption,
 }: FormSelectProps) {
   const { t } = useTranslation();
@@ -107,6 +109,7 @@ export function FormSelect({
             loading={loading}
             disabled={disabled}
             className={cn("w-full", error && "border-destructive")}
+            clearable={clearable}
           />
         </div>
       </FormControl>

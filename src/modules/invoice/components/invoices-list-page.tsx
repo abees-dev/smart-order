@@ -289,23 +289,21 @@ export function InvoicesListPage() {
       </Card>
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <ResponsiveTable
-            dataSource={invoices}
-            columns={columns}
-            loading={loading}
-            emptyText="Không có hóa đơn nào"
-          />
-          {hasMore && !loading && (
-            <div className="p-4 text-center">
-              <Button variant="outline" onClick={loadMoreInvoices}>
-                Tải thêm
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div>
+        <ResponsiveTable
+          dataSource={invoices}
+          columns={columns}
+          loading={loading}
+          emptyText="Không có hóa đơn nào"
+        />
+        {hasMore && !loading && (
+          <div className="p-4 text-center">
+            <Button variant="outline" onClick={loadMoreInvoices}>
+              Tải thêm
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Dialogs */}
       {showFormDialog && (

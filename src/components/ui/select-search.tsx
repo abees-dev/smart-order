@@ -164,7 +164,10 @@ export function SelectSearch({
               "pr-8 cursor-text text-left bg-transparent",
               size === "default" && "h-9",
               size === "sm" && "h-8",
-              className
+              className,
+              {
+                "pr-12": clearable && selectedValue && !disabled,
+              }
             )}
           />
         </PopoverTrigger>
