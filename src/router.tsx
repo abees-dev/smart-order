@@ -4,7 +4,7 @@ import { customerRouter } from "./modules/customer";
 import { suppliesRouter } from "./modules/supplies";
 import { suppliersRouter } from "./modules/suppliers";
 import { productRouter } from "./modules/product";
-import { invoiceRouter } from "./modules/invoice";
+import { orderRouter } from "./modules/order";
 import DashboardLayout from "./layout/dashboard-layout";
 import { ROUTES } from "./constants/routes";
 
@@ -28,7 +28,7 @@ const router = createBrowserRouter(
         ...suppliersRouter,
         ...suppliesRouter,
         ...productRouter,
-        ...invoiceRouter,
+        ...orderRouter,
       ],
     },
     {

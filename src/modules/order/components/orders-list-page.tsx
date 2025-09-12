@@ -43,7 +43,7 @@ import {
   ResponsiveTable,
   type ResponsiveTableColumn,
 } from "@/components/tables";
-import { InvoiceFormDialog } from "./invoice-form-dialog";
+import { OrderFormDialog } from "./order-form-dialog";
 import {
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
@@ -54,7 +54,7 @@ import {
 import { useOrderActions, useOrders } from "../hooks/use-order";
 // import { InvoiceDetailDialog } from "./invoice-detail-dialog";
 
-export function InvoicesListPage() {
+export function OrdersListPage() {
   const [filters, setFilters] = useState<OrderFilters>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -511,7 +511,7 @@ export function InvoicesListPage() {
 
         {/* Dialogs */}
         {showFormDialog && (
-          <InvoiceFormDialog
+          <OrderFormDialog
             open={showFormDialog}
             onOpenChange={(open) => {
               setShowFormDialog(open);

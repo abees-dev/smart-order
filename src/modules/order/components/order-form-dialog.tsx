@@ -32,20 +32,21 @@ import type { Product } from "../../product/types";
 import type { Supply } from "../../supplies/types";
 import type { Customer } from "../../customer/types";
 import { useOrderActions } from "../hooks/use-order";
+import { generateOrderNumber } from "@/modules/supplies/utils/text";
 
-interface InvoiceFormDialogProps {
+interface OrderFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   editOrder?: Order | null;
 }
 
-export function InvoiceFormDialog({
+export function OrderFormDialog({
   open,
   onOpenChange,
   onSuccess,
   editOrder = null,
-}: InvoiceFormDialogProps) {
+}: OrderFormDialogProps) {
   const { createOrder, updateOrder, loading, error } = useOrderActions();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -122,18 +123,6 @@ export function InvoiceFormDialog({
     control: form.control,
     name: "items",
   });
-
-  // Generate order number
-  const generateOrderNumber = () => {
-    const date = new Date();
-    const timestamp = date.getTime().toString().slice(-6);
-    return `ORD-${date.getFullYear()}${(date.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}${date
-      .getDate()
-      .toString()
-      .padStart(2, "0")}-${timestamp}`;
-  };
 
   useEffect(() => {
     if (open && !editOrder) {
