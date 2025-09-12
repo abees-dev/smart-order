@@ -42,8 +42,7 @@ const router = createBrowserRouter(
   ],
   {
     basename:
-      import.meta.env.VITE_BASE_URL ||
-      (import.meta.env.MODE === "miniapp" ? "/zapps/1309730958729066148" : "/"),
+      import.meta.env.MODE === "miniapp" ? "/zapps/1309730958729066148" : "/",
   }
 );
 
