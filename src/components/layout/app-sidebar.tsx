@@ -10,6 +10,7 @@ import {
   Warehouse,
   FileText,
   ChevronRight,
+  Receipt,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
@@ -68,6 +69,11 @@ export function AppSidebar() {
       title: t("navigation.suppliers"),
       url: ROUTES.DASHBOARD.SUPPLIERS,
       icon: Building2,
+    },
+    {
+      title: "Hóa đơn",
+      url: ROUTES.DASHBOARD.INVOICES,
+      icon: Receipt,
     },
   ];
 
