@@ -79,13 +79,19 @@
   },
   "products": {
     "title": "Sản phẩm",
+    "description": "Quản lý danh mục sản phẩm của bạn",
     "addProduct": "Thêm sản phẩm",
+    "editProduct": "Chỉnh sửa sản phẩm",
+    "deleteProduct": "Xóa sản phẩm",
+    "productInfo": "Thông tin sản phẩm",
     "productName": "Tên sản phẩm",
     "price": "Giá",
     "category": "Danh mục",
     "stock": "Kho",
-    "description": "Mô tả",
-    "image": "Hình ảnh"
+    "productDescription": "Mô tả",
+    "image": "Hình ảnh",
+    "searchPlaceholder": "Tìm kiếm sản phẩm...",
+    "noProductsFound": "Không tìm thấy sản phẩm nào"
   },
   "customers": {
     "title": "Khách hàng",

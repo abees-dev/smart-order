@@ -14,6 +14,7 @@ import {
   Timestamp,
   DocumentSnapshot,
   QueryConstraint,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import type {
@@ -88,6 +89,105 @@ export class ProductService {
       };
     } catch (error) {
       console.error("Error getting products:", error);
+      throw new Error("Không thể tải danh sách sản phẩm");
+    }
+  }
+
+  static async getProductsWithPagination(
+    filters: ProductFilters = {},
+    pageSize = 10,
+    page = 1
+  ): Promise<{
+    products: Product[];
+    hasMore: boolean;
+    total: number;
+    lastDoc?: DocumentSnapshot;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [];
+
+      // Add filters
+      if (filters.category) {
+        constraints.push(where("category", "==", filters.category));
+      }
+      if (filters.isActive !== undefined) {
+        constraints.push(where("isActive", "==", filters.isActive));
+      }
+      if (filters.hasSupplies !== undefined) {
+        if (filters.hasSupplies) {
+          constraints.push(where("supplies", "!=", null));
+        }
+      }
+
+      // Add search filter (simple text search on name)
+      if (filters.search) {
+        constraints.push(where("name", ">=", filters.search));
+        constraints.push(where("name", "<=", filters.search + "\uf8ff"));
+        constraints.push(orderBy("name"));
+      } else {
+        // Add ordering only when not searching
+        constraints.push(orderBy("createdAt", "desc"));
+      }
+
+      // Get total count
+      const countQuery = query(this.productsRef, ...constraints);
+      const countSnapshot = await getCountFromServer(countQuery);
+      const total = countSnapshot.data().count;
+
+      // Get paginated data
+      const skip = (page - 1) * pageSize;
+      constraints.push(limit(pageSize));
+
+      // For pagination in Firestore, we need to use cursor-based pagination
+      // Since traditional offset doesn't exist, we'll simulate it by getting documents up to the skip point
+      let querySnapshot;
+      if (skip > 0) {
+        const skipQuery = query(
+          this.productsRef,
+          ...constraints.slice(0, -1), // Remove limit constraint
+          limit(skip)
+        );
+        const skipSnapshot = await getDocs(skipQuery);
+        const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
+
+        if (lastVisible) {
+          const finalQuery = query(
+            this.productsRef,
+            ...constraints.slice(0, -1), // Remove limit constraint
+            startAfter(lastVisible),
+            limit(pageSize)
+          );
+          querySnapshot = await getDocs(finalQuery);
+        } else {
+          // If no documents to skip, return empty result
+          return {
+            products: [],
+            hasMore: false,
+            total,
+            lastDoc: undefined,
+          };
+        }
+      } else {
+        const finalQuery = query(this.productsRef, ...constraints);
+        querySnapshot = await getDocs(finalQuery);
+      }
+
+      const products: Product[] = [];
+      querySnapshot.forEach((doc) => {
+        products.push({ id: doc.id, ...doc.data() } as Product);
+      });
+
+      const hasMore = total > page * pageSize;
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+      return {
+        products,
+        hasMore,
+        total,
+        lastDoc,
+      };
+    } catch (error) {
+      console.error("Error getting products with pagination:", error);
       throw new Error("Không thể tải danh sách sản phẩm");
     }
   }

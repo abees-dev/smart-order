@@ -79,13 +79,19 @@
   },
   "products": {
     "title": "Products",
+    "description": "Manage your product catalog",
     "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "deleteProduct": "Delete Product",
+    "productInfo": "Product Information",
     "productName": "Product Name",
     "price": "Price",
     "category": "Category",
     "stock": "Stock",
-    "description": "Description",
-    "image": "Image"
+    "productDescription": "Description",
+    "image": "Image",
+    "searchPlaceholder": "Search products...",
+    "noProductsFound": "No products found"
   },
   "customers": {
     "title": "Customers",

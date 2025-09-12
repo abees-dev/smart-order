@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDocumentTitle } from "@/hooks/use-document-title";
@@ -9,7 +10,7 @@ import {
   type TableAction,
 } from "@/components/tables";
 
-import { useProducts } from "../hooks/use-product";
+import { useProducts, useProductActions } from "../hooks/use-product";
 import { ProductFormDialog } from "./product-form-dialog";
 import { ProductDetailDialog } from "./product-detail-dialog";
 import { DeleteProductDialog } from "./delete-product-dialog";
@@ -17,30 +18,42 @@ import type { Product, ProductFilters } from "../types";
 import ReactMarkdown from "react-markdown";
 
 export function ProductsListPage() {
+  const { t } = useTranslation();
   useDocumentTitle();
 
+  // Set document title manually for this page
+  useEffect(() => {
+    document.title = `${t("products.title")} - ${t("app.title")}`;
+  }, [t]);
+
   const [filters, setFilters] = useState<ProductFilters>({});
-  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  const { state, refreshProducts, loadMore, hasMore } = useProducts(filters);
-  const { createColumn, createCurrencyColumn } =
+  const {
+    products,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    refreshProducts,
+    total,
+    page,
+    pageSize,
+    changePage,
+    isMobile,
+    loadingMore,
+  } = useProducts(filters, 7);
+
+  useProductActions();
+  const { createColumn, createCurrencyColumn, createStatusColumn } =
     useEnhancedTableColumns<Product>();
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
-  };
-
-  const handleFormSuccess = () => {
-    refreshProducts();
-    setSelectedProduct(null);
-  };
-
-  const handleDeleteSuccess = () => {
-    refreshProducts();
-    setSelectedProduct(null);
   };
 
   const formatCurrency = (amount: number) => {
@@ -59,7 +72,7 @@ export function ProductsListPage() {
   const columns: ResponsiveTableColumn<Product>[] = [
     createColumn({
       key: "product",
-      title: "Thông tin sản phẩm",
+      title: t("products.productInfo") || "Thông tin sản phẩm",
       render: (_, record: Product) => (
         <div className="space-y-1">
           <div className="font-semibold text-foreground">{record.name}</div>
@@ -88,7 +101,7 @@ export function ProductsListPage() {
     }),
     createColumn({
       key: "description",
-      title: "Mô tả",
+      title: t("products.productDescription") || "Mô tả",
       responsive: false,
       render: (_, record: Product) => (
         <div className="max-w-xs">
@@ -104,7 +117,7 @@ export function ProductsListPage() {
         </div>
       ),
     }),
-    createCurrencyColumn("price", "Giá bán"),
+    createCurrencyColumn("price", t("products.price") || "Giá bán"),
     createColumn({
       key: "supplies",
       title: "Vật tư",
@@ -122,29 +135,14 @@ export function ProductsListPage() {
         </div>
       ),
     }),
-    createColumn({
-      key: "status",
-      title: "Trạng thái",
-      align: "center",
-      render: (_, record: Product) => (
-        <span
-          className={`px-2 py-1 rounded-md text-xs font-medium ${
-            record.isActive
-              ? "bg-green-50 text-green-700"
-              : "bg-gray-50 text-gray-700"
-          }`}
-        >
-          {record.isActive ? "Hoạt động" : "Tạm dừng"}
-        </span>
-      ),
-    }),
+    createStatusColumn("isActive", t("common.status") || "Trạng thái"),
   ];
 
   // Define table actions
   const tableActions: TableAction<Product>[] = [
     {
       key: "view",
-      label: "Xem chi tiết",
+      label: t("common.view") || "Xem chi tiết",
       icon: Eye,
       onClick: (record) => {
         setSelectedProduct(record);
@@ -153,16 +151,16 @@ export function ProductsListPage() {
     },
     {
       key: "edit",
-      label: "Chỉnh sửa",
+      label: t("common.edit") || "Chỉnh sửa",
       icon: Pencil,
       onClick: (record) => {
         setSelectedProduct(record);
-        setShowFormDialog(true);
+        setShowEditDialog(true);
       },
     },
     {
       key: "delete",
-      label: "Xóa",
+      label: t("common.delete") || "Xóa",
       icon: Trash2,
       variant: "destructive",
       onClick: (record) => {
@@ -182,15 +180,11 @@ export function ProductsListPage() {
             <span className="px-2 py-1 bg-muted rounded-md text-xs">
               {record.category}
             </span>
-            <span
-              className={`px-2 py-1 rounded-md text-xs font-medium ${
-                record.isActive
-                  ? "bg-green-50 text-green-700"
-                  : "bg-gray-50 text-gray-700"
-              }`}
-            >
-              {record.isActive ? "Hoạt động" : "Tạm dừng"}
-            </span>
+            {createStatusColumn("isActive", "Status").render?.(
+              record.isActive,
+              record,
+              0
+            )}
           </div>
         </div>
       </div>
@@ -219,54 +213,110 @@ export function ProductsListPage() {
     </div>
   );
 
+  const handleProductCreated = () => {
+    setShowCreateDialog(false);
+    refreshProducts();
+  };
+
+  const handleProductUpdated = () => {
+    setShowEditDialog(false);
+    setSelectedProduct(null);
+    refreshProducts();
+  };
+
+  const handleProductDeleted = () => {
+    setShowDeleteDialog(false);
+    setSelectedProduct(null);
+    refreshProducts();
+  };
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-red-600">
+          <p>{error}</p>
+          <Button onClick={refreshProducts} className="mt-2">
+            {t("common.retry") || "Thử lại"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* <SupplierSelect /> */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Sản phẩm</h1>
-          <p className="text-muted-foreground">
-            Quản lý danh sách sản phẩm của cửa hàng
-          </p>
-        </div>
-        <Button onClick={() => setShowFormDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm sản phẩm
-        </Button>
-      </div>
-
       <EnhancedTable<Product>
-        title="Danh sách sản phẩm"
+        title={t("products.title") || "Sản phẩm"}
+        description={
+          t("products.description") || "Quản lý danh sách sản phẩm của cửa hàng"
+        }
         columns={columns}
-        dataSource={state.products}
+        dataSource={products}
+        rowKey="id"
+        loading={loading}
+        emptyText={
+          t("products.noProductsFound") || "Không tìm thấy sản phẩm nào"
+        }
         actions={tableActions}
-        loading={state.loading}
-        searchable
-        onSearchChange={handleSearch}
-        searchPlaceholder="Tìm kiếm sản phẩm..."
-        emptyText="Không tìm thấy sản phẩm nào"
-        mobileCardRender={mobileCardRender}
         hasMore={hasMore}
         onLoadMore={loadMore}
-        rowKey="id"
+        isMobile={isMobile}
+        loadingMore={loadingMore}
+        searchValue={filters.search || ""}
+        pagination={
+          !isMobile
+            ? {
+                current: page,
+                pageSize: pageSize,
+                total: total,
+                onChange: (newPage: number) => changePage(newPage),
+              }
+            : undefined
+        }
+        searchable
+        searchPlaceholder={
+          t("products.searchPlaceholder") || "Tìm kiếm sản phẩm..."
+        }
+        onSearchChange={handleSearch}
+        mobileCardRender={mobileCardRender}
+        headerActions={
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("products.addProduct") || "Thêm sản phẩm"}
+            </Button>
+          </div>
+        }
       />
 
-      {/* Dialogs */}
       <ProductFormDialog
-        open={showFormDialog}
-        onOpenChange={setShowFormDialog}
-        onSuccess={handleFormSuccess}
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={handleProductCreated}
+        mode="create"
+      />
+
+      <ProductFormDialog
+        open={showEditDialog}
+        onOpenChange={(open: boolean) => {
+          setShowEditDialog(open);
+          if (!open) setSelectedProduct(null);
+        }}
         product={selectedProduct}
-        mode={selectedProduct ? "edit" : "create"}
+        onSuccess={handleProductUpdated}
+        mode="edit"
       />
 
       <ProductDetailDialog
         open={showDetailDialog}
-        onOpenChange={setShowDetailDialog}
+        onOpenChange={(open: boolean) => {
+          setShowDetailDialog(open);
+          if (!open) setSelectedProduct(null);
+        }}
         product={selectedProduct}
         onEdit={() => {
           setShowDetailDialog(false);
-          setShowFormDialog(true);
+          setShowEditDialog(true);
         }}
         onDelete={() => {
           setShowDetailDialog(false);
@@ -276,9 +326,12 @@ export function ProductsListPage() {
 
       <DeleteProductDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        onOpenChange={(open: boolean) => {
+          setShowDeleteDialog(open);
+          if (!open) setSelectedProduct(null);
+        }}
         product={selectedProduct}
-        onSuccess={handleDeleteSuccess}
+        onSuccess={handleProductDeleted}
       />
     </div>
   );

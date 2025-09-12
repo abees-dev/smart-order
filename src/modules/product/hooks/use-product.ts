@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { DocumentSnapshot } from "firebase/firestore";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ProductService } from "../services/product.service";
 import type {
   Product,
@@ -10,6 +12,8 @@ import type {
 } from "../types";
 
 export function useProducts(filters: ProductFilters = {}, pageSize = 10) {
+  const isMobile = useIsMobile();
+
   const [state, setState] = useState<ProductListState>({
     products: [],
     loading: true,
@@ -20,57 +24,157 @@ export function useProducts(filters: ProductFilters = {}, pageSize = 10) {
     hasMore: false,
   });
 
-  const loadProducts = useCallback(
-    async (reset = false) => {
-      try {
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-        const result = await ProductService.getAllProducts(
-          filters,
-          pageSize,
-          reset ? undefined : state.lastDoc
-        );
+  const loadProducts = useCallback(
+    async (reset = false, targetPage = 1) => {
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        error: null,
+      }));
+
+      try {
+        let result;
+
+        if (isMobile) {
+          // Mobile: Use infinite loading with Firestore pagination
+          result = await ProductService.getAllProducts(
+            filters,
+            pageSize,
+            reset ? undefined : lastDoc || undefined
+          );
+        } else {
+          // Desktop: Use traditional pagination
+          result = await ProductService.getProductsWithPagination(
+            filters,
+            pageSize,
+            targetPage
+          );
+        }
+
+        const products = result.products;
+        const newHasMore = result.hasMore;
+        const newLastDoc = result.lastDoc;
+        const newTotal =
+          "total" in result ? (result.total as number) : undefined;
 
         setState((prev) => ({
           ...prev,
-          products: reset
-            ? result.products
-            : [...prev.products, ...result.products],
-          hasMore: result.hasMore,
-          lastDoc: result.lastDoc,
+          products:
+            isMobile && !reset ? [...prev.products, ...products] : products,
           loading: false,
-          page: reset ? 1 : prev.page + 1,
+          total:
+            newTotal !== undefined
+              ? newTotal
+              : reset
+              ? products.length
+              : prev.total + products.length,
+          page: isMobile ? (reset ? 1 : prev.page + 1) : targetPage,
+          hasMore: newHasMore,
         }));
+
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+
+        return { success: true };
       } catch (error) {
         setState((prev) => ({
           ...prev,
-          error: error instanceof Error ? error.message : "Có lỗi xảy ra",
           loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
         }));
+
+        return { success: false, error };
       }
     },
-    [filters, pageSize, state.lastDoc]
+    [filters, pageSize, lastDoc, isMobile]
   );
 
-  const refreshProducts = useCallback(() => {
-    loadProducts(true);
+  const refreshProducts = useCallback(async () => {
+    setLastDoc(null);
+    setHasMore(true);
+    await loadProducts(true, 1);
   }, [loadProducts]);
 
-  const loadMore = useCallback(() => {
-    if (!state.loading && state.hasMore) {
-      loadProducts(false);
+  const loadMore = useCallback(async () => {
+    if (!state.loading && hasMore && isMobile && !loadingMore) {
+      setLoadingMore(true);
+      try {
+        await loadProducts(false);
+      } finally {
+        setLoadingMore(false);
+      }
     }
-  }, [loadProducts, state.loading, state.hasMore]);
+  }, [state.loading, hasMore, isMobile, loadingMore, loadProducts]);
 
+  const changePage = useCallback(
+    async (newPage: number) => {
+      if (!isMobile) {
+        await loadProducts(true, newPage);
+      }
+    },
+    [isMobile, loadProducts]
+  );
+
+  // Load initial data
   useEffect(() => {
-    refreshProducts();
-  }, [filters, pageSize]);
+    const loadData = async () => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+      setLastDoc(null);
+      setHasMore(true);
+
+      try {
+        let result;
+
+        if (isMobile) {
+          result = await ProductService.getAllProducts(filters, pageSize);
+        } else {
+          result = await ProductService.getProductsWithPagination(
+            filters,
+            pageSize,
+            1
+          );
+        }
+
+        const { products, hasMore: newHasMore, lastDoc: newLastDoc } = result;
+        const total =
+          "total" in result ? (result.total as number) : products.length;
+
+        setState({
+          products,
+          loading: false,
+          error: null,
+          total,
+          page: 1,
+          pageSize,
+          hasMore: newHasMore,
+        });
+
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+        }));
+      }
+    };
+
+    loadData();
+  }, [JSON.stringify(filters), pageSize, isMobile]);
 
   return {
-    state,
-    refreshProducts,
+    ...state,
+    hasMore,
     loadMore,
-    hasMore: state.hasMore,
+    refreshProducts,
+    changePage,
+    isMobile,
+    loadingMore,
   };
 }
 
