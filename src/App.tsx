@@ -1,5 +1,6 @@
 import { RouterProvider } from "react-router-dom";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 import router from "./router";
 // import { useDocumentTitle } from "./hooks/use-document-title";
 
@@ -15,6 +16,7 @@ function App() {
       }
     >
       <RouterProvider router={router} />
+      <Toaster position="top-right" richColors closeButton={false} />
     </Suspense>
   );
 }

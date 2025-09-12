@@ -43,6 +43,8 @@ import {
   ResponsiveTable,
   type ResponsiveTableColumn,
 } from "@/components/tables";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
 import { OrderFormDialog } from "./order-form-dialog";
 import {
   ORDER_STATUS_COLORS,
@@ -61,6 +63,8 @@ export function OrdersListPage() {
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
+
   const { orders, loading, error, hasMore, refreshOrders, loadMoreOrders } =
     useOrders(filters);
 
@@ -77,17 +81,24 @@ export function OrdersListPage() {
     }));
   };
 
-  const handleDeleteInvoice = async (order: Order) => {
-    if (
-      window.confirm(`Bạn có chắc chắn muốn xóa hóa đơn ${order.orderNumber}?`)
-    ) {
-      try {
-        await deleteOrder(order.id);
-        refreshOrders();
-      } catch (error) {
-        console.error("Error deleting order:", error);
-      }
-    }
+  const handleDeleteOrder = async (order: Order) => {
+    showConfirm({
+      title: "Xác nhận xóa đơn hàng",
+      description: `Bạn có chắc chắn muốn xóa đơn ${order.orderNumber}?\n\nHành động này không thể hoàn tác.`,
+      confirmText: "Xóa đơn hàng",
+      cancelText: "Hủy",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await deleteOrder(order.id);
+          refreshOrders();
+          toast.success("Hóa đơn đã được xóa thành công.");
+        } catch (error) {
+          console.error("Error deleting order:", error);
+          toast.error("Có lỗi xảy ra khi xóa đơn hàng.");
+        }
+      },
+    });
   };
 
   const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
@@ -101,39 +112,57 @@ export function OrdersListPage() {
     const actionMessage =
       statusMessages[newStatus as keyof typeof statusMessages];
 
-    // Special message for cancelling exported order
-    let confirmMessage = `Bạn có chắc chắn muốn ${actionMessage} hóa đơn ${order.orderNumber}?`;
+    // Build description based on status
+    let description = `Bạn có chắc chắn muốn ${actionMessage} đơn hàng ${order.orderNumber}?`;
 
     if (newStatus === "cancelled" && order.status === "exported") {
-      confirmMessage +=
-        "\n\n⚠️ Hóa đơn này đã được xuất kho. Khi hủy, hệ thống sẽ tự động hoàn lại số tồn kho của các vật tư đã xuất.";
+      description +=
+        "\n\n⚠️ Đơn hàng này đã được xuất kho. Khi hủy, hệ thống sẽ tự động hoàn lại số tồn kho của các vật tư đã xuất.";
     } else if (newStatus === "exported") {
-      confirmMessage +=
-        "\n\n📦 Hệ thống sẽ tự động trừ tồn kho của các vật tư trong hóa đơn này.";
+      description +=
+        "\n\n📦 Hệ thống sẽ tự động trừ tồn kho của các vật tư trong đơn hàng này.";
     }
 
-    if (window.confirm(confirmMessage)) {
-      try {
-        await changeOrderStatus(order.id, newStatus);
-        refreshOrders();
+    // Determine variant based on action
+    const variant = newStatus === "cancelled" ? "destructive" : "warning";
 
-        // Show success message with inventory info
-        if (newStatus === "cancelled" && order.status === "exported") {
-          alert("✅ Hóa đơn đã được hủy thành công. Tồn kho đã được hoàn lại.");
-        } else if (newStatus === "exported") {
-          alert(
-            "✅ Hóa đơn đã được xuất kho thành công. Tồn kho đã được cập nhật."
-          );
+    showConfirm({
+      title: `${
+        actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1)
+      } đơn hàng`,
+      description,
+      confirmText:
+        actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1),
+      cancelText: "Hủy",
+      variant,
+      onConfirm: async () => {
+        try {
+          await changeOrderStatus(order.id, newStatus);
+          refreshOrders();
+
+          // Show success message based on status
+          if (newStatus === "cancelled" && order.status === "exported") {
+            toast.success(
+              `Đơn hàng đã được hủy thành công. Tồn kho đã được hoàn lại.`
+            );
+          } else if (newStatus === "exported") {
+            toast.success(
+              `Đơn hàng đã được xuất kho thành công. Tồn kho đã được cập nhật.`
+            );
+          } else {
+            toast.success(`Đơn hàng đã được ${actionMessage} thành công.`);
+          }
+        } catch (error) {
+          console.error("Error changing status:", error);
+          // Show error toast
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Có lỗi xảy ra khi thay đổi trạng thái đơn hàng";
+          toast.error(errorMessage);
         }
-      } catch (error) {
-        console.error("Error changing status:", error);
-        if (error instanceof Error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        } else {
-          alert("❌ Có lỗi xảy ra khi thay đổi trạng thái hóa đơn");
-        }
-      }
-    }
+      },
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -361,7 +390,7 @@ export function OrdersListPage() {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-sm">
-                      ⚠️ Hủy hóa đơn đã xuất kho sẽ hoàn lại tồn kho
+                      ⚠️ Hủy đơn hàng đã xuất kho sẽ hoàn lại tồn kho
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -391,11 +420,11 @@ export function OrdersListPage() {
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => handleDeleteInvoice(record)}
+                  onClick={() => handleDeleteOrder(record)}
                   className="text-red-600 focus:text-red-600"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Xóa hóa đơn
+                  Xóa đơn hàng
                 </DropdownMenuItem>
               </>
             )}
@@ -428,21 +457,21 @@ export function OrdersListPage() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6" />
-              Quản lý hóa đơn
+              Quản lý đơn hàng
             </h1>
             <p className="text-muted-foreground">
-              Quản lý hóa đơn bán hàng và xuất kho
+              Quản lý đơn hàng bán hàng và xuất kho
             </p>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => setShowFormDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Tạo hóa đơn mới
+                Tạo đơn hàng mới
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Tạo hóa đơn bán hàng mới</p>
+              <p>Tạo đơn hàng mới</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -460,7 +489,7 @@ export function OrdersListPage() {
               <div className="flex-1">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Tìm theo số hóa đơn hoặc tên khách hàng..."
+                    placeholder="Tìm theo số đơn hàng hoặc tên khách hàng..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -498,7 +527,7 @@ export function OrdersListPage() {
             dataSource={orders}
             columns={columns}
             loading={loading}
-            emptyText="Không có hóa đơn nào"
+            emptyText="Không có đơn hàng nào"
           />
           {hasMore && !loading && (
             <div className="p-4 text-center">
@@ -524,6 +553,11 @@ export function OrdersListPage() {
               refreshOrders();
               setShowFormDialog(false);
               setSelectedOrder(null);
+              toast.success(
+                `Đơn hàng đã được ${
+                  selectedOrder ? "cập nhật" : "tạo"
+                } thành công.`
+              );
             }}
           />
         )}
@@ -531,6 +565,9 @@ export function OrdersListPage() {
         {selectedOrder && showDetailDialog && (
           <div>Detail Dialog - To be implemented</div>
         )}
+
+        {/* Confirm Dialog */}
+        {ConfirmDialog}
       </div>
     </TooltipProvider>
   );
