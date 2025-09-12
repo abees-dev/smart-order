@@ -23,30 +23,30 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormSelectField } from "@/components/forms/form-select";
-import { useInvoiceActions } from "../hooks/use-invoice";
-import { createInvoiceSchema, type CreateInvoiceFormData } from "../validation";
-import type { Invoice } from "../types";
+import { createOrderSchema, type CreateOrderFormData } from "../validation";
+import type { Order } from "../types";
 import { ProductService } from "../../product/services/product.service";
 import { SupplyService } from "../../supplies/services/supply.service";
 import { CustomerService } from "../../customer/services/customer.service";
 import type { Product } from "../../product/types";
 import type { Supply } from "../../supplies/types";
 import type { Customer } from "../../customer/types";
+import { useOrderActions } from "../hooks/use-order";
 
 interface InvoiceFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
-  editInvoice?: Invoice | null;
+  editOrder?: Order | null;
 }
 
 export function InvoiceFormDialog({
   open,
   onOpenChange,
   onSuccess,
-  editInvoice = null,
+  editOrder = null,
 }: InvoiceFormDialogProps) {
-  const { createInvoice, updateInvoice, loading, error } = useInvoiceActions();
+  const { createOrder, updateOrder, loading, error } = useOrderActions();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [supplies, setSupplies] = useState<Supply[]>([]);
@@ -96,10 +96,10 @@ export function InvoiceFormDialog({
       description: `${customer.phone} - ${customer.address}`,
     }));
 
-  const form = useForm<CreateInvoiceFormData>({
-    resolver: zodResolver(createInvoiceSchema),
+  const form = useForm<CreateOrderFormData>({
+    resolver: zodResolver(createOrderSchema),
     defaultValues: {
-      invoiceNumber: "",
+      orderNumber: "",
       customerId: "",
       customerName: "",
       vatRate: 10,
@@ -123,11 +123,11 @@ export function InvoiceFormDialog({
     name: "items",
   });
 
-  // Generate invoice number
-  const generateInvoiceNumber = () => {
+  // Generate order number
+  const generateOrderNumber = () => {
     const date = new Date();
     const timestamp = date.getTime().toString().slice(-6);
-    return `INV-${date.getFullYear()}${(date.getMonth() + 1)
+    return `ORD-${date.getFullYear()}${(date.getMonth() + 1)
       .toString()
       .padStart(2, "0")}${date
       .getDate()
@@ -136,10 +136,10 @@ export function InvoiceFormDialog({
   };
 
   useEffect(() => {
-    if (open && !editInvoice) {
-      form.setValue("invoiceNumber", generateInvoiceNumber());
+    if (open && !editOrder) {
+      form.setValue("orderNumber", generateOrderNumber());
     }
-  }, [open, editInvoice, form]);
+  }, [open, editOrder, form]);
 
   // Fetch products, supplies and customers
   useEffect(() => {
@@ -174,14 +174,14 @@ export function InvoiceFormDialog({
 
   // Fill form when editing
   useEffect(() => {
-    if (editInvoice) {
+    if (editOrder) {
       form.reset({
-        invoiceNumber: editInvoice.invoiceNumber,
-        customerId: editInvoice.customerId || "",
-        customerName: editInvoice.customerName || "",
-        vatRate: editInvoice.vatRate,
-        notes: editInvoice.notes || "",
-        items: editInvoice.items.map((item) => ({
+        orderNumber: editOrder.orderNumber,
+        customerId: editOrder.customerId || "",
+        customerName: editOrder.customerName || "",
+        vatRate: editOrder.vatRate,
+        notes: editOrder.notes || "",
+        items: editOrder.items.map((item) => ({
           type: item.type,
           itemId: item.itemId,
           category: item.category,
@@ -192,7 +192,7 @@ export function InvoiceFormDialog({
         })),
       });
     }
-  }, [editInvoice, form]);
+  }, [editOrder, form]);
 
   const addItem = () => {
     append({
@@ -224,7 +224,7 @@ export function InvoiceFormDialog({
     return { subtotal, vatAmount, totalAmount };
   };
 
-  const onSubmit = async (data: CreateInvoiceFormData) => {
+  const onSubmit = async (data: CreateOrderFormData) => {
     try {
       // Enrich items with itemCode and itemName
       const enrichedItems = data.items.map((item) => {
@@ -248,10 +248,10 @@ export function InvoiceFormDialog({
         items: enrichedItems,
       };
 
-      if (editInvoice) {
-        await updateInvoice(editInvoice.id, enrichedData);
+      if (editOrder) {
+        await updateOrder(editOrder.id, enrichedData);
       } else {
-        await createInvoice(enrichedData);
+        await createOrder(enrichedData);
       }
       onSuccess();
     } catch (error) {
@@ -261,7 +261,7 @@ export function InvoiceFormDialog({
 
   const handleClose = () => {
     form.reset({
-      invoiceNumber: "",
+      orderNumber: "",
       customerId: "",
       customerName: "",
       vatRate: 10,
@@ -288,12 +288,12 @@ export function InvoiceFormDialog({
       <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {editInvoice ? "Chỉnh sửa hóa đơn" : "Tạo hóa đơn mới"}
+            {editOrder ? "Chỉnh sửa đơn hàng" : "Tạo đơn hàng mới"}
           </DialogTitle>
           <DialogDescription>
-            {editInvoice
-              ? "Cập nhật thông tin hóa đơn"
-              : "Nhập thông tin để tạo hóa đơn mới"}
+            {editOrder
+              ? "Cập nhật thông tin đơn hàng"
+              : "Nhập thông tin để tạo đơn hàng mới"}
           </DialogDescription>
         </DialogHeader>
 
@@ -303,12 +303,12 @@ export function InvoiceFormDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="invoiceNumber"
+                name="orderNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Số hóa đơn *</FormLabel>
+                    <FormLabel>Số đơn hàng *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="INV-20241201-123456" />
+                      <Input {...field} placeholder="ORD-20241201-123456" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -669,9 +669,9 @@ export function InvoiceFormDialog({
               <Button type="submit" disabled={loading}>
                 {loading
                   ? "Đang lưu..."
-                  : editInvoice
+                  : editOrder
                   ? "Cập nhật"
-                  : "Tạo hóa đơn"}
+                  : "Tạo đơn hàng"}
               </Button>
             </DialogFooter>
           </form>
