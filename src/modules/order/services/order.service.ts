@@ -17,28 +17,28 @@ import {
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import type {
-  Invoice,
-  CreateInvoiceData,
-  UpdateInvoiceData,
-  InvoiceFilters,
-  InvoiceStatus,
+  CreateOrderData,
+  Order,
+  OrderFilters,
+  OrderStatus,
+  UpdateOrderData,
 } from "../types";
 import { ProductService } from "@/modules/product/services/product.service";
 import { SupplyService } from "@/modules/supplies/services/supply.service";
 
-const INVOICES_COLLECTION = "invoices";
+const ORDER_COLLECTION = "orders";
 const STOCK_MOVEMENTS_COLLECTION = "stock_movements";
 
-export class InvoiceService {
-  private static invoicesRef = collection(db, INVOICES_COLLECTION);
+export class OrderService {
+  private static ordersRef = collection(db, ORDER_COLLECTION);
 
-  // Get all invoices with filters and pagination
-  static async getAllInvoices(
-    filters: InvoiceFilters = {},
+  // Get all orders with filters and pagination
+  static async getAllOrders(
+    filters: OrderFilters = {},
     pageSize = 20,
     lastDoc?: DocumentSnapshot
   ): Promise<{
-    invoices: Invoice[];
+    orders: Order[];
     hasMore: boolean;
     lastDoc?: DocumentSnapshot;
   }> {
@@ -73,90 +73,83 @@ export class InvoiceService {
         constraints.push(startAfter(lastDoc));
       }
 
-      const q = query(this.invoicesRef, ...constraints);
+      const q = query(this.ordersRef, ...constraints);
       const querySnapshot = await getDocs(q);
       const docs = querySnapshot.docs;
 
-      let invoices = docs.map((doc) => ({
+      let orders = docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Invoice[];
+      })) as Order[];
 
-      // Client-side search filter (for invoice number and customer name)
+      // Client-side search filter (for order number and customer name)
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        invoices = invoices.filter(
-          (invoice) =>
-            invoice.invoiceNumber.toLowerCase().includes(searchLower) ||
-            (invoice.customerName &&
-              invoice.customerName.toLowerCase().includes(searchLower))
+        orders = orders.filter(
+          (order) =>
+            order.orderNumber.toLowerCase().includes(searchLower) ||
+            (order.customerName &&
+              order.customerName.toLowerCase().includes(searchLower))
         );
       }
 
-      const hasMore = invoices.length > pageSize;
+      const hasMore = orders.length > pageSize;
       if (hasMore) {
-        invoices = invoices.slice(0, pageSize);
+        orders = orders.slice(0, pageSize);
       }
 
       return {
-        invoices,
+        orders,
         hasMore,
-        lastDoc: invoices.length > 0 ? docs[invoices.length - 1] : undefined,
+        lastDoc: orders.length > 0 ? docs[orders.length - 1] : undefined,
       };
     } catch (error) {
-      console.error("Error fetching invoices:", error);
-      throw new Error("Không thể tải danh sách hóa đơn");
+      console.error("Error fetching orders:", error);
+      throw new Error("Không thể tải danh sách đơn hàng");
     }
   }
 
-  // Get invoice by ID
-  static async getInvoiceById(id: string): Promise<Invoice | null> {
+  // Get order by ID
+  static async getOrderById(id: string): Promise<Order | null> {
     try {
-      const docRef = doc(this.invoicesRef, id);
+      const docRef = doc(this.ordersRef, id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         return {
           id: docSnap.id,
           ...docSnap.data(),
-        } as Invoice;
+        } as Order;
       }
 
       return null;
     } catch (error) {
-      console.error("Error fetching invoice:", error);
-      throw new Error("Không thể tải thông tin hóa đơn");
+      console.error("Error fetching order:", error);
+      throw new Error("Không thể tải thông tin đơn hàng");
     }
   }
 
-  // Check if invoice number exists
-  static async checkInvoiceNumberExists(
-    invoiceNumber: string
-  ): Promise<boolean> {
+  // Check if order number exists
+  static async checkOrderNumberExists(orderNumber: string): Promise<boolean> {
     try {
-      const q = query(
-        this.invoicesRef,
-        where("invoiceNumber", "==", invoiceNumber)
-      );
+      const q = query(this.ordersRef, where("orderNumber", "==", orderNumber));
       const querySnapshot = await getDocs(q);
       return !querySnapshot.empty;
     } catch (error) {
-      console.error("Error checking invoice number:", error);
+      console.error("Error checking order number:", error);
       return false;
     }
   }
 
-  // Create new invoice
-  static async createInvoice(data: CreateInvoiceData): Promise<string> {
+  // Create new order
+  static async createOrder(data: CreateOrderData): Promise<string> {
     try {
       const batch = writeBatch(db);
 
-      // Check if invoice number already exists
-      const numberExists = await this.checkInvoiceNumberExists(
-        data.invoiceNumber
-      );
+      // Check if order number already exists
+      const numberExists = await this.checkOrderNumberExists(data.orderNumber);
       if (numberExists) {
-        throw new Error("Số hóa đơn đã tồn tại");
+        throw new Error("Số đơn hàng đã tồn tại");
       }
 
       // Enrich items with product/supply details
@@ -197,11 +190,11 @@ export class InvoiceService {
       const totalAmount = subtotal + vatAmount;
 
       const now = Timestamp.now();
-      const invoiceData: Omit<Invoice, "id"> = {
-        invoiceNumber: data.invoiceNumber,
+      const orderData: Omit<Order, "id"> = {
+        orderNumber: data.orderNumber,
         customerId: data.customerId || "",
         customerName: data.customerName || "",
-        status: "draft" as InvoiceStatus,
+        status: "draft" as OrderStatus,
         items: enrichedItems,
         subtotal,
         vatRate: data.vatRate,
@@ -212,38 +205,35 @@ export class InvoiceService {
         updatedAt: now,
       };
 
-      const docRef = doc(this.invoicesRef);
-      batch.set(docRef, invoiceData);
+      const docRef = doc(this.ordersRef);
+      batch.set(docRef, orderData);
 
       await batch.commit();
       return docRef.id;
     } catch (error) {
-      console.error("Error creating invoice:", error);
+      console.error("Error creating order:", error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error("Không thể tạo hóa đơn");
+      throw new Error("Không thể tạo đơn hàng");
     }
   }
 
-  // Update invoice
-  static async updateInvoice(
-    id: string,
-    data: UpdateInvoiceData
-  ): Promise<void> {
+  // Update order
+  static async updateOrder(id: string, data: UpdateOrderData): Promise<void> {
     try {
-      const docRef = doc(this.invoicesRef, id);
+      const docRef = doc(this.ordersRef, id);
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        throw new Error("Không tìm thấy hóa đơn");
+        throw new Error("Không tìm thấy đơn hàng");
       }
 
-      const currentInvoice = docSnap.data() as Invoice;
+      const currentOrder = docSnap.data() as Order;
 
-      // Only allow updates for draft invoices
-      if (currentInvoice.status !== "draft") {
-        throw new Error("Chỉ có thể chỉnh sửa hóa đơn ở trạng thái nháp");
+      // Only allow updates for draft orders
+      if (currentOrder.status !== "draft") {
+        throw new Error("Chỉ có thể chỉnh sửa đơn hàng ở trạng thái nháp");
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -288,7 +278,7 @@ export class InvoiceService {
           (sum, item) => sum + item.totalPrice,
           0
         );
-        const vatRate = data.vatRate ?? currentInvoice.vatRate;
+        const vatRate = data.vatRate ?? currentOrder.vatRate;
         const vatAmount = subtotal * (vatRate / 100);
         const totalAmount = subtotal + vatAmount;
 
@@ -309,23 +299,23 @@ export class InvoiceService {
   }
 
   // Change invoice status
-  static async changeInvoiceStatus(
+  static async changeOrderStatus(
     id: string,
-    newStatus: InvoiceStatus
+    newStatus: OrderStatus
   ): Promise<void> {
     try {
-      const docRef = doc(this.invoicesRef, id);
+      const docRef = doc(this.ordersRef, id);
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        throw new Error("Không tìm thấy hóa đơn");
+        throw new Error("Không tìm thấy đơn hàng");
       }
 
-      const currentInvoice = docSnap.data() as Invoice;
-      const currentStatus = currentInvoice.status;
+      const currentOrder = docSnap.data() as Order;
+      const currentStatus = currentOrder.status;
 
       // Import the transitions constant properly
-      const transitions: Record<InvoiceStatus, InvoiceStatus[]> = {
+      const transitions: Record<OrderStatus, OrderStatus[]> = {
         draft: ["confirmed", "cancelled"],
         confirmed: ["exported", "cancelled"],
         exported: ["completed", "cancelled"],
@@ -343,7 +333,7 @@ export class InvoiceService {
       const batch = writeBatch(db);
       const now = Timestamp.now();
 
-      const updateData: Partial<Invoice> = {
+      const updateData: Partial<Order> = {
         status: newStatus,
         updatedAt: now,
       };
@@ -353,7 +343,7 @@ export class InvoiceService {
         updateData.exportedAt = now;
 
         // Reduce stock for supplies used in products
-        for (const item of currentInvoice.items) {
+        for (const item of currentOrder.items) {
           if (item.type === "supply") {
             // Direct supply reduction
             await this.reduceSupplyStock(item.itemId, item.quantity, batch);
@@ -379,7 +369,7 @@ export class InvoiceService {
         updateData.cancelledAt = now;
 
         // Restore stock for supplies that were reduced
-        for (const item of currentInvoice.items) {
+        for (const item of currentOrder.items) {
           if (item.type === "supply") {
             // Direct supply restoration
             await this.restoreSupplyStock(item.itemId, item.quantity, batch);
@@ -483,56 +473,56 @@ export class InvoiceService {
   }
 
   // Delete invoice (only drafts)
-  static async deleteInvoice(id: string): Promise<void> {
+  static async deleteOrder(id: string): Promise<void> {
     try {
-      const docRef = doc(this.invoicesRef, id);
+      const docRef = doc(this.ordersRef, id);
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        throw new Error("Không tìm thấy hóa đơn");
+        throw new Error("Không tìm thấy đơn hàng");
       }
 
-      const invoice = docSnap.data() as Invoice;
-      if (invoice.status !== "draft") {
-        throw new Error("Chỉ có thể xóa hóa đơn ở trạng thái nháp");
+      const order = docSnap.data() as Order;
+      if (order.status !== "draft") {
+        throw new Error("Chỉ có thể xóa đơn hàng ở trạng thái nháp");
       }
 
       await deleteDoc(docRef);
     } catch (error) {
-      console.error("Error deleting invoice:", error);
+      console.error("Error deleting order:", error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error("Không thể xóa hóa đơn");
+      throw new Error("Không thể xóa đơn hàng");
     }
   }
 
-  // Get invoice statistics
-  static async getInvoiceStats(): Promise<{
+  // Get order statistics
+  static async getOrderStats(): Promise<{
     total: number;
-    byStatus: Record<InvoiceStatus, number>;
+    byStatus: Record<OrderStatus, number>;
     totalRevenue: number;
   }> {
     try {
-      const querySnapshot = await getDocs(this.invoicesRef);
-      const invoices = querySnapshot.docs.map((doc) => doc.data() as Invoice);
+      const querySnapshot = await getDocs(this.ordersRef);
+      const orders = querySnapshot.docs.map((doc) => doc.data() as Order);
 
       const stats = {
-        total: invoices.length,
+        total: orders.length,
         byStatus: {
           draft: 0,
           confirmed: 0,
           exported: 0,
           completed: 0,
           cancelled: 0,
-        } as Record<InvoiceStatus, number>,
+        } as Record<OrderStatus, number>,
         totalRevenue: 0,
       };
 
-      invoices.forEach((invoice) => {
-        stats.byStatus[invoice.status]++;
-        if (invoice.status === "completed") {
-          stats.totalRevenue += invoice.totalAmount;
+      orders.forEach((order) => {
+        stats.byStatus[order.status]++;
+        if (order.status === "completed") {
+          stats.totalRevenue += order.totalAmount;
         }
       });
 

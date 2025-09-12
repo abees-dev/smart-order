@@ -1,17 +1,17 @@
 import type { Timestamp } from "firebase/firestore";
 
-export type InvoiceStatus =
+export type OrderStatus =
   | "draft" // Nháp - vừa tạo
   | "confirmed" // Đã xác nhận
   | "exported" // Đã xuất kho (sẽ trừ vật tư)
   | "completed" // Hoàn thành
   | "cancelled"; // Đã hủy
 
-export type InvoiceItemType = "product" | "supply";
+export type OrderItemType = "product" | "supply";
 
-export interface InvoiceItem {
+export interface OrderItem {
   id?: string; // for temporary ID during creation
-  type: InvoiceItemType; // product hoặc supply
+  type: OrderItemType; // product hoặc supply
   itemId: string; // productId hoặc supplyId
   itemName: string;
   itemCode: string; // productCode hoặc sku
@@ -22,13 +22,13 @@ export interface InvoiceItem {
   description?: string;
 }
 
-export interface Invoice {
+export interface Order {
   id: string;
-  invoiceNumber: string; // Số hóa đơn - unique
+  orderNumber: string; // Số đơn hàng - unique
   customerId?: string; // optional khách hàng
   customerName?: string;
-  status: InvoiceStatus;
-  items: InvoiceItem[];
+  status: OrderStatus;
+  items: OrderItem[];
   subtotal: number; // tổng tiền chưa VAT
   vatRate: number; // % VAT
   vatAmount: number; // tiền VAT
@@ -41,50 +41,47 @@ export interface Invoice {
   updatedAt: Timestamp;
 }
 
-export interface CreateInvoiceData {
-  invoiceNumber: string;
+export interface CreateOrderData {
+  orderNumber: string;
   customerId?: string;
   customerName?: string;
-  items: Omit<InvoiceItem, "id" | "itemName" | "itemCode">[];
+  items: Omit<OrderItem, "id" | "itemName" | "itemCode">[];
   vatRate: number;
   notes?: string;
 }
 
-export interface UpdateInvoiceData {
+export interface UpdateOrderData {
   customerId?: string;
   customerName?: string;
-  items?: Omit<InvoiceItem, "id" | "itemName" | "itemCode">[];
+  items?: Omit<OrderItem, "id" | "itemName" | "itemCode">[];
   vatRate?: number;
   notes?: string;
-  status?: InvoiceStatus;
+  status?: OrderStatus;
 }
 
-export interface InvoiceFilters {
-  status?: InvoiceStatus;
+export interface OrderFilters {
+  status?: OrderStatus;
   customerId?: string;
   dateFrom?: Date;
   dateTo?: Date;
-  search?: string; // tìm theo invoiceNumber hoặc customerName
+  search?: string; // tìm theo orderNumber hoặc customerName
 }
 
-export interface InvoiceListState {
-  invoices: Invoice[];
+export interface OrderListState {
+  orders: Order[];
   loading: boolean;
   error: string | null;
   hasMore: boolean;
   total: number;
 }
 
-export interface InvoiceFormState {
+export interface OrderFormState {
   loading: boolean;
   error: string | null;
 }
 
 // Status transition rules
-export const INVOICE_STATUS_TRANSITIONS: Record<
-  InvoiceStatus,
-  InvoiceStatus[]
-> = {
+export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   draft: ["confirmed", "cancelled"],
   confirmed: ["exported", "cancelled"],
   exported: ["completed", "cancelled"],
@@ -93,7 +90,7 @@ export const INVOICE_STATUS_TRANSITIONS: Record<
 };
 
 // Status labels for UI
-export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   draft: "Nháp",
   confirmed: "Đã xác nhận",
   exported: "Đã xuất kho",
@@ -102,8 +99,8 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
 };
 
 // Status colors for badges
-export const INVOICE_STATUS_COLORS: Record<
-  InvoiceStatus,
+export const ORDER_STATUS_COLORS: Record<
+  OrderStatus,
   "default" | "secondary" | "destructive" | "outline"
 > = {
   draft: "outline",

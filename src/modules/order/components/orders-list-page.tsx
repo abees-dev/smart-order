@@ -43,60 +43,66 @@ import {
   ResponsiveTable,
   type ResponsiveTableColumn,
 } from "@/components/tables";
-import { useInvoices, useInvoiceActions } from "../hooks/use-invoice";
-import { InvoiceFormDialog } from "./invoice-form-dialog";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
+import { OrderFormDialog } from "./order-form-dialog";
+import {
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  type Order,
+  type OrderFilters,
+  type OrderStatus,
+} from "../types";
+import { useOrderActions, useOrders } from "../hooks/use-order";
 // import { InvoiceDetailDialog } from "./invoice-detail-dialog";
-import type { Invoice, InvoiceFilters, InvoiceStatus } from "../types";
-import { INVOICE_STATUS_LABELS, INVOICE_STATUS_COLORS } from "../types";
 
-export function InvoicesListPage() {
-  const [filters, setFilters] = useState<InvoiceFilters>({});
+export function OrdersListPage() {
+  const [filters, setFilters] = useState<OrderFilters>({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
-  const {
-    invoices,
-    loading,
-    error,
-    hasMore,
-    refreshInvoices,
-    loadMoreInvoices,
-  } = useInvoices(filters);
-  const { deleteInvoice, changeInvoiceStatus } = useInvoiceActions();
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
+
+  const { orders, loading, error, hasMore, refreshOrders, loadMoreOrders } =
+    useOrders(filters);
+
+  const { deleteOrder, changeOrderStatus } = useOrderActions();
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: searchTerm }));
   };
 
-  const handleStatusFilter = (status: InvoiceStatus | "all") => {
+  const handleStatusFilter = (status: OrderStatus | "all") => {
     setFilters((prev) => ({
       ...prev,
       status: status === "all" ? undefined : status,
     }));
   };
 
-  const handleDeleteInvoice = async (invoice: Invoice) => {
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn xóa hóa đơn ${invoice.invoiceNumber}?`
-      )
-    ) {
-      try {
-        await deleteInvoice(invoice.id);
-        refreshInvoices();
-      } catch (error) {
-        console.error("Error deleting invoice:", error);
-      }
-    }
+  const handleDeleteOrder = async (order: Order) => {
+    showConfirm({
+      title: "Xác nhận xóa đơn hàng",
+      description: `Bạn có chắc chắn muốn xóa đơn ${order.orderNumber}?\n\nHành động này không thể hoàn tác.`,
+      confirmText: "Xóa đơn hàng",
+      cancelText: "Hủy",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await deleteOrder(order.id);
+          refreshOrders();
+          toast.success("Hóa đơn đã được xóa thành công.");
+        } catch (error) {
+          console.error("Error deleting order:", error);
+          toast.error("Có lỗi xảy ra khi xóa đơn hàng.");
+        }
+      },
+    });
   };
 
-  const handleStatusChange = async (
-    invoice: Invoice,
-    newStatus: InvoiceStatus
-  ) => {
-    const statusMessages: Record<Exclude<InvoiceStatus, "draft">, string> = {
+  const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
+    const statusMessages: Record<Exclude<OrderStatus, "draft">, string> = {
       confirmed: "xác nhận",
       exported: "xuất kho",
       completed: "hoàn thành",
@@ -106,39 +112,57 @@ export function InvoicesListPage() {
     const actionMessage =
       statusMessages[newStatus as keyof typeof statusMessages];
 
-    // Special message for cancelling exported invoice
-    let confirmMessage = `Bạn có chắc chắn muốn ${actionMessage} hóa đơn ${invoice.invoiceNumber}?`;
+    // Build description based on status
+    let description = `Bạn có chắc chắn muốn ${actionMessage} đơn hàng ${order.orderNumber}?`;
 
-    if (newStatus === "cancelled" && invoice.status === "exported") {
-      confirmMessage +=
-        "\n\n⚠️ Hóa đơn này đã được xuất kho. Khi hủy, hệ thống sẽ tự động hoàn lại số tồn kho của các vật tư đã xuất.";
+    if (newStatus === "cancelled" && order.status === "exported") {
+      description +=
+        "\n\n⚠️ Đơn hàng này đã được xuất kho. Khi hủy, hệ thống sẽ tự động hoàn lại số tồn kho của các vật tư đã xuất.";
     } else if (newStatus === "exported") {
-      confirmMessage +=
-        "\n\n📦 Hệ thống sẽ tự động trừ tồn kho của các vật tư trong hóa đơn này.";
+      description +=
+        "\n\n📦 Hệ thống sẽ tự động trừ tồn kho của các vật tư trong đơn hàng này.";
     }
 
-    if (window.confirm(confirmMessage)) {
-      try {
-        await changeInvoiceStatus(invoice.id, newStatus);
-        refreshInvoices();
+    // Determine variant based on action
+    const variant = newStatus === "cancelled" ? "destructive" : "warning";
 
-        // Show success message with inventory info
-        if (newStatus === "cancelled" && invoice.status === "exported") {
-          alert("✅ Hóa đơn đã được hủy thành công. Tồn kho đã được hoàn lại.");
-        } else if (newStatus === "exported") {
-          alert(
-            "✅ Hóa đơn đã được xuất kho thành công. Tồn kho đã được cập nhật."
-          );
+    showConfirm({
+      title: `${
+        actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1)
+      } đơn hàng`,
+      description,
+      confirmText:
+        actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1),
+      cancelText: "Hủy",
+      variant,
+      onConfirm: async () => {
+        try {
+          await changeOrderStatus(order.id, newStatus);
+          refreshOrders();
+
+          // Show success message based on status
+          if (newStatus === "cancelled" && order.status === "exported") {
+            toast.success(
+              `Đơn hàng đã được hủy thành công. Tồn kho đã được hoàn lại.`
+            );
+          } else if (newStatus === "exported") {
+            toast.success(
+              `Đơn hàng đã được xuất kho thành công. Tồn kho đã được cập nhật.`
+            );
+          } else {
+            toast.success(`Đơn hàng đã được ${actionMessage} thành công.`);
+          }
+        } catch (error) {
+          console.error("Error changing status:", error);
+          // Show error toast
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Có lỗi xảy ra khi thay đổi trạng thái đơn hàng";
+          toast.error(errorMessage);
         }
-      } catch (error) {
-        console.error("Error changing status:", error);
-        if (error instanceof Error) {
-          alert(`❌ Lỗi: ${error.message}`);
-        } else {
-          alert("❌ Có lỗi xảy ra khi thay đổi trạng thái hóa đơn");
-        }
-      }
-    }
+      },
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -149,7 +173,7 @@ export function InvoicesListPage() {
   };
 
   // Helper function to get status icon
-  const getStatusIcon = (status: InvoiceStatus) => {
+  const getStatusIcon = (status: OrderStatus) => {
     const statusIcons = {
       draft: FileEdit,
       confirmed: CheckCircle,
@@ -162,11 +186,11 @@ export function InvoicesListPage() {
   };
 
   // Define table columns
-  const columns: ResponsiveTableColumn<Invoice>[] = [
+  const columns: ResponsiveTableColumn<Order>[] = [
     {
-      key: "invoiceNumber",
-      title: "Số hóa đơn",
-      dataIndex: "invoiceNumber",
+      key: "orderNumber",
+      title: "Số đơn hàng",
+      dataIndex: "orderNumber",
       render: (value) => (
         <div className="font-medium text-blue-600">{value as string}</div>
       ),
@@ -182,12 +206,12 @@ export function InvoicesListPage() {
       title: "Trạng thái",
       dataIndex: "status",
       render: (value) => {
-        const status = value as InvoiceStatus;
+        const status = value as OrderStatus;
         const StatusIcon = getStatusIcon(status);
         return (
-          <Badge variant={INVOICE_STATUS_COLORS[status]} className="gap-1">
+          <Badge variant={ORDER_STATUS_COLORS[status]} className="gap-1">
             <StatusIcon className="h-3 w-3" />
-            {INVOICE_STATUS_LABELS[status]}
+            {ORDER_STATUS_LABELS[status]}
           </Badge>
         );
       },
@@ -196,7 +220,7 @@ export function InvoicesListPage() {
       key: "inventoryStatus",
       title: "Tồn kho",
       render: (_, record) => {
-        const status = record.status as InvoiceStatus;
+        const status = record.status as OrderStatus;
         if (status === "exported") {
           return (
             <Tooltip>
@@ -285,7 +309,7 @@ export function InvoicesListPage() {
             {/* View Details */}
             <DropdownMenuItem
               onClick={() => {
-                setSelectedInvoice(record);
+                setSelectedOrder(record);
                 setShowDetailDialog(true);
               }}
             >
@@ -297,7 +321,7 @@ export function InvoicesListPage() {
             {record.status === "draft" && (
               <DropdownMenuItem
                 onClick={() => {
-                  setSelectedInvoice(record);
+                  setSelectedOrder(record);
                   setShowFormDialog(true);
                 }}
               >
@@ -366,7 +390,7 @@ export function InvoicesListPage() {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-sm">
-                      ⚠️ Hủy hóa đơn đã xuất kho sẽ hoàn lại tồn kho
+                      ⚠️ Hủy đơn hàng đã xuất kho sẽ hoàn lại tồn kho
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -396,11 +420,11 @@ export function InvoicesListPage() {
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => handleDeleteInvoice(record)}
+                  onClick={() => handleDeleteOrder(record)}
                   className="text-red-600 focus:text-red-600"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Xóa hóa đơn
+                  Xóa đơn hàng
                 </DropdownMenuItem>
               </>
             )}
@@ -417,7 +441,7 @@ export function InvoicesListPage() {
           <CardContent className="flex items-center justify-center h-96">
             <div className="text-center">
               <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={refreshInvoices}>Thử lại</Button>
+              <Button onClick={refreshOrders}>Thử lại</Button>
             </div>
           </CardContent>
         </Card>
@@ -433,21 +457,21 @@ export function InvoicesListPage() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6" />
-              Quản lý hóa đơn
+              Quản lý đơn hàng
             </h1>
             <p className="text-muted-foreground">
-              Quản lý hóa đơn bán hàng và xuất kho
+              Quản lý đơn hàng bán hàng và xuất kho
             </p>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={() => setShowFormDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Tạo hóa đơn mới
+                Tạo đơn hàng mới
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Tạo hóa đơn bán hàng mới</p>
+              <p>Tạo đơn hàng mới</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -465,7 +489,7 @@ export function InvoicesListPage() {
               <div className="flex-1">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Tìm theo số hóa đơn hoặc tên khách hàng..."
+                    placeholder="Tìm theo số đơn hàng hoặc tên khách hàng..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -478,7 +502,7 @@ export function InvoicesListPage() {
               <Select
                 value={filters.status || "all"}
                 onValueChange={(value) =>
-                  handleStatusFilter(value as InvoiceStatus | "all")
+                  handleStatusFilter(value as OrderStatus | "all")
                 }
               >
                 <SelectTrigger className="w-48">
@@ -500,14 +524,14 @@ export function InvoicesListPage() {
         {/* Table */}
         <div>
           <ResponsiveTable
-            dataSource={invoices}
+            dataSource={orders}
             columns={columns}
             loading={loading}
-            emptyText="Không có hóa đơn nào"
+            emptyText="Không có đơn hàng nào"
           />
           {hasMore && !loading && (
             <div className="p-4 text-center">
-              <Button variant="outline" onClick={loadMoreInvoices}>
+              <Button variant="outline" onClick={loadMoreOrders}>
                 Tải thêm
               </Button>
             </div>
@@ -516,26 +540,34 @@ export function InvoicesListPage() {
 
         {/* Dialogs */}
         {showFormDialog && (
-          <InvoiceFormDialog
+          <OrderFormDialog
             open={showFormDialog}
             onOpenChange={(open) => {
               setShowFormDialog(open);
               if (!open) {
-                setSelectedInvoice(null);
+                setSelectedOrder(null);
               }
             }}
-            editInvoice={selectedInvoice}
+            editOrder={selectedOrder}
             onSuccess={() => {
-              refreshInvoices();
+              refreshOrders();
               setShowFormDialog(false);
-              setSelectedInvoice(null);
+              setSelectedOrder(null);
+              toast.success(
+                `Đơn hàng đã được ${
+                  selectedOrder ? "cập nhật" : "tạo"
+                } thành công.`
+              );
             }}
           />
         )}
 
-        {selectedInvoice && showDetailDialog && (
+        {selectedOrder && showDetailDialog && (
           <div>Detail Dialog - To be implemented</div>
         )}
+
+        {/* Confirm Dialog */}
+        {ConfirmDialog}
       </div>
     </TooltipProvider>
   );
