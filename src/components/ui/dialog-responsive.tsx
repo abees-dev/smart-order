@@ -26,7 +26,7 @@ export interface DialogFormProps {
   onOpenChange: (open: boolean) => void;
   className?: string;
   actions?: {
-    submit: {
+    submit?: {
       label: string;
       onClick?: () => void;
       loading?: boolean;

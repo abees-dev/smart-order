@@ -1,5 +1,6 @@
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -14,8 +15,13 @@ interface FormTextFieldProps {
   control?: Control<any, any, any> | undefined;
   label?: string;
   placeholder?: string;
-  type?: "text" | "area" | "number";
+  type?: "text" | "textarea" | "number";
   required?: boolean;
+  helpText?: string;
+  rows?: number;
+  min?: string; // for number type
+  step?: string; // for number type
+  value?: string | number;
 }
 
 const FormTextField = ({
@@ -25,6 +31,11 @@ const FormTextField = ({
   placeholder,
   type = "text",
   required = false,
+  helpText,
+  rows = 3,
+  min = "0",
+  step = "1",
+  value,
 }: FormTextFieldProps) => {
   return (
     <FormField
@@ -34,10 +45,33 @@ const FormTextField = ({
         const renderInputType = () => {
           if (type === "text") {
             return <Input placeholder={placeholder} {...field} />;
-          } else if (type === "area") {
-            return <Textarea placeholder={placeholder} {...field} />;
-          } else {
-            return <Input placeholder={placeholder} {...field} />;
+          } else if (type === "textarea") {
+            return (
+              <Textarea rows={rows} placeholder={placeholder} {...field} />
+            );
+          } else if (type === "number") {
+            return (
+              <Input
+                type="number"
+                min={min}
+                step={step}
+                placeholder={placeholder}
+                {...field}
+                value={value as number}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow empty string to let user clear the field
+                  if (value === "") {
+                    field.onChange(0);
+                    return;
+                  }
+                  const parsedValue = parseFloat(value);
+                  if (!isNaN(parsedValue)) {
+                    field.onChange(parsedValue);
+                  }
+                }}
+              />
+            );
           }
         };
         return (
@@ -50,6 +84,7 @@ const FormTextField = ({
             )}
             <FormControl>{renderInputType()}</FormControl>
             <FormMessage />
+            {helpText && <FormDescription>{helpText}</FormDescription>}
           </FormItem>
         );
       }}

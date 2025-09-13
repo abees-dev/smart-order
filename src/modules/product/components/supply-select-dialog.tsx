@@ -57,13 +57,13 @@ export function SupplySelectDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl p-0">
+        <DialogHeader className="px-4 pt-4">
           <DialogTitle>Chọn vật tư</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 px-4">
             <Input
               placeholder="Tìm kiếm vật tư..."
               value={searchTerm}
@@ -81,7 +81,7 @@ export function SupplySelectDialog({
                 <SelectItem value="all">Tất cả danh mục</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {category}
+                    {SUPPLY_CATEGORY_MAP[category] || category}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -91,7 +91,7 @@ export function SupplySelectDialog({
           {loading ? (
             <div className="text-center py-8">Đang tải...</div>
           ) : (
-            <div className="max-h-96 overflow-y-auto space-y-2">
+            <div className="max-h-96 overflow-y-auto space-y-2 px-4 pb-4">
               {filteredSupplies.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Không tìm thấy vật tư nào

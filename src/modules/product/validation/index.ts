@@ -13,8 +13,8 @@ export const createProductSchema = z.object({
     .min(2, "Mã sản phẩm phải có ít nhất 2 ký tự")
     .max(20, "Mã sản phẩm không được quá 20 ký tự")
     .regex(
-      /^[A-Z0-9-_]+$/i,
-      "Mã sản phẩm chỉ được chứa chữ cái, số, dấu gạch ngang và gạch dưới"
+      /^[A-Z0-9-_.]+$/i,
+      "Mã sản phẩm chỉ được chứa chữ cái, số, dấu gạch ngang, gạch dưới và dấu chấm"
     ),
   name: z.string().min(2, "Tên sản phẩm phải có ít nhất 2 ký tự"),
   description: z.string().optional(),
