@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { useCustomerActions } from "../hooks/use-customer";
 import {
   createCustomerSchema,
@@ -109,6 +108,7 @@ export function CustomerFormDialog({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 sm:space-y-6"
         noValidate
+        id="customer-form"
       >
         {error && (
           <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
@@ -153,7 +153,7 @@ export function CustomerFormDialog({
           type="area"
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
           <FormTextField
             control={form.control}
             name="city"
@@ -169,7 +169,7 @@ export function CustomerFormDialog({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
           <FormTextField
             control={form.control}
             name="country"
@@ -190,25 +190,6 @@ export function CustomerFormDialog({
           placeholder={t("customers.notesPlaceholder")}
           label={t("customers.notes")}
         />
-
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-            className="w-full sm:w-auto"
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-            {loading
-              ? t("common.loading")
-              : isEditing
-              ? t("common.update")
-              : t("common.create")}
-          </Button>
-        </div>
       </form>
     </Form>
   );
@@ -226,6 +207,19 @@ export function CustomerFormDialog({
           : t("customers.addCustomerDescription")
       }
       className="sm:max-w-[600px]"
+      actions={{
+        cancel: {
+          label: t("common.cancel"),
+          onClick: () => onOpenChange(false),
+          disabled: loading,
+        },
+        submit: {
+          label: isEditing ? t("common.update") : t("common.create"),
+          onClick: () => form.handleSubmit(onSubmit)(),
+          disabled: loading,
+        },
+      }}
+      formId="customer-form"
     >
       {formContent}
     </DialogResponsive>
