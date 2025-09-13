@@ -103,35 +103,6 @@ export function SupplierFilterSheet({
     (value) => value !== undefined && value !== ""
   ).length;
 
-  // Common cities for suggestions
-  const commonCities = [
-    "Hà Nội",
-    "Hồ Chí Minh",
-    "Đà Nẵng",
-    "Hải Phòng",
-    "Cần Thơ",
-    "Nha Trang",
-    "Huế",
-    "Vũng Tàu",
-  ];
-
-  // Common countries for suggestions
-  const commonCountries = [
-    "Vietnam",
-    "Việt Nam",
-    "Trung Quốc",
-    "China",
-    "Nhật Bản",
-    "Japan",
-    "Hàn Quốc",
-    "Korea",
-    "Thái Lan",
-    "Thailand",
-    "Singapore",
-    "Malaysia",
-    "Indonesia",
-  ];
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
@@ -167,58 +138,6 @@ export function SupplierFilterSheet({
                       {...field}
                     />
                   </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("suppliers.city")}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("suppliers.selectCity")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">{t("common.all")}</SelectItem>
-                      {commonCities.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("suppliers.country")}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t("suppliers.selectCountry")}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">{t("common.all")}</SelectItem>
-                      {commonCountries.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </FormItem>
               )}
             />

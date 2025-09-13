@@ -63,7 +63,10 @@
     "loadMore": "Tải thêm",
     "deleting": "Đang xóa...",
     "all": "Tất cả",
-    "status": "Trạng thái"
+    "status": "Trạng thái",
+    "metadata": "Dữ liệu phụ",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật"
   },
   "orders": {
     "title": "Đơn hàng",

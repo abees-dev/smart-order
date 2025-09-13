@@ -1,32 +1,11 @@
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Pencil,
-  Phone,
-  MapPin,
-  Building2,
-  CreditCard,
-  FileText,
-} from "lucide-react";
+import { Phone, MapPin, Building2, CreditCard, FileText } from "lucide-react";
 import type { Supplier } from "../types";
 import type { Timestamp } from "firebase/firestore";
+import DialogResponsive from "@/components/ui/dialog-responsive";
 
 interface SupplierDetailDialogProps {
   open: boolean;
@@ -39,17 +18,10 @@ export function SupplierDetailDialog({
   open,
   onOpenChange,
   supplier,
-  onEdit,
 }: SupplierDetailDialogProps) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
 
   if (!supplier) return null;
-
-  const handleEdit = () => {
-    onEdit?.(supplier);
-    onOpenChange(false);
-  };
 
   const formatDate = (timestamp: Timestamp) => {
     if (!timestamp?.toDate) return "-";
@@ -66,12 +38,6 @@ export function SupplierDetailDialog({
             {supplier.isActive ? t("common.active") : t("common.inactive")}
           </Badge>
         </div>
-        {onEdit && (
-          <Button variant="outline" size="sm" onClick={handleEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            {t("common.edit")}
-          </Button>
-        )}
       </div>
 
       <Separator />
@@ -118,10 +84,12 @@ export function SupplierDetailDialog({
         </h4>
         <div className="grid grid-cols-1 gap-4 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground flex-1">
               {t("suppliers.address")}:
             </span>
-            <span className="font-medium text-right">{supplier.address}</span>
+            <span className="font-medium text-right text-wrap w-[340px]">
+              {supplier.address}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">
@@ -220,7 +188,6 @@ export function SupplierDetailDialog({
 
       {/* Metadata */}
       <div className="space-y-4">
-        <h4 className="font-medium">{t("common.metadata")}</h4>
         <div className="grid grid-cols-1 gap-4 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">
@@ -243,35 +210,20 @@ export function SupplierDetailDialog({
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>{t("suppliers.supplierDetails")}</DrawerTitle>
-            <DrawerDescription>
-              {t("suppliers.supplierDetailsDescription")}
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
-            {detailContent}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("suppliers.supplierDetails")}</DialogTitle>
-          <DialogDescription>
-            {t("suppliers.supplierDetailsDescription")}
-          </DialogDescription>
-        </DialogHeader>
-        {detailContent}
-      </DialogContent>
-    </Dialog>
+    <DialogResponsive
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("suppliers.supplierDetails")}
+      description={t("suppliers.supplierDetailsDescription")}
+      actions={{
+        cancel: {
+          label: t("common.close"),
+          onClick: () => onOpenChange(false),
+        },
+      }}
+    >
+      {detailContent}
+    </DialogResponsive>
   );
 }
