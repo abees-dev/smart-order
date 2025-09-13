@@ -65,7 +65,9 @@ export function CustomersListPage() {
       title: t("customers.customerInfo"),
       render: (_, record: Customer) => (
         <div className="space-y-1">
-          <div className="font-semibold text-foreground">{record.name}</div>
+          <div className="font-semibold text-foreground line-clamp-2 ">
+            {record.name}
+          </div>
           {record.email && (
             <div className="text-sm text-muted-foreground">{record.email}</div>
           )}

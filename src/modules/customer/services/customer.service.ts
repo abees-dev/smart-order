@@ -308,6 +308,12 @@ export class CustomerService {
         cleaned.notes = data.notes;
       }
     }
+    if (data.customerCode !== undefined) {
+      cleaned.customerCode = data.customerCode.trim();
+    }
+    if (data.taxCode !== undefined) {
+      cleaned.taxCode = data.taxCode.trim();
+    }
 
     return cleaned;
   }
