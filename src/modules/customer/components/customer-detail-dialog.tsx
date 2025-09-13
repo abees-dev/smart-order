@@ -8,24 +8,11 @@ import {
   FileText,
   User,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useIsMobile } from "@/hooks/use-mobile";
 import type { Customer } from "../types";
+import DialogResponsive from "@/components/ui/dialog-responsive";
 
 interface CustomerDetailDialogProps {
   open: boolean;
@@ -39,7 +26,6 @@ export function CustomerDetailDialog({
   customer,
 }: CustomerDetailDialogProps) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
 
   if (!customer) return null;
 
@@ -176,41 +162,14 @@ export function CustomerDetailDialog({
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader className="text-left">
-            <DrawerTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              {t("customers.customerDetails")}
-            </DrawerTitle>
-            <DrawerDescription>
-              {t("customers.customerDetailsDescription")}
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-4 max-h-[80vh] overflow-y-auto">
-            {detailsContent}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            {t("customers.customerDetails")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("customers.customerDetailsDescription")}
-          </DialogDescription>
-        </DialogHeader>
-        {detailsContent}
-      </DialogContent>
-    </Dialog>
+    <DialogResponsive
+      title={t("customers.customerDetails")}
+      description={t("customers.customerDetailsDescription")}
+      open={open}
+      onOpenChange={onOpenChange}
+    >
+      {detailsContent}
+    </DialogResponsive>
   );
 }

@@ -10,6 +10,8 @@ export interface Customer {
   country: string;
   contactPerson?: string;
   notes?: string;
+  customerCode?: string;
+  taxCode?: string;
   isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -24,6 +26,8 @@ export interface CreateCustomerData {
   country: string;
   contactPerson?: string;
   notes?: string;
+  customerCode?: string;
+  taxCode?: string;
 }
 
 export interface UpdateCustomerData extends Partial<CreateCustomerData> {

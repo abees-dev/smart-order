@@ -41,6 +41,16 @@ export const createCustomerSchema = z.object({
     .max(500, "Ghi chú không được vượt quá 500 ký tự")
     .optional()
     .or(z.literal("")),
+  customerCode: z
+    .string()
+    .max(100, "Mã khách hàng không vượt quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
+  taxCode: z
+    .string()
+    .max(100, "Mã số thuế không vượt quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
 });
 
 export const updateCustomerSchema = createCustomerSchema.partial().extend({

@@ -145,7 +145,11 @@
     "selectStatus": "Select status",
     "clearFilters": "Clear Filters",
     "applyFilters": "Apply Filters",
-    "activeFilters": "Active Filters"
+    "activeFilters": "Active Filters",
+    "customerCode": "Customer Code",
+    "customerCodePlaceholder": "Enter customer code",
+    "taxCode": "Tax Code",
+    "taxCodePlaceholder": "Enter tax code"
   },
   "suppliers": {
     "title": "Suppliers",

@@ -146,7 +146,11 @@
     "selectStatus": "Chọn trạng thái",
     "clearFilters": "Xóa bộ lọc",
     "applyFilters": "Áp dụng bộ lọc",
-    "activeFilters": "Bộ lọc đang áp dụng"
+    "activeFilters": "Bộ lọc đang áp dụng",
+    "customerCode": "Mã khách hàng",
+    "customerCodePlaceholder": "Nhập mã khách hàng",
+    "taxCode": "Mã số thuế",
+    "taxCodePlaceholder": "Nhập mã số thuế"
   },
   "suppliers": {
     "title": "Nhà cung cấp",
