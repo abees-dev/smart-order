@@ -359,7 +359,6 @@ export function OrdersListPage() {
       </div>
     );
   }
-  console.log("orders", orders);
 
   return (
     <div className="p-6 space-y-6">

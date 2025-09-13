@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { Timestamp } from "firebase/firestore";
 
 export interface TableAction<T> {
   key: string;
@@ -355,6 +356,10 @@ export function useEnhancedTableColumns<T>() {
       width: 120,
       render: (value) => {
         if (!value) return "-";
+        if (value instanceof Timestamp) {
+          const date = value.toDate();
+          return date.toLocaleDateString("vi-VN");
+        }
         const date = value instanceof Date ? value : new Date(String(value));
         return date.toLocaleDateString("vi-VN");
       },

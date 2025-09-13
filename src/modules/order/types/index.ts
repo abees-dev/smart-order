@@ -73,6 +73,8 @@ export interface OrderListState {
   error: string | null;
   hasMore: boolean;
   total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface OrderFormState {

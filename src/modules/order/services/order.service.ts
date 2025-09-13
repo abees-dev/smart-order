@@ -14,6 +14,7 @@ import {
   Timestamp,
   DocumentSnapshot,
   QueryConstraint,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import type {
@@ -32,7 +33,7 @@ const STOCK_MOVEMENTS_COLLECTION = "stock_movements";
 export class OrderService {
   private static ordersRef = collection(db, ORDER_COLLECTION);
 
-  // Get all orders with filters and pagination
+  // Get all orders with filters and pagination (infinite loading)
   static async getAllOrders(
     filters: OrderFilters = {},
     pageSize = 20,
@@ -45,7 +46,7 @@ export class OrderService {
     try {
       const constraints: QueryConstraint[] = [
         orderBy("createdAt", "desc"),
-        limit(pageSize + 1),
+        limit(pageSize),
       ];
 
       // Apply filters
@@ -75,12 +76,14 @@ export class OrderService {
 
       const q = query(this.ordersRef, ...constraints);
       const querySnapshot = await getDocs(q);
-      const docs = querySnapshot.docs;
 
-      let orders = docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Order[];
+      let orders: Order[] = [];
+      querySnapshot.forEach((doc) => {
+        orders.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Order);
+      });
 
       // Client-side search filter (for order number and customer name)
       if (filters.search) {
@@ -93,19 +96,158 @@ export class OrderService {
         );
       }
 
-      const hasMore = orders.length > pageSize;
-      if (hasMore) {
-        orders = orders.slice(0, pageSize);
-      }
+      const hasMore = querySnapshot.docs.length === pageSize;
+      const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
 
       return {
         orders,
         hasMore,
-        lastDoc: orders.length > 0 ? docs[orders.length - 1] : undefined,
+        lastDoc: newLastDoc,
       };
     } catch (error) {
       console.error("Error fetching orders:", error);
-      throw new Error("Không thể tải danh sách đơn hàng");
+      return {
+        orders: [],
+        hasMore: false,
+        lastDoc: undefined,
+      };
+    }
+  }
+
+  // Get orders with traditional pagination (desktop)
+  static async getOrdersWithPagination(
+    filters: OrderFilters = {},
+    pageSize = 20,
+    page = 1
+  ): Promise<{
+    orders: Order[];
+    hasMore: boolean;
+    total: number;
+    lastDoc?: DocumentSnapshot;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [orderBy("createdAt", "desc")];
+
+      // Apply filters (excluding search for now)
+      if (filters.status) {
+        constraints.push(where("status", "==", filters.status));
+      }
+
+      if (filters.customerId) {
+        constraints.push(where("customerId", "==", filters.customerId));
+      }
+
+      if (filters.dateFrom) {
+        constraints.push(
+          where("createdAt", ">=", Timestamp.fromDate(filters.dateFrom))
+        );
+      }
+
+      if (filters.dateTo) {
+        constraints.push(
+          where("createdAt", "<=", Timestamp.fromDate(filters.dateTo))
+        );
+      }
+
+      // Get total count (without search filter for performance)
+      let total = 0;
+      if (!filters.search) {
+        const countQuery = query(this.ordersRef, ...constraints);
+        const countSnapshot = await getCountFromServer(countQuery);
+        total = countSnapshot.data().count;
+      }
+
+      // Get paginated data
+      const skip = (page - 1) * pageSize;
+      constraints.push(limit(pageSize));
+
+      let querySnapshot;
+      if (skip > 0) {
+        const skipQuery = query(
+          this.ordersRef,
+          ...constraints.slice(0, -1),
+          limit(skip)
+        );
+        const skipSnapshot = await getDocs(skipQuery);
+        if (skipSnapshot.docs.length > 0) {
+          const lastSkipDoc = skipSnapshot.docs[skipSnapshot.docs.length - 1];
+          const paginatedQuery = query(
+            this.ordersRef,
+            ...constraints.slice(0, -1),
+            startAfter(lastSkipDoc),
+            limit(pageSize)
+          );
+          querySnapshot = await getDocs(paginatedQuery);
+        } else {
+          return {
+            orders: [],
+            hasMore: false,
+            total: 0,
+            lastDoc: undefined,
+          };
+        }
+      } else {
+        const paginatedQuery = query(this.ordersRef, ...constraints);
+        querySnapshot = await getDocs(paginatedQuery);
+      }
+
+      let orders: Order[] = [];
+      querySnapshot.forEach((doc) => {
+        orders.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Order);
+      });
+
+      // Apply client-side search filter if needed
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        orders = orders.filter(
+          (order) =>
+            order.orderNumber.toLowerCase().includes(searchLower) ||
+            (order.customerName &&
+              order.customerName.toLowerCase().includes(searchLower))
+        );
+
+        // For search, we need to estimate total by loading all data
+        if (total === 0) {
+          const allQuery = query(this.ordersRef, ...constraints.slice(0, -1));
+          const allSnapshot = await getDocs(allQuery);
+          let allOrders: Order[] = [];
+          allSnapshot.forEach((doc) => {
+            allOrders.push({
+              id: doc.id,
+              ...doc.data(),
+            } as Order);
+          });
+
+          allOrders = allOrders.filter(
+            (order) =>
+              order.orderNumber.toLowerCase().includes(searchLower) ||
+              (order.customerName &&
+                order.customerName.toLowerCase().includes(searchLower))
+          );
+          total = allOrders.length;
+        }
+      }
+
+      const hasMore = skip + orders.length < total;
+      const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+      return {
+        orders,
+        hasMore,
+        total,
+        lastDoc: newLastDoc,
+      };
+    } catch (error) {
+      console.error("Error getting orders with pagination:", error);
+      return {
+        orders: [],
+        hasMore: false,
+        total: 0,
+        lastDoc: undefined,
+      };
     }
   }
 

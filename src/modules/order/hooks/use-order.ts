@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { DocumentSnapshot } from "firebase/firestore";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type {
   CreateOrderData,
   Order,
@@ -12,68 +13,168 @@ import type {
 import { OrderService } from "../services/order.service";
 
 // Hook for managing order list with filters and pagination
-export function useOrders(filters: OrderFilters = {}, pageSize = 20) {
+export function useOrders(filters: OrderFilters = {}, pageSize = 8) {
+  const isMobile = useIsMobile();
+
   const [state, setState] = useState<OrderListState>({
     orders: [],
     loading: true,
     error: null,
-    hasMore: false,
     total: 0,
+    page: 1,
+    pageSize,
+    hasMore: false,
   });
 
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot>();
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchOrders = useCallback(
-    async (reset = false) => {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
+  const loadOrders = useCallback(
+    async (reset = false, targetPage = 1) => {
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        error: null,
+      }));
 
       try {
-        const docToUse = reset ? undefined : lastDoc;
-        const {
-          orders: newOrders,
-          hasMore,
-          lastDoc: newLastDoc,
-        } = await OrderService.getAllOrders(filters, pageSize, docToUse);
+        let result;
+
+        if (isMobile) {
+          // Mobile: Use infinite loading with Firestore pagination
+          result = await OrderService.getAllOrders(
+            filters,
+            pageSize,
+            reset ? undefined : lastDoc || undefined
+          );
+        } else {
+          // Desktop: Use traditional pagination
+          result = await OrderService.getOrdersWithPagination(
+            filters,
+            pageSize,
+            targetPage
+          );
+        }
+
+        const orders = result.orders;
+        const newHasMore = result.hasMore;
+        const newLastDoc = result.lastDoc;
+        const newTotal =
+          "total" in result ? (result.total as number) : undefined;
 
         setState((prev) => ({
           ...prev,
-          orders: reset ? newOrders : [...prev.orders, ...newOrders],
-          hasMore,
-          total: reset ? newOrders.length : prev.total + newOrders.length,
+          orders: isMobile && !reset ? [...prev.orders, ...orders] : orders,
           loading: false,
+          total:
+            newTotal !== undefined
+              ? newTotal
+              : reset
+              ? orders.length
+              : prev.total + orders.length,
+          page: isMobile ? (reset ? 1 : prev.page + 1) : targetPage,
         }));
 
-        setLastDoc(newLastDoc);
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+
+        return { success: true };
       } catch (error) {
         setState((prev) => ({
           ...prev,
-          error: error instanceof Error ? error.message : "Đã có lỗi xảy ra",
           loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
         }));
+
+        return { success: false, error };
       }
     },
-    [filters, pageSize, lastDoc]
+    [filters, pageSize, lastDoc, isMobile]
   );
 
-  const refreshOrders = useCallback(() => {
-    setLastDoc(undefined);
-    fetchOrders(true);
-  }, [fetchOrders]);
+  const refreshOrders = useCallback(async () => {
+    setLastDoc(null);
+    setHasMore(true);
+    await loadOrders(true, 1);
+  }, [loadOrders]);
 
-  const loadMoreOrders = useCallback(() => {
-    if (state.hasMore && !state.loading) {
-      fetchOrders(false);
+  const loadMore = useCallback(async () => {
+    if (!state.loading && hasMore && isMobile && !loadingMore) {
+      setLoadingMore(true);
+      try {
+        await loadOrders(false);
+      } finally {
+        setLoadingMore(false);
+      }
     }
-  }, [fetchOrders, state.hasMore, state.loading]);
+  }, [state.loading, hasMore, isMobile, loadingMore, loadOrders]);
 
+  const changePage = useCallback(
+    async (newPage: number) => {
+      if (!isMobile) {
+        await loadOrders(true, newPage);
+      }
+    },
+    [isMobile, loadOrders]
+  );
+
+  // Load initial data
   useEffect(() => {
-    refreshOrders();
-  }, [filters]);
+    const loadData = async () => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+      setLastDoc(null);
+      setHasMore(true);
+
+      try {
+        let result;
+
+        if (isMobile) {
+          result = await OrderService.getAllOrders(filters, pageSize);
+        } else {
+          result = await OrderService.getOrdersWithPagination(
+            filters,
+            pageSize,
+            1
+          );
+        }
+
+        const { orders, hasMore: newHasMore, lastDoc: newLastDoc } = result;
+        const total =
+          "total" in result ? (result.total as number) : orders.length;
+
+        setState({
+          orders,
+          loading: false,
+          error: null,
+          total,
+          page: 1,
+          pageSize,
+          hasMore: newHasMore,
+        });
+
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+        }));
+      }
+    };
+
+    loadData();
+  }, [JSON.stringify(filters), pageSize, isMobile]);
 
   return {
     ...state,
+    hasMore,
+    loadMore,
     refreshOrders,
-    loadMoreOrders,
+    changePage,
+    isMobile,
+    loadingMore,
   };
 }
 

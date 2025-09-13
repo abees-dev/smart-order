@@ -1,0 +1,658 @@
+import { useState } from "react";
+import {
+  FileText,
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  MoreHorizontal,
+  CheckCircle,
+  Truck,
+  Package,
+  X,
+  AlertCircle,
+  FileEdit,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  EnhancedTable,
+  useEnhancedTableColumns,
+  type ResponsiveTableColumn,
+  type TableAction,
+} from "@/components/tables";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
+import { OrderFormDialog } from "./order-form-dialog";
+import {
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  type Order,
+  type OrderFilters,
+  type OrderStatus,
+} from "../types";
+import { useOrderActions, useOrders } from "../hooks/use-order";
+// import { InvoiceDetailDialog } from "./invoice-detail-dialog";
+
+export function OrdersListPage() {
+  const [filters, setFilters] = useState<OrderFilters>({});
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
+
+  const {
+    orders,
+    loading,
+    error,
+    hasMore,
+    refreshOrders,
+    loadMore,
+    changePage,
+    isMobile,
+    loadingMore,
+    page,
+    total,
+    pageSize,
+  } = useOrders(filters);
+
+  const { deleteOrder, changeOrderStatus } = useOrderActions();
+  const { createColumn, createCurrencyColumn, createDateColumn } =
+    useEnhancedTableColumns<Order>();
+
+  const handleSearch = (value: string) => {
+    setFilters((prev) => ({ ...prev, search: value || undefined }));
+  };
+
+  const handleStatusFilter = (status: OrderStatus | "all") => {
+    setFilters((prev) => ({
+      ...prev,
+      status: status === "all" ? undefined : status,
+    }));
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    showConfirm({
+      title: "Xác nhận xóa đơn hàng",
+      description: `Bạn có chắc chắn muốn xóa đơn ${order.orderNumber}?\n\nHành động này không thể hoàn tác.`,
+      confirmText: "Xóa đơn hàng",
+      cancelText: "Hủy",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await deleteOrder(order.id);
+          refreshOrders();
+          toast.success("Hóa đơn đã được xóa thành công.");
+        } catch (error) {
+          console.error("Error deleting order:", error);
+          toast.error("Có lỗi xảy ra khi xóa đơn hàng.");
+        }
+      },
+    });
+  };
+
+  const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
+    const statusMessages: Record<Exclude<OrderStatus, "draft">, string> = {
+      confirmed: "xác nhận",
+      exported: "xuất kho",
+      completed: "hoàn thành",
+      cancelled: "hủy",
+    };
+
+    const actionMessage =
+      statusMessages[newStatus as keyof typeof statusMessages];
+
+    // Build description based on status
+    let description = `Bạn có chắc chắn muốn ${actionMessage} đơn hàng ${order.orderNumber}?`;
+
+    if (newStatus === "cancelled" && order.status === "exported") {
+      description +=
+        "\n\n⚠️ Đơn hàng này đã được xuất kho. Khi hủy, hệ thống sẽ tự động hoàn lại số tồn kho của các vật tư đã xuất.";
+    } else if (newStatus === "exported") {
+      description +=
+        "\n\n📦 Hệ thống sẽ tự động trừ tồn kho của các vật tư trong đơn hàng này.";
+    }
+
+    // Determine variant based on action
+    const variant = newStatus === "cancelled" ? "destructive" : "warning";
+
+    showConfirm({
+      title: `${
+        actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1)
+      } đơn hàng`,
+      description,
+      confirmText:
+        actionMessage.charAt(0).toUpperCase() + actionMessage.slice(1),
+      cancelText: "Hủy",
+      variant,
+      onConfirm: async () => {
+        try {
+          await changeOrderStatus(order.id, newStatus);
+          refreshOrders();
+
+          // Show success message based on status
+          if (newStatus === "cancelled" && order.status === "exported") {
+            toast.success(
+              `Đơn hàng đã được hủy thành công. Tồn kho đã được hoàn lại.`
+            );
+          } else if (newStatus === "exported") {
+            toast.success(
+              `Đơn hàng đã được xuất kho thành công. Tồn kho đã được cập nhật.`
+            );
+          } else {
+            toast.success(`Đơn hàng đã được ${actionMessage} thành công.`);
+          }
+        } catch (error) {
+          console.error("Error changing status:", error);
+          // Show error toast
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Có lỗi xảy ra khi thay đổi trạng thái đơn hàng";
+          toast.error(errorMessage);
+        }
+      },
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount);
+  };
+
+  // Helper function to get status icon
+  const getStatusIcon = (status: OrderStatus) => {
+    const statusIcons = {
+      draft: FileEdit,
+      confirmed: CheckCircle,
+      exported: Truck,
+      completed: Package,
+      cancelled: X,
+    };
+
+    return statusIcons[status];
+  };
+
+  // Define table columns
+  const columns: ResponsiveTableColumn<Order>[] = [
+    createColumn({
+      key: "orderInfo",
+      title: "Thông tin đơn hàng",
+      render: (_, record: Order) => (
+        <div className="space-y-1">
+          <div className="font-medium text-blue-600">{record.orderNumber}</div>
+          <div className="text-sm text-muted-foreground">
+            {record.customerName || "Khách lẻ"}
+          </div>
+          <div className="sm:hidden">
+            <Badge variant={ORDER_STATUS_COLORS[record.status]} className="gap-1">
+              {(() => {
+                const StatusIcon = getStatusIcon(record.status);
+                return <StatusIcon className="h-3 w-3" />;
+              })()}
+              {ORDER_STATUS_LABELS[record.status]}
+            </Badge>
+          </div>
+        </div>
+      ),
+    }),
+    createColumn({
+      key: "orderNumber",
+      title: "Số đơn hàng",
+      dataIndex: "orderNumber",
+      responsive: false,
+      render: (value) => (
+        <div className="font-medium text-blue-600">{value as string}</div>
+      ),
+    }),
+    createColumn({
+      key: "customerName",
+      title: "Khách hàng",
+      dataIndex: "customerName",
+      responsive: false,
+      render: (value) => <div>{(value as string) || "Khách lẻ"}</div>,
+    }),
+    createColumn({
+      key: "status",
+      title: "Trạng thái",
+      dataIndex: "status",
+      responsive: false,
+      align: "center",
+      width: 120,
+      render: (value) => {
+        const status = value as OrderStatus;
+        const StatusIcon = getStatusIcon(status);
+        return (
+          <Badge variant={ORDER_STATUS_COLORS[status]} className="gap-1">
+            <StatusIcon className="h-3 w-3" />
+            {ORDER_STATUS_LABELS[status]}
+          </Badge>
+        );
+      },
+    }),
+    createCurrencyColumn("totalAmount", "Tổng tiền"),
+    createDateColumn("createdAt", "Ngày tạo"),
+  ];
+
+  // Define table actions
+  const tableActions: TableAction<Order>[] = [
+    {
+      key: "view",
+      label: "Xem chi tiết",
+      icon: Eye,
+      onClick: (record) => {
+        setSelectedOrder(record);
+        setShowDetailDialog(true);
+      },
+    },
+    {
+      key: "edit",
+      label: "Chỉnh sửa",
+      icon: Edit,
+      onClick: (record) => {
+        setSelectedOrder(record);
+        setShowFormDialog(true);
+      },
+      show: (record) => record.status === "draft",
+    },
+    {
+      key: "confirm",
+      label: "Xác nhận",
+      icon: CheckCircle,
+      onClick: (record) => handleStatusChange(record, "confirmed"),
+      show: (record) => record.status === "draft",
+    },
+    {
+      key: "export",
+      label: "Xuất kho",
+      icon: Truck,
+      onClick: (record) => handleStatusChange(record, "exported"),
+      show: (record) => record.status === "confirmed",
+    },
+    {
+      key: "complete",
+      label: "Hoàn thành",
+      icon: Package,
+      onClick: (record) => handleStatusChange(record, "completed"),
+      show: (record) => record.status === "exported",
+    },
+    {
+      key: "cancel",
+      label: "Hủy đơn",
+      icon: X,
+      variant: "destructive",
+      onClick: (record) => handleStatusChange(record, "cancelled"),
+      show: (record) => 
+        record.status === "draft" || 
+        record.status === "confirmed" || 
+        record.status === "exported",
+    },
+    {
+      key: "delete",
+      label: "Xóa",
+      icon: Trash2,
+      variant: "destructive",
+      onClick: (record) => handleDeleteOrder(record),
+      show: (record) => record.status === "draft" || record.status === "cancelled",
+    },
+  ];
+            <AlertCircle className="h-3 w-3" />
+            Chưa ảnh hưởng
+          </Badge>
+        );
+      },
+    },
+    {
+      key: "totalAmount",
+      title: "Tổng tiền",
+      dataIndex: "totalAmount",
+      render: (value) => (
+        <div className="font-medium text-green-600">
+          {formatCurrency(value as number)}
+        </div>
+      ),
+    },
+    {
+      key: "createdAt",
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      render: (_, record) => (
+        <div>{record.createdAt.toDate().toLocaleDateString("vi-VN")}</div>
+      ),
+    },
+    {
+      key: "actions",
+      title: "Thao tác",
+      render: (_, record) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {/* View Details */}
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedOrder(record);
+                setShowDetailDialog(true);
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Xem chi tiết
+            </DropdownMenuItem>
+
+            {/* Edit (only for draft) */}
+            {record.status === "draft" && (
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedOrder(record);
+                  setShowFormDialog(true);
+                }}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Chỉnh sửa
+              </DropdownMenuItem>
+            )}
+
+            {/* Status Actions */}
+            {record.status === "draft" && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => handleStatusChange(record, "confirmed")}
+                  className="text-green-600"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Xác nhận đơn hàng
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleStatusChange(record, "cancelled")}
+                  className="text-red-600"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Hủy đơn hàng
+                </DropdownMenuItem>
+              </>
+            )}
+
+            {record.status === "confirmed" && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => handleStatusChange(record, "exported")}
+                  className="text-blue-600"
+                >
+                  <Truck className="mr-2 h-4 w-4" />
+                  Xuất kho
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleStatusChange(record, "cancelled")}
+                  className="text-red-600"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Hủy đơn hàng
+                </DropdownMenuItem>
+              </>
+            )}
+
+            {record.status === "exported" && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => handleStatusChange(record, "completed")}
+                  className="text-purple-600"
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  Hoàn thành
+                </DropdownMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem
+                      onClick={() => handleStatusChange(record, "cancelled")}
+                      className="text-red-600"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Hủy đơn hàng
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">
+                      ⚠️ Hủy đơn hàng đã xuất kho sẽ hoàn lại tồn kho
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
+
+            {/* Status indicator for completed/cancelled */}
+            {(record.status === "completed" ||
+              record.status === "cancelled") && (
+              <DropdownMenuItem disabled className="text-muted-foreground">
+                {record.status === "completed" ? (
+                  <>
+                    <Package className="mr-2 h-4 w-4" />
+                    Đã hoàn thành
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Đã hủy
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+
+            {/* Delete (only for draft) */}
+            {record.status === "draft" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleDeleteOrder(record)}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Xóa đơn hàng
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card>
+          <CardContent className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={refreshOrders}>Thử lại</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <div className="container mx-auto p-4 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="h-6 w-6" />
+              Quản lý đơn hàng
+            </h1>
+            <p className="text-muted-foreground">
+              Quản lý đơn hàng bán hàng và xuất kho
+            </p>
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => setShowFormDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tạo đơn hàng mới
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Tạo đơn hàng mới</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Bộ lọc
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Tìm theo số đơn hàng hoặc tên khách hàng..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  />
+                  <Button variant="outline" onClick={handleSearch}>
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <Select
+                value={filters.status || "all"}
+                onValueChange={(value) =>
+                  handleStatusFilter(value as OrderStatus | "all")
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="draft">Nháp</SelectItem>
+                  <SelectItem value="confirmed">Đã xác nhận</SelectItem>
+                  <SelectItem value="exported">Đã xuất kho</SelectItem>
+                  <SelectItem value="completed">Hoàn thành</SelectItem>
+                  <SelectItem value="cancelled">Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Table */}
+        <div>
+          <ResponsiveTable
+            dataSource={orders}
+            columns={columns}
+            loading={loading}
+            emptyText="Không có đơn hàng nào"
+          />
+
+          {/* Mobile: Infinite loading */}
+          {isMobile && hasMore && !loading && (
+            <div className="p-4 text-center">
+              <Button
+                variant="outline"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Đang tải..." : "Tải thêm"}
+              </Button>
+            </div>
+          )}
+
+          {/* Desktop: Pagination */}
+          {!isMobile && total > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <div className="text-sm text-muted-foreground">
+                Hiển thị {(page - 1) * pageSize + 1} đến{" "}
+                {Math.min(page * pageSize, total)} trong tổng số {total} đơn
+                hàng
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changePage(page - 1)}
+                  disabled={page === 1 || loading}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Trước
+                </Button>
+                <div className="text-sm font-medium">
+                  Trang {page} / {Math.ceil(total / pageSize)}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changePage(page + 1)}
+                  disabled={page >= Math.ceil(total / pageSize) || loading}
+                >
+                  Sau
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Dialogs */}
+        {showFormDialog && (
+          <OrderFormDialog
+            open={showFormDialog}
+            onOpenChange={(open) => {
+              setShowFormDialog(open);
+              if (!open) {
+                setSelectedOrder(null);
+              }
+            }}
+            editOrder={selectedOrder}
+            onSuccess={() => {
+              refreshOrders();
+              setShowFormDialog(false);
+              setSelectedOrder(null);
+              toast.success(
+                `Đơn hàng đã được ${
+                  selectedOrder ? "cập nhật" : "tạo"
+                } thành công.`
+              );
+            }}
+          />
+        )}
+
+        {selectedOrder && showDetailDialog && (
+          <div>Detail Dialog - To be implemented</div>
+        )}
+
+        {/* Confirm Dialog */}
+        {ConfirmDialog}
+      </div>
+    </TooltipProvider>
+  );
+}
