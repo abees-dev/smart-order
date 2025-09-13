@@ -77,7 +77,7 @@ export function SelectSearch({
   );
 
   const handleSelect = (optionValue: string) => {
-    const newValue = optionValue === selectedValue ? "" : optionValue;
+    const newValue = optionValue;
     const newSelectedOption = options.find(
       (option) => option.value === newValue
     );
