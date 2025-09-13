@@ -176,33 +176,6 @@ export function OrdersListPage() {
   // Define table columns
   const columns: ResponsiveTableColumn<Order>[] = [
     createColumn({
-      key: "orderInfo",
-      title: "Thông tin đơn hàng",
-      render: (_, record: Order) => (
-        <div className="space-y-1">
-          <div className="font-medium text-blue-600">{record.orderNumber}</div>
-          <div className="text-sm text-muted-foreground">
-            {record.customerName || "Khách lẻ"}
-          </div>
-          <div className="sm:hidden">
-            <Badge
-              variant={ORDER_STATUS_COLORS[record.status]}
-              className="gap-1"
-            >
-              {(() => {
-                const StatusIcon = getStatusIcon(record.status);
-                return <StatusIcon className="h-3 w-3" />;
-              })()}
-              {ORDER_STATUS_LABELS[record.status]}
-            </Badge>
-          </div>
-          <div className="text-sm font-medium text-green-600 sm:hidden">
-            {formatCurrency(record.totalAmount)}
-          </div>
-        </div>
-      ),
-    }),
-    createColumn({
       key: "orderNumber",
       title: "Số đơn hàng",
       dataIndex: "orderNumber",

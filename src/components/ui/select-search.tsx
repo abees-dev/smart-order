@@ -137,8 +137,6 @@ export function SelectSearch({
   const displayValue = open ? searchValue : selectedOption?.label || "";
   const displayPlaceholder = open ? searchPlaceholder : placeholder;
 
-  console.log("SelectSearch selectedValue:", filteredOptions);
-
   return (
     <Popover open={open} onOpenChange={handleOpenChange} {...props}>
       <div className="relative w-full">
