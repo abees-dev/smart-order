@@ -207,5 +207,17 @@
     "filterDescription": "Use the filters below to search for suppliers",
     "selectCity": "Select city",
     "selectCountry": "Select country"
+  },
+  "comingSoon": {
+    "title": "Coming Soon",
+    "description": "We're working hard to bring you this amazing feature.",
+    "estimatedLaunch": "Estimated launch",
+    "upcomingFeatures": "Upcoming Features",
+    "stayTuned": "Stay tuned for the latest updates!",
+    "feature1": "Advanced analytics and reporting",
+    "feature2": "Real-time inventory tracking",
+    "feature3": "Mobile app integration",
+    "feature4": "Automated notifications",
+    "q1_2026": "Q1 2026"
   }
 }

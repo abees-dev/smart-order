@@ -269,5 +269,17 @@
       "cannotDelete": "Chỉ có thể xóa hóa đơn ở trạng thái nháp",
       "duplicateNumber": "Số hóa đơn đã tồn tại"
     }
+  },
+  "comingSoon": {
+    "title": "Sắp Ra Mắt",
+    "description": "Chúng tôi đang làm việc chăm chỉ để mang đến cho bạn tính năng tuyệt vời này.",
+    "estimatedLaunch": "Dự kiến ra mắt",
+    "upcomingFeatures": "Tính năng sắp tới",
+    "stayTuned": "Hãy theo dõi để cập nhật những tin tức mới nhất!",
+    "feature1": "Phân tích và báo cáo nâng cao",
+    "feature2": "Theo dõi kho hàng theo thời gian thực",
+    "feature3": "Tích hợp ứng dụng di động",
+    "feature4": "Thông báo tự động",
+    "q1_2026": "Quý 1 năm 2026"
   }
 }

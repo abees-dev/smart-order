@@ -72,7 +72,7 @@ export function AppSidebar() {
     },
     {
       title: "Hóa đơn",
-      url: ROUTES.DASHBOARD.INVOICES,
+      url: ROUTES.DASHBOARD.COMING_SOON, // Placeholder routes
       icon: Receipt,
     },
   ];
@@ -95,12 +95,12 @@ export function AppSidebar() {
   const otherItems = [
     {
       title: t("navigation.reports"),
-      url: ROUTES.DASHBOARD.REPORTS,
+      url: ROUTES.DASHBOARD.COMING_SOON,
       icon: Calendar,
     },
     {
       title: t("navigation.settings"),
-      url: ROUTES.DASHBOARD.SETTINGS,
+      url: ROUTES.DASHBOARD.COMING_SOON,
       icon: Settings,
     },
   ];
