@@ -4,6 +4,10 @@
 
 This is a React + TypeScript + Vite application built for both web and **Zalo Mini App (ZMP)** deployment. Features a modular architecture with Vietnamese-first i18n, Firebase backend, and shadcn/ui component system.
 
+### Current Modules
+
+Active modules: `auth`, `customer`, `suppliers`, `supplies`, `product`, `order` - each follows identical structure patterns.
+
 ### Key Patterns & Conventions
 
 **Module-Based Architecture:**
@@ -27,7 +31,13 @@ const router = createBrowserRouter(
     {
       path: "/dashboard",
       element: <DashboardLayout />,
-      children: [...customerRouter, ...suppliersRouter, ...suppliesRouter],
+      children: [
+        ...customerRouter,
+        ...suppliersRouter,
+        ...suppliesRouter,
+        ...productRouter,
+        ...orderRouter,
+      ],
     },
   ],
   {
@@ -92,7 +102,12 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
 npm run dev              # Vite dev server on https://localhost:4000 (SSL for ZMP)
 npm run build-miniapp    # ZMP build with app-config.json
 npm run build            # Standard web build
+npm run seed:customers   # Seed customer data via tsx script
 ```
+
+**Dev Console Utilities:**
+
+- `seedCustomers()` function auto-loaded in dev mode console for quick data seeding
 
 **i18n Setup (Vietnamese Default):**
 
@@ -104,8 +119,14 @@ npm run build            # Standard web build
 **shadcn/ui Configuration:**
 
 - Style: "new-york", Tailwind v4 with CSS variables
-- Aliases: `@/components`, `@/lib/utils`, `@/components/ui`
+- Aliases: `@/components`, `@/lib/utils`, `@/components/ui`, `@/lib`, `@/hooks`
 - Use `cn()` utility from `@/lib/utils` for className merging
+
+**Component Libraries:**
+
+- **Table System**: `EnhancedTable` with built-in search, actions, pagination, mobile cards
+- **Form Controls**: `FormSelect` (searchable), `FormTextField`, `SupplierSelect` with specialized patterns
+- **UI Components**: Full shadcn/ui set with React 19 + Radix UI + Lucide icons
 
 ### Critical Implementation Details
 
@@ -121,6 +142,21 @@ npm run build            # Standard web build
 ```typescript
 import { db } from "@/config/firebase"; // Pre-configured Firestore instance
 // Use Firebase v9+ modular SDK: collection(), doc(), getDocs(), etc.
+```
+
+**Table Component Patterns:**
+
+```typescript
+// Use EnhancedTable for feature-rich data tables
+<EnhancedTable
+  data={customers}
+  columns={columns}
+  searchable
+  actions={[{ key: "edit", label: "Edit", onClick: handleEdit }]}
+  loading={state.loading}
+  onLoadMore={loadMore}
+  hasMore={hasMore}
+/>
 ```
 
 **Validation Pattern:**
