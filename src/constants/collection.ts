@@ -5,4 +5,5 @@ export const COLLECTIONS = {
   CUSTOMERS: "customers",
   PRODUCTS: "products",
   STOCK_MOVEMENTS: "stock_movements",
+  ADDITIONAL_COSTS: "additional_costs",
 } as const;

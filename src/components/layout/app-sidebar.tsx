@@ -117,7 +117,7 @@ export function AppSidebar() {
   const otherItems = [
     {
       title: t("navigation.reports"),
-      url: ROUTES.DASHBOARD.COMING_SOON,
+      url: ROUTES.DASHBOARD.REPORTS,
       icon: Calendar,
     },
     {

@@ -6,6 +6,7 @@ import { suppliersRouter } from "./modules/suppliers";
 import { productRouter } from "./modules/product";
 import { orderRouter } from "./modules/order";
 import { invoiceRouter } from "./modules/invoice";
+import { reportsRouter } from "./modules/reports/router";
 import DashboardLayout from "./layout/dashboard-layout";
 import { ComingSoonPage } from "./components/layout";
 import { ROUTES } from "./constants/routes";
@@ -32,6 +33,7 @@ const router = createBrowserRouter(
         ...productRouter,
         ...orderRouter,
         ...invoiceRouter,
+        reportsRouter,
         {
           path: "coming-soon",
           element: <ComingSoonPage />,
