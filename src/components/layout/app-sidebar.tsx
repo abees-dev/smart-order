@@ -15,7 +15,12 @@ import {
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ROUTES, isActiveRoute, isSuppliesActive } from "@/constants/routes";
+import {
+  ROUTES,
+  isActiveRoute,
+  isSuppliesActive,
+  isInvoicesActive,
+} from "@/constants/routes";
 
 import {
   Sidebar,
@@ -35,11 +40,19 @@ export function AppSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
   const [suppliesOpen, setSuppliesOpen] = useState(false);
+  const [invoicesOpen, setInvoicesOpen] = useState(false);
 
   // Auto-open supplies menu if we're on a supplies route
   useEffect(() => {
     if (isSuppliesActive(location.pathname)) {
       setSuppliesOpen(true);
+    }
+  }, [location.pathname]);
+
+  // Auto-open invoices menu if we're on an invoices route
+  useEffect(() => {
+    if (isInvoicesActive(location.pathname)) {
+      setInvoicesOpen(true);
     }
   }, [location.pathname]);
 
@@ -70,11 +83,6 @@ export function AppSidebar() {
       url: ROUTES.DASHBOARD.SUPPLIERS,
       icon: Building2,
     },
-    {
-      title: "Hóa đơn",
-      url: ROUTES.DASHBOARD.COMING_SOON, // Placeholder routes
-      icon: Receipt,
-    },
   ];
 
   // Supplies submenu items
@@ -88,6 +96,20 @@ export function AppSidebar() {
       title: t("navigation.imports"),
       url: ROUTES.DASHBOARD.SUPPLIES.IMPORTS,
       icon: FileText,
+    },
+  ];
+
+  // Invoices submenu items
+  const invoicesSubItems = [
+    {
+      title: "Hóa đơn đầu vào",
+      url: ROUTES.DASHBOARD.INVOICES.INPUT,
+      icon: Archive,
+    },
+    {
+      title: "Hóa đơn đầu ra",
+      url: ROUTES.DASHBOARD.INVOICES.OUTPUT,
+      icon: Receipt,
     },
   ];
 
@@ -143,6 +165,41 @@ export function AppSidebar() {
                 {suppliesOpen && (
                   <SidebarMenuSub>
                     {suppliesSubItems.map((subItem) => {
+                      const isActive = isActiveRoute(
+                        location.pathname,
+                        subItem.url
+                      );
+                      return (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild isActive={isActive}>
+                            <Link to={subItem.url}>
+                              <subItem.icon />
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                )}
+              </SidebarMenuItem>
+
+              {/* Invoices menu item with submenu */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setInvoicesOpen(!invoicesOpen)}
+                >
+                  <Receipt />
+                  <span>Hóa đơn</span>
+                  <ChevronRight
+                    className={`ml-auto transition-transform ${
+                      invoicesOpen ? "rotate-90" : ""
+                    }`}
+                  />
+                </SidebarMenuButton>
+                {invoicesOpen && (
+                  <SidebarMenuSub>
+                    {invoicesSubItems.map((subItem) => {
                       const isActive = isActiveRoute(
                         location.pathname,
                         subItem.url

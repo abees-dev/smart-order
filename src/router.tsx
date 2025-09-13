@@ -5,6 +5,7 @@ import { suppliesRouter } from "./modules/supplies";
 import { suppliersRouter } from "./modules/suppliers";
 import { productRouter } from "./modules/product";
 import { orderRouter } from "./modules/order";
+import { invoiceRouter } from "./modules/invoice";
 import DashboardLayout from "./layout/dashboard-layout";
 import { ComingSoonPage } from "./components/layout";
 import { ROUTES } from "./constants/routes";
@@ -30,6 +31,7 @@ const router = createBrowserRouter(
         ...suppliesRouter,
         ...productRouter,
         ...orderRouter,
+        ...invoiceRouter,
         {
           path: "coming-soon",
           element: <ComingSoonPage />,

@@ -145,8 +145,6 @@ export function SupplyImportFormDialog({
     setShowSupplyForm(false);
   };
 
-  console.log("Supplies:", supplies);
-
   const addItem = () => {
     append({
       supplyId: "",

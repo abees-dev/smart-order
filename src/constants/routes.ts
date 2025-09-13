@@ -15,7 +15,6 @@ export const ROUTES = {
     SUPPLIERS: "/dashboard/suppliers",
     ORDERS: "/dashboard/orders",
     PRODUCTS: "/dashboard/products",
-    INVOICES: "/dashboard/invoices",
     REPORTS: "/dashboard/reports",
     SETTINGS: "/dashboard/settings",
     COMING_SOON: "/dashboard/coming-soon",
@@ -25,6 +24,14 @@ export const ROUTES = {
       ROOT: "/dashboard/supplies",
       INVENTORY: "/dashboard/supplies/inventory",
       IMPORTS: "/dashboard/supplies/imports",
+    },
+
+    // Invoices section (nested)
+    INVOICES: {
+      ROOT: "/dashboard/invoices",
+      INPUT: "/dashboard/invoices/input",
+      OUTPUT: "/dashboard/invoices/output",
+      ALL: "/dashboard/invoices/all",
     },
   },
 
@@ -49,4 +56,9 @@ export const isActiveRoute = (
 // Helper function to check if supplies section is active
 export const isSuppliesActive = (currentPath: string): boolean => {
   return currentPath.startsWith(ROUTES.DASHBOARD.SUPPLIES.ROOT);
+};
+
+// Helper function to check if invoices section is active
+export const isInvoicesActive = (currentPath: string): boolean => {
+  return currentPath.startsWith(ROUTES.DASHBOARD.INVOICES.ROOT);
 };
