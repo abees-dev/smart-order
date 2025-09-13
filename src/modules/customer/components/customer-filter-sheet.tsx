@@ -114,20 +114,6 @@ export function CustomerFilterSheet({
     "Buôn Ma Thuột",
   ];
 
-  // Common countries for quick selection
-  const commonCountries = [
-    "Vietnam",
-    "United States",
-    "Singapore",
-    "Thailand",
-    "Malaysia",
-    "Japan",
-    "South Korea",
-    "Australia",
-    "Germany",
-    "United Kingdom",
-  ];
-
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -197,39 +183,6 @@ export function CustomerFilterSheet({
                       {commonCities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-
-            {/* Country Filter */}
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("customers.filterByCountry")}</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value === "all" ? "" : value);
-                    }}
-                    value={field.value || "all"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t("customers.selectCountry")}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {commonCountries.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
                         </SelectItem>
                       ))}
                     </SelectContent>
