@@ -19,7 +19,6 @@ export default defineConfig({
         chunkFileNames: "assets/[name].js",
         assetFileNames: "assets/[name].[ext]",
       },
-      external: ["react-is"],
     },
   },
   server: {
