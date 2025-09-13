@@ -16,6 +16,7 @@ import { ProductDetailDialog } from "./product-detail-dialog";
 import { DeleteProductDialog } from "./delete-product-dialog";
 import type { Product, ProductFilters } from "../types";
 import ReactMarkdown from "react-markdown";
+import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
 
 export function ProductsListPage() {
   const { t } = useTranslation();
@@ -83,7 +84,7 @@ export function ProductsListPage() {
           </div>
           <div className="text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-muted rounded-md text-xs">
-              {record.category}
+              {PRODUCT_CATEGORIES_MAP[record.category] || record.category}
             </span>
           </div>
           {record.description && (
@@ -304,40 +305,46 @@ export function ProductsListPage() {
         }
       />
 
-      <ProductFormDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onSuccess={handleProductCreated}
-        mode="create"
-      />
+      {showCreateDialog && (
+        <ProductFormDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onSuccess={handleProductCreated}
+          mode="create"
+        />
+      )}
 
-      <ProductFormDialog
-        open={showEditDialog}
-        onOpenChange={(open: boolean) => {
-          setShowEditDialog(open);
-          if (!open) setSelectedProduct(null);
-        }}
-        product={selectedProduct}
-        onSuccess={handleProductUpdated}
-        mode="edit"
-      />
+      {showEditDialog && (
+        <ProductFormDialog
+          open={showEditDialog}
+          onOpenChange={(open: boolean) => {
+            setShowEditDialog(open);
+            if (!open) setSelectedProduct(null);
+          }}
+          product={selectedProduct}
+          onSuccess={handleProductUpdated}
+          mode="edit"
+        />
+      )}
 
-      <ProductDetailDialog
-        open={showDetailDialog}
-        onOpenChange={(open: boolean) => {
-          setShowDetailDialog(open);
-          if (!open) setSelectedProduct(null);
-        }}
-        product={selectedProduct}
-        onEdit={() => {
-          setShowDetailDialog(false);
-          setShowEditDialog(true);
-        }}
-        onDelete={() => {
-          setShowDetailDialog(false);
-          setShowDeleteDialog(true);
-        }}
-      />
+      {showDetailDialog && (
+        <ProductDetailDialog
+          open={showDetailDialog}
+          onOpenChange={(open: boolean) => {
+            setShowDetailDialog(open);
+            if (!open) setSelectedProduct(null);
+          }}
+          product={selectedProduct}
+          onEdit={() => {
+            setShowDetailDialog(false);
+            setShowEditDialog(true);
+          }}
+          onDelete={() => {
+            setShowDetailDialog(false);
+            setShowDeleteDialog(true);
+          }}
+        />
+      )}
 
       <DeleteProductDialog
         open={showDeleteDialog}

@@ -46,6 +46,8 @@ import {
 } from "../validation";
 import type { Product, ProductSupply } from "../types";
 import type { Supply } from "@/modules/supplies/types";
+import { FormSelectField } from "@/components/forms";
+import { PRODUCT_CATEGORIES } from "@/constants/category";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -266,17 +268,14 @@ export function ProductFormDialog({
                 <FormField
                   control={form.control}
                   name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Danh mục *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ví dụ: Đồ uống, Thực phẩm..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  render={({ field, fieldState }) => (
+                    <FormSelectField
+                      field={field}
+                      fieldState={fieldState}
+                      label="Danh mục *"
+                      placeholder="Chọn danh mục"
+                      options={PRODUCT_CATEGORIES}
+                    />
                   )}
                 />
               </div>
