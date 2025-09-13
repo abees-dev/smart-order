@@ -3104,7 +3104,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.10":
+"@types/react-is@npm:^19":
+  version: 19.0.0
+  resolution: "@types/react-is@npm:19.0.0"
+  dependencies:
+    "@types/react": "npm:*"
+  checksum: 10c0/d5fa0294f95cf301540f3e28fb44c00524c74a7de3ef9757703d76067206f3ecc002da6486e1581f23b54173b6449db8631acc3088009116e4569ff216df3ecc
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:*, @types/react@npm:^19.1.10":
   version: 19.1.13
   resolution: "@types/react@npm:19.1.13"
   dependencies:
@@ -7241,6 +7250,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-is@npm:^19.1.1":
+  version: 19.1.1
+  resolution: "react-is@npm:19.1.1"
+  checksum: 10c0/3dba763fcd69835ae263dcd6727d7ffcc44c1d616f04b7329e67aefdc66a567af4f8dcecdd29454c7a707c968aa1eb85083a83fb616f01675ef25e71cf082f97
+  languageName: node
+  linkType: hard
+
 "react-markdown@npm:^10.1.0":
   version: 10.1.0
   resolution: "react-markdown@npm:10.1.0"
@@ -7886,6 +7902,7 @@ __metadata:
     "@types/node": "npm:^24.3.1"
     "@types/react": "npm:^19.1.10"
     "@types/react-dom": "npm:^19.1.7"
+    "@types/react-is": "npm:^19"
     "@vitejs/plugin-react": "npm:^5.0.0"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
@@ -7905,6 +7922,7 @@ __metadata:
     react-dom: "npm:^19.1.1"
     react-hook-form: "npm:^7.62.0"
     react-i18next: "npm:^15.7.3"
+    react-is: "npm:^19.1.1"
     react-markdown: "npm:^10.1.0"
     react-router-dom: "npm:^7.8.2"
     recharts: "npm:^3.2.0"
