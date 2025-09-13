@@ -23,7 +23,7 @@ import type {
   UpdateCustomerData,
   CustomerFilters,
 } from "../types";
-import { normalizeText } from "@/modules/supplies/utils/text";
+import { normalizeText } from "@/utils";
 
 const COLLECTION_NAME = "customers";
 

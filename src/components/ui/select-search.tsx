@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "./input";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { PopoverPortal } from "@radix-ui/react-popover";
-import { normalizeText } from "@/modules/supplies/utils/text";
+import { normalizeText } from "@/utils";
 
 // Utility function to normalize text for searching
 

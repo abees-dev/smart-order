@@ -1,4 +1,6 @@
-function normalizeText(text: string): string {
+import { format } from "date-fns";
+
+export const normalizeText = (text: string): string => {
   return (
     text
       // Convert to lowercase
@@ -15,15 +17,11 @@ function normalizeText(text: string): string {
 
       .trim()
   );
-}
-
-const generateOrderNumber = () => {
-  const d = new Date();
-  const yy = d.getFullYear().toString().slice(-2);
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const ts = String(d.getTime()).slice(-6);
-  return `PO-${yy}${mm}${dd}-${ts}`;
 };
 
-export { normalizeText, generateOrderNumber };
+export const generateOrderNumber = () => {
+  const d = new Date();
+  const dateFormat = format(d, "yyMMdd");
+  const ts = String(d.getTime()).slice(-6);
+  return `PO-${dateFormat}-${ts}`;
+};

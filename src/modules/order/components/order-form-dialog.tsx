@@ -32,7 +32,7 @@ import type { Product } from "../../product/types";
 import type { Supply } from "../../supplies/types";
 import type { Customer } from "../../customer/types";
 import { useOrderActions } from "../hooks/use-order";
-import { generateOrderNumber } from "@/modules/supplies/utils/text";
+import { generateOrderNumber } from "@/utils";
 
 interface OrderFormDialogProps {
   open: boolean;

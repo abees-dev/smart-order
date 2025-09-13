@@ -15,8 +15,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Supply } from "@/modules/supplies/types";
-import { normalizeText } from "@/modules/supplies/utils/text";
 import { SUPPLY_CATEGORY_MAP } from "@/modules/supplies/utils/supply-categrory";
+import { normalizeText } from "@/utils";
 
 interface SupplySelectDialogProps {
   supplies: Supply[];
