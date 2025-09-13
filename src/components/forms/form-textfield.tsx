@@ -15,6 +15,7 @@ interface FormTextFieldProps {
   label?: string;
   placeholder?: string;
   type?: "text" | "area" | "number";
+  required?: boolean;
 }
 
 const FormTextField = ({
@@ -23,6 +24,7 @@ const FormTextField = ({
   label,
   placeholder,
   type = "text",
+  required = false,
 }: FormTextFieldProps) => {
   return (
     <FormField
@@ -40,7 +42,12 @@ const FormTextField = ({
         };
         return (
           <FormItem>
-            {label && <FormLabel>{label}</FormLabel>}
+            {label && (
+              <FormLabel>
+                {label}
+                {required && <span className="text-red-500">*</span>}
+              </FormLabel>
+            )}
             <FormControl>{renderInputType()}</FormControl>
             <FormMessage />
           </FormItem>

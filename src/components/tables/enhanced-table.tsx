@@ -172,7 +172,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
     <div className="space-y-4">
       {/* Header Section */}
       {(title || description || searchable || headerActions) && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
             {title && (
               <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
