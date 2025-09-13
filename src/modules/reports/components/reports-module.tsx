@@ -115,7 +115,7 @@ export function ReportsModule() {
         loading={loading}
       />
 
-      {/* Error */}
+      {/* Error  */}
       {error && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
