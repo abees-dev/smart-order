@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import type { DateRange } from "react-day-picker";
 import { useInputInvoices } from "../hooks/use-invoice";
 import { EnhancedTable, type ResponsiveTableColumn } from "@/components/tables";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Select,
   SelectContent,
@@ -22,11 +24,13 @@ import {
   Receipt,
   Building,
   RefreshCw,
+  Calendar,
 } from "lucide-react";
 import type { InputInvoice, InvoiceFilters, TaxType } from "../types";
 
 export function InputInvoiceListPage() {
   const [filters, setFilters] = useState<Omit<InvoiceFilters, "type">>({});
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const { state, refreshInvoices, loadMore, hasMore } = useInputInvoices(
     filters,
@@ -139,6 +143,15 @@ export function InputInvoiceListPage() {
     }));
   };
 
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    setFilters((prev) => ({
+      ...prev,
+      dateFrom: range?.from,
+      dateTo: range?.to,
+    }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -227,40 +240,59 @@ export function InputInvoiceListPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tìm kiếm</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Số hoá đơn, nhà cung cấp..."
-                  value={filters.search || ""}
-                  onChange={(e) => handleFilterChange("search", e.target.value)}
-                  className="pl-9"
+          <div className="space-y-4">
+            {/* Date Range Filter */}
+
+            {/* Other Filters */}
+            <div className="flex gap-4 items-center flex-wrap">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tìm kiếm</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Số hoá đơn, nhà cung cấp..."
+                    value={filters.search || ""}
+                    onChange={(e) =>
+                      handleFilterChange("search", e.target.value)
+                    }
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Loại thuế</label>
+                <Select
+                  value={filters.taxType || "all"}
+                  onValueChange={(value) =>
+                    handleFilterChange(
+                      "taxType",
+                      value === "all" ? undefined : (value as TaxType)
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="taxed">Có thuế</SelectItem>
+                    <SelectItem value="non-taxed">Không thuế</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Khoảng thời gian
+                </label>
+                <DateRangePicker
+                  date={dateRange}
+                  onDateChange={handleDateRangeChange}
+                  placeholder="Chọn khoảng thời gian lọc hóa đơn"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Loại thuế</label>
-              <Select
-                value={filters.taxType || "all"}
-                onValueChange={(value) =>
-                  handleFilterChange(
-                    "taxType",
-                    value === "all" ? undefined : (value as TaxType)
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="taxed">Có thuế</SelectItem>
-                  <SelectItem value="non-taxed">Không thuế</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>

@@ -11,6 +11,7 @@ export * from "./form";
 export * from "./textarea";
 export * from "./popover";
 export * from "./calendar";
+export * from "./date-range-picker";
 export * from "./checkbox";
 export * from "./tooltip";
 export * from "./table";

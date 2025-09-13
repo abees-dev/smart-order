@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import type { DateRange } from "react-day-picker";
 import { useInvoices } from "../hooks/use-invoice";
 import { EnhancedTable, type ResponsiveTableColumn } from "@/components/tables";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Select,
   SelectContent,
@@ -22,11 +24,13 @@ import {
   Eye,
   TrendingUp,
   TrendingDown,
+  Calendar,
 } from "lucide-react";
 import type { InvoiceView, InvoiceFilters, TaxType } from "../types";
 
 export function InvoiceListPage() {
   const [filters, setFilters] = useState<InvoiceFilters>({});
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const { state, refreshInvoices, loadMore, hasMore } = useInvoices(
     filters,
@@ -148,8 +152,18 @@ export function InvoiceListPage() {
     }));
   };
 
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    setFilters((prev) => ({
+      ...prev,
+      dateFrom: range?.from,
+      dateTo: range?.to,
+    }));
+  };
+
   const resetFilters = () => {
     setFilters({});
+    setDateRange(undefined);
   };
 
   return (
@@ -182,73 +196,91 @@ export function InvoiceListPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-4">
+            {/* Date Range Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tìm kiếm</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Số hoá đơn, tên đối tác..."
-                  value={filters.search || ""}
-                  onChange={(e) => handleFilterChange("search", e.target.value)}
-                  className="pl-9"
-                />
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Khoảng thời gian
+              </label>
+              <DateRangePicker
+                date={dateRange}
+                onDateChange={handleDateRangeChange}
+                placeholder="Chọn khoảng thời gian lọc hóa đơn"
+              />
+            </div>
+
+            {/* Other Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tìm kiếm</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Số hoá đơn, tên đối tác..."
+                    value={filters.search || ""}
+                    onChange={(e) =>
+                      handleFilterChange("search", e.target.value)
+                    }
+                    className="pl-9"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Loại hoá đơn</label>
-              <Select
-                value={filters.type || "all"}
-                onValueChange={(value) =>
-                  handleFilterChange(
-                    "type",
-                    value === "all" ? undefined : value
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="input">Hoá đơn đầu vào</SelectItem>
-                  <SelectItem value="output">Hoá đơn đầu ra</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Loại hoá đơn</label>
+                <Select
+                  value={filters.type || "all"}
+                  onValueChange={(value) =>
+                    handleFilterChange(
+                      "type",
+                      value === "all" ? undefined : value
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="input">Hoá đơn đầu vào</SelectItem>
+                    <SelectItem value="output">Hoá đơn đầu ra</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Loại thuế</label>
-              <Select
-                value={filters.taxType || "all"}
-                onValueChange={(value) =>
-                  handleFilterChange(
-                    "taxType",
-                    value === "all" ? undefined : (value as TaxType)
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="taxed">Có thuế</SelectItem>
-                  <SelectItem value="non-taxed">Không thuế</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Loại thuế</label>
+                <Select
+                  value={filters.taxType || "all"}
+                  onValueChange={(value) =>
+                    handleFilterChange(
+                      "taxType",
+                      value === "all" ? undefined : (value as TaxType)
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="taxed">Có thuế</SelectItem>
+                    <SelectItem value="non-taxed">Không thuế</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Thao tác</label>
-              <Button
-                variant="outline"
-                onClick={resetFilters}
-                className="w-full"
-              >
-                Xoá bộ lọc
-              </Button>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Thao tác</label>
+                <Button
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="w-full"
+                >
+                  Xoá bộ lọc
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
