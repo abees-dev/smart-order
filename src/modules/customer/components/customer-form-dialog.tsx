@@ -150,7 +150,7 @@ export function CustomerFormDialog({
           name="address"
           placeholder={t("customers.addressPlaceholder")}
           label={t("customers.address")}
-          type="area"
+          type="textarea"
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
