@@ -21,7 +21,21 @@ export const createProductSchema = z.object({
   category: z.string().min(2, "Danh mục phải có ít nhất 2 ký tự"),
   price: z.number().min(0, "Giá bán phải lớn hơn hoặc bằng 0"),
   cost: z.number().min(0, "Giá vốn phải lớn hơn hoặc bằng 0").optional(),
-  supplies: z.array(productSupplySchema).optional().default([]),
+  supplies: z
+    .array(productSupplySchema)
+    .optional()
+    .default([])
+    .refine(
+      (supplies) => {
+        if (!supplies || supplies.length === 0) return true;
+        const supplyIds = supplies.map((s) => s.supplyId);
+        const uniqueSupplyIds = new Set(supplyIds);
+        return supplyIds.length === uniqueSupplyIds.size;
+      },
+      {
+        message: "Vật tư không được trùng lặp",
+      }
+    ),
 });
 
 export const updateProductSchema = createProductSchema.partial().extend({

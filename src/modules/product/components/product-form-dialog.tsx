@@ -76,6 +76,11 @@ export function ProductFormDialog({
   const onSubmit = async (
     data: CreateProductFormData | UpdateProductFormData
   ) => {
+    // Prevent multiple submissions
+    if (state.loading) {
+      return;
+    }
+
     try {
       const isValid = await checkProductCode(data.productCode!, product?.id);
       if (!isValid) {
@@ -85,6 +90,7 @@ export function ProductFormDialog({
         });
         return;
       }
+
       const productData = {
         ...data,
         supplies,
@@ -110,6 +116,7 @@ export function ProductFormDialog({
 
       form.reset();
       setSupplies([]);
+      onOpenChange(false); // Close dialog after successful creation/update
       onSuccess?.(result);
     } catch (error) {
       console.error(
@@ -120,25 +127,27 @@ export function ProductFormDialog({
   };
 
   const handleAddSupply = (supply: Supply) => {
-    const existingSupply = supplies.find((s) => s.supplyId === supply.id);
-    if (existingSupply) {
-      setSupplies(
-        supplies.map((s) =>
+    setSupplies((prevSupplies) => {
+      const existingSupply = prevSupplies.find((s) => s.supplyId === supply.id);
+      if (existingSupply) {
+        // If supply already exists, increment quantity
+        return prevSupplies.map((s) =>
           s.supplyId === supply.id ? { ...s, quantity: s.quantity + 1 } : s
-        )
-      );
-    } else {
-      setSupplies([
-        ...supplies,
-        {
-          supplyId: supply.id,
-          supplyName: supply.name,
-          quantity: 1,
-          unit: supply.unit,
-          purchasePrice: supply.purchasePrice,
-        },
-      ]);
-    }
+        );
+      } else {
+        // If supply doesn't exist, add it
+        return [
+          ...prevSupplies,
+          {
+            supplyId: supply.id,
+            supplyName: supply.name,
+            quantity: 1,
+            unit: supply.unit,
+            purchasePrice: supply.purchasePrice,
+          },
+        ];
+      }
+    });
   };
 
   const handleUpdateSupplyQuantity = (supplyId: string, quantity: number) => {
@@ -146,13 +155,17 @@ export function ProductFormDialog({
       handleRemoveSupply(supplyId);
       return;
     }
-    setSupplies(
-      supplies.map((s) => (s.supplyId === supplyId ? { ...s, quantity } : s))
+    setSupplies((prevSupplies) =>
+      prevSupplies.map((s) =>
+        s.supplyId === supplyId ? { ...s, quantity } : s
+      )
     );
   };
 
   const handleRemoveSupply = (supplyId: string) => {
-    setSupplies(supplies.filter((s) => s.supplyId !== supplyId));
+    setSupplies((prevSupplies) =>
+      prevSupplies.filter((s) => s.supplyId !== supplyId)
+    );
   };
 
   const formContent = (
@@ -367,7 +380,7 @@ export function ProductFormDialog({
         submit: {
           label: isEditMode ? "Cập nhật sản phẩm" : "Tạo sản phẩm",
           disabled: state.loading,
-          onClick: () => form.handleSubmit(onSubmit)(),
+          onClick: () => {},
         },
       }}
     >
