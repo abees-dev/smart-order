@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -28,15 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SupplierSelectField } from "@/components/forms";
+import { SupplierSelectField, SupplySelectField } from "@/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSupplyImportActions, useSupplies } from "../hooks/use-supply";
+import { useSupplyImportActions } from "../hooks/use-supply";
 import {
   createSupplyImportSchema,
   type CreateSupplyImportFormData,
 } from "../validation";
 import { SupplyFormDialog } from "./supply-form-dialog";
-import type { SupplyImport } from "../types";
+import type { Supply, SupplyImport } from "../types";
+import FormTextField from "@/components/forms/form-textfield";
 
 interface SupplyImportFormDialogProps {
   open: boolean;
@@ -53,7 +53,6 @@ export function SupplyImportFormDialog({
 }: SupplyImportFormDialogProps) {
   const { createImport, updateImport, loading, error } =
     useSupplyImportActions();
-  const { supplies, loading: suppliesLoading, refreshSupplies } = useSupplies();
   const [showSupplyForm, setShowSupplyForm] = useState(false);
 
   const isEditing = !!editImport;
@@ -141,7 +140,6 @@ export function SupplyImportFormDialog({
   };
 
   const handleSupplyCreated = () => {
-    refreshSupplies();
     setShowSupplyForm(false);
   };
 
@@ -170,6 +168,52 @@ export function SupplyImportFormDialog({
     }
 
     remove(index);
+  };
+
+  const handleVatChange = (index: number, vatRate: number) => {
+    const quantity = form.getValues(`items.${index}.quantity`);
+    const unitPrice = form.getValues(`items.${index}.unitPrice`);
+    if (quantity > 0 && unitPrice > 0) {
+      const subtotal = quantity * unitPrice;
+      const vatAmount = subtotal * (vatRate / 100);
+      const totalPrice = subtotal + vatAmount;
+      form.setValue(`items.${index}.totalPrice`, totalPrice);
+    }
+  };
+  const handleUnitPriceChange = (index: number, unitPrice: number) => {
+    const quantity = form.getValues(`items.${index}.quantity`);
+    const vatRate = form.getValues(`items.${index}.vatRate`) || 0;
+    if (quantity > 0) {
+      const subtotal = unitPrice * quantity;
+      const vatAmount = subtotal * (vatRate / 100);
+      const totalPrice = subtotal + vatAmount;
+      form.setValue(`items.${index}.totalPrice`, totalPrice);
+    }
+  };
+
+  const handleQuantityChange = (index: number, quantity: number) => {
+    const unitPrice = form.getValues(`items.${index}.unitPrice`);
+    const vatRate = form.getValues(`items.${index}.vatRate`) || 0;
+    if (unitPrice > 0) {
+      const subtotal = quantity * unitPrice;
+      const vatAmount = subtotal * (vatRate / 100);
+      const totalPrice = subtotal + vatAmount;
+      form.setValue(`items.${index}.totalPrice`, totalPrice);
+    }
+  };
+  const handleSelectSupply = (supply: Supply | null, index: number) => {
+    if (supply) {
+      // Auto-fill supply info when selected
+      form.setValue(`items.${index}.unitPrice`, supply.purchasePrice);
+      const quantity = form.getValues(`items.${index}.quantity`);
+      const vatRate = form.getValues(`items.${index}.vatRate`) || 0;
+      if (quantity > 0) {
+        const subtotal = quantity * supply.purchasePrice;
+        const vatAmount = subtotal * (vatRate / 100);
+        const totalPrice = subtotal + vatAmount;
+        form.setValue(`items.${index}.totalPrice`, totalPrice);
+      }
+    }
   };
 
   return (
@@ -201,18 +245,12 @@ export function SupplyImportFormDialog({
                 <CardTitle className="text-lg">Thông tin phiếu nhập</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
+                <FormTextField
                   name="invoiceNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Số hóa đơn *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nhập số hóa đơn" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Số hóa đơn"
+                  required
+                  placeholder="Nhập số hóa đơn"
+                  control={form.control}
                 />
 
                 <FormField
@@ -222,32 +260,19 @@ export function SupplyImportFormDialog({
                     <SupplierSelectField
                       field={field}
                       fieldState={fieldState}
-                      label="Nhà cung cấp *"
+                      label="Nhà cung cấp"
                       placeholder="Chọn nhà cung cấp"
-                      allowCreate
-                      onCreateNew={() => {
-                        // TODO: Open supplier creation dialog
-                        console.log("Open supplier creation dialog");
-                      }}
+                      required
                     />
                   )}
                 />
-
-                <FormField
-                  control={form.control}
+                <FormTextField
                   name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ghi chú</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ghi chú về phiếu nhập..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Ghi chú"
+                  placeholder="Nhập ghi chú"
+                  control={form.control}
+                  type="textarea"
+                  rows={3}
                 />
               </CardContent>
             </Card>
@@ -283,383 +308,174 @@ export function SupplyImportFormDialog({
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {suppliesLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span>Đang tải danh sách vật tư...</span>
-                  </div>
-                )}
-
-                {!suppliesLoading && supplies.length === 0 && (
-                  <div className="text-center py-8 bg-muted/50 rounded-lg">
-                    <Package className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      Chưa có vật tư nào
-                    </h3>
-                    <p className="text-muted-foreground mb-4">
-                      Bạn cần tạo vật tư trước khi có thể tạo phiếu nhập.
-                    </p>
-                    <Button
-                      type="button"
-                      onClick={() => setShowSupplyForm(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Tạo vật tư đầu tiên
-                    </Button>
-                  </div>
-                )}
-
-                {!suppliesLoading &&
-                  supplies.length > 0 &&
-                  fields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className="border rounded-lg p-4 space-y-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-base">
-                          Vật tư #{index + 1}
-                        </h4>
-                        <div className="flex gap-1">
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="border rounded-lg p-4 space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-base">
+                        Vật tư #{index + 1}
+                      </h4>
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const currentItem = form.getValues(
+                              `items.${index}`
+                            );
+                            append({
+                              supplyId: currentItem.supplyId,
+                              quantity: currentItem.quantity,
+                              unitPrice: currentItem.unitPrice,
+                              vatRate: currentItem.vatRate,
+                              totalPrice: currentItem.totalPrice,
+                            });
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          title="Nhân bản mục này"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        {fields.length > 1 && (
                           <Button
                             type="button"
-                            onClick={() => {
-                              const currentItem = form.getValues(
-                                `items.${index}`
-                              );
-                              append({
-                                supplyId: currentItem.supplyId,
-                                quantity: currentItem.quantity,
-                                unitPrice: currentItem.unitPrice,
-                                vatRate: currentItem.vatRate,
-                                totalPrice: currentItem.totalPrice,
-                              });
-                            }}
+                            onClick={() => removeItem(index)}
                             variant="ghost"
                             size="sm"
-                            title="Nhân bản mục này"
+                            title="Xóa mục này"
+                            className="text-destructive hover:text-destructive"
                           >
-                            <Plus className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              onClick={() => removeItem(index)}
-                              variant="ghost"
-                              size="sm"
-                              title="Xóa mục này"
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.supplyId`}
-                          render={({ field }) => {
-                            const selectedSupply = supplies.find(
-                              (s) => s.id === field.value
-                            );
-                            return (
-                              <FormItem className="md:col-span-2">
-                                <FormLabel>Chọn vật tư *</FormLabel>
-                                <FormControl>
-                                  <Select
-                                    value={field.value}
-                                    onValueChange={(value) => {
-                                      field.onChange(value);
-                                      // Auto-fill supply info when selected
-                                      const selectedSupply = supplies.find(
-                                        (s) => s.id === value
-                                      );
-                                      if (selectedSupply) {
-                                        form.setValue(
-                                          `items.${index}.unitPrice`,
-                                          selectedSupply.purchasePrice
-                                        );
-                                        const quantity = form.getValues(
-                                          `items.${index}.quantity`
-                                        );
-                                        const vatRate =
-                                          form.getValues(
-                                            `items.${index}.vatRate`
-                                          ) || 0;
-                                        if (quantity > 0) {
-                                          const subtotal =
-                                            quantity *
-                                            selectedSupply.purchasePrice;
-                                          const vatAmount =
-                                            subtotal * (vatRate / 100);
-                                          const totalPrice =
-                                            subtotal + vatAmount;
-                                          form.setValue(
-                                            `items.${index}.totalPrice`,
-                                            totalPrice
-                                          );
-                                        }
-                                      }
-                                    }}
-                                    disabled={suppliesLoading}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue
-                                        className="w-[240px]"
-                                        placeholder={
-                                          suppliesLoading
-                                            ? "Đang tải..."
-                                            : "Chọn vật tư"
-                                        }
-                                      >
-                                        {field.value && selectedSupply && (
-                                          <div className="flex items-center justify-between w-[240px]">
-                                            <span className="font-medium text-sm truncate">
-                                              {selectedSupply.name}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground ml-2">
-                                              {selectedSupply.sku}
-                                            </span>
-                                          </div>
-                                        )}
-                                      </SelectValue>
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-60">
-                                      {supplies.length === 0 ? (
-                                        <div className="p-2 text-sm text-muted-foreground text-center">
-                                          Không có vật tư nào
-                                        </div>
-                                      ) : (
-                                        supplies.map((supply) => (
-                                          <SelectItem
-                                            key={supply.id}
-                                            value={supply.id}
-                                          >
-                                            <div className="flex flex-col w-full">
-                                              <div className="flex items-center justify-between">
-                                                <span className="font-medium">
-                                                  {supply.name}
-                                                </span>
-                                                <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">
-                                                  {supply.sku}
-                                                </span>
-                                              </div>
-                                              <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
-                                                <span>
-                                                  {supply.unit} - Giá:{" "}
-                                                  {supply.purchasePrice.toLocaleString(
-                                                    "vi-VN"
-                                                  )}
-                                                  đ
-                                                </span>
-                                                <span
-                                                  className={
-                                                    supply.currentStock <=
-                                                    supply.minStock
-                                                      ? "text-orange-600"
-                                                      : "text-green-600"
-                                                  }
-                                                >
-                                                  Tồn: {supply.currentStock}
-                                                </span>
-                                              </div>
-                                            </div>
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
-                                {selectedSupply && (
-                                  <div className="text-sm mt-1 p-2 bg-muted/50 rounded">
-                                    <div className="flex items-center justify-between">
-                                      <span>
-                                        Tồn kho: {selectedSupply.currentStock}{" "}
-                                        {selectedSupply.unit}
-                                      </span>
-                                      {selectedSupply.currentStock <=
-                                        selectedSupply.minStock && (
-                                        <span className="text-orange-600 font-medium">
-                                          Sắp hết hàng
-                                        </span>
-                                      )}
-                                    </div>
-                                    {selectedSupply.description && (
-                                      <div className="text-xs text-muted-foreground mt-1">
-                                        {selectedSupply.description}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                <FormMessage />
-                              </FormItem>
-                            );
-                          }}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.quantity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Số lượng *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  placeholder="Số lượng"
-                                  {...field}
-                                  onChange={(e) => {
-                                    const quantity =
-                                      parseInt(e.target.value) || 0;
-                                    field.onChange(quantity);
-                                    const unitPrice = form.getValues(
-                                      `items.${index}.unitPrice`
-                                    );
-                                    const vatRate =
-                                      form.getValues(
-                                        `items.${index}.vatRate`
-                                      ) || 0;
-                                    if (unitPrice > 0) {
-                                      const subtotal = quantity * unitPrice;
-                                      const vatAmount =
-                                        subtotal * (vatRate / 100);
-                                      const totalPrice = subtotal + vatAmount;
-                                      form.setValue(
-                                        `items.${index}.totalPrice`,
-                                        totalPrice
-                                      );
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.unitPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Giá nhập (VNĐ) *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="1000"
-                                  placeholder="Giá đơn vị"
-                                  {...field}
-                                  onChange={(e) => {
-                                    const unitPrice =
-                                      parseFloat(e.target.value) || 0;
-                                    field.onChange(unitPrice);
-                                    const quantity = form.getValues(
-                                      `items.${index}.quantity`
-                                    );
-                                    const vatRate =
-                                      form.getValues(
-                                        `items.${index}.vatRate`
-                                      ) || 0;
-                                    if (quantity > 0) {
-                                      const subtotal = unitPrice * quantity;
-                                      const vatAmount =
-                                        subtotal * (vatRate / 100);
-                                      const totalPrice = subtotal + vatAmount;
-                                      form.setValue(
-                                        `items.${index}.totalPrice`,
-                                        totalPrice
-                                      );
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.vatRate`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>VAT (%)</FormLabel>
-                              <Select
-                                onValueChange={(value) => {
-                                  const vatRate = parseFloat(value);
-                                  field.onChange(vatRate);
-                                  const quantity = form.getValues(
-                                    `items.${index}.quantity`
-                                  );
-                                  const unitPrice = form.getValues(
-                                    `items.${index}.unitPrice`
-                                  );
-                                  if (quantity > 0 && unitPrice > 0) {
-                                    const subtotal = quantity * unitPrice;
-                                    const vatAmount =
-                                      subtotal * (vatRate / 100);
-                                    const totalPrice = subtotal + vatAmount;
-                                    form.setValue(
-                                      `items.${index}.totalPrice`,
-                                      totalPrice
-                                    );
-                                  }
-                                }}
-                                value={field.value?.toString()}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Chọn VAT" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="0">0%</SelectItem>
-                                  <SelectItem value="5">5%</SelectItem>
-                                  <SelectItem value="8">8%</SelectItem>
-                                  <SelectItem value="10">10%</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.totalPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Thành tiền (VNĐ)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  disabled
-                                  placeholder="Tự động tính"
-                                  value={
-                                    field.value?.toLocaleString("vi-VN") || "0"
-                                  }
-                                  className="bg-muted"
-                                />
-                              </FormControl>
-                              <div className="text-xs text-muted-foreground">
-                                {field.value > 0 && (
-                                  <span>
-                                    {field.value.toLocaleString("vi-VN")} VNĐ
-                                  </span>
-                                )}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        )}
                       </div>
                     </div>
-                  ))}
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.supplyId`}
+                        render={({ field, fieldState }) => (
+                          <SupplySelectField
+                            field={field}
+                            fieldState={fieldState}
+                            label="Chọn vật tư *"
+                            placeholder="Chọn vật tư"
+                            required
+                            className="md:col-span-2"
+                            onSupplySelect={(supply) =>
+                              handleSelectSupply(supply, index)
+                            }
+                          />
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.quantity`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Số lượng *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="1"
+                                placeholder="Số lượng"
+                                {...field}
+                                onChange={(e) => {
+                                  const quantity =
+                                    parseInt(e.target.value) || 0;
+                                  field.onChange(quantity);
+                                  handleQuantityChange(index, quantity);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.unitPrice`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Giá nhập (VNĐ) *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="1000"
+                                placeholder="Giá đơn vị"
+                                {...field}
+                                onChange={(e) => {
+                                  const unitPrice =
+                                    parseFloat(e.target.value) || 0;
+                                  field.onChange(unitPrice);
+                                  handleUnitPriceChange(index, unitPrice);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.vatRate`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>VAT (%)</FormLabel>
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(parseInt(value));
+                                handleVatChange(index, parseInt(value));
+                              }}
+                              value={field.value?.toString()}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn VAT" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="0">0%</SelectItem>
+                                <SelectItem value="5">5%</SelectItem>
+                                <SelectItem value="8">8%</SelectItem>
+                                <SelectItem value="10">10%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.totalPrice`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Thành tiền (VNĐ)</FormLabel>
+                            <FormControl>
+                              <Input
+                                disabled
+                                placeholder="Tự động tính"
+                                value={
+                                  field.value?.toLocaleString("vi-VN") || "0"
+                                }
+                                className="bg-muted"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
 
                 {/* Total Summary */}
                 {fields.length > 0 &&

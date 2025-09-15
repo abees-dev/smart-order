@@ -222,7 +222,7 @@ export function SelectSearch({
                   onClick={() => !option.disabled && handleSelect(option.value)}
                 >
                   {option.renderOption ? (
-                    <div>{option.renderOption(option)}</div>
+                    <div className="w-full">{option.renderOption(option)}</div>
                   ) : (
                     <div>
                       <CheckIcon
