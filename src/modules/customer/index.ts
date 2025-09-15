@@ -5,7 +5,7 @@ export {
   DeleteCustomerDialog,
 } from "./components";
 
-export { useCustomers, useCustomer } from "./hooks/use-customer";
+export { useCustomers } from "./hooks/use-customer";
 
 export { CustomerService } from "./services/customer.service";
 
@@ -14,8 +14,6 @@ export type {
   CreateCustomerData,
   UpdateCustomerData,
   CustomerFilters,
-  CustomerListState,
-  CustomerFormState,
 } from "./types";
 
 export {

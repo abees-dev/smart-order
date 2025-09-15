@@ -39,18 +39,6 @@ export interface CustomerFilters {
   city?: string;
   country?: string;
   isActive?: boolean;
-}
-
-export interface CustomerListState {
-  customers: Customer[];
-  loading: boolean;
-  error: string | null;
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export interface CustomerFormState {
-  loading: boolean;
-  error: string | null;
+  page?: number;
+  limit?: number;
 }

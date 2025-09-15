@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { DeleteCustomerDialog } from "./delete-customer-dialog";
 import { CustomerFilterSheet } from "./customer-filter-sheet";
 import type { Customer, CustomerFilters } from "../types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { debounce } from "lodash";
 
 export function CustomersListPage() {
   const { t } = useTranslation();
@@ -34,26 +36,38 @@ export function CustomersListPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
+  const isMobile = useIsMobile();
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const {
     customers,
+    fetchNextPage,
     loading,
+    hasNextPage,
+    refetchCustomers,
     error,
-    hasMore,
-    loadMore,
-    refreshCustomers,
-    total,
-    page,
-    pageSize,
-    changePage,
-    isMobile,
-    loadingMore,
-  } = useCustomers(filters, 7);
-
+    pagination,
+  } = useCustomers({
+    ...filters,
+    page: page,
+    limit: 10,
+    search: searchTerm || undefined,
+  });
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
   const { createColumn, createStatusColumn } =
     useEnhancedTableColumns<Customer>();
 
+  const debouncedSearchTerm = useCallback(
+    debounce((term: string) => {
+      setSearchTerm(term);
+    }, 300),
+    []
+  );
+
   const handleSearch = (value: string) => {
+    debouncedSearchTerm(value);
     setFilters((prev) => ({ ...prev, search: value || undefined }));
   };
 
@@ -190,19 +204,19 @@ export function CustomersListPage() {
 
   const handleCustomerCreated = () => {
     setShowCreateDialog(false);
-    refreshCustomers();
+    refetchCustomers();
   };
 
   const handleCustomerUpdated = () => {
     setShowEditDialog(false);
     setSelectedCustomer(null);
-    refreshCustomers();
+    refetchCustomers();
   };
 
   const handleCustomerDeleted = () => {
     setShowDeleteDialog(false);
     setSelectedCustomer(null);
-    refreshCustomers();
+    refetchCustomers();
   };
 
   const handleFiltersChange = (newFilters: CustomerFilters) => {
@@ -218,7 +232,12 @@ export function CustomersListPage() {
       <div className="p-6">
         <div className="text-center text-red-600">
           <p>{error}</p>
-          <Button onClick={refreshCustomers} className="mt-2">
+          <Button
+            onClick={() => {
+              refetchCustomers();
+            }}
+            className="mt-2"
+          >
             {t("common.retry")}
           </Button>
         </div>
@@ -237,17 +256,17 @@ export function CustomersListPage() {
         loading={loading}
         emptyText={t("customers.noCustomersFound")}
         actions={tableActions}
-        hasMore={hasMore}
-        onLoadMore={loadMore}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
         isMobile={isMobile}
-        loadingMore={loadingMore}
+        loadingMore={loading}
         searchValue={filters.search || ""}
         pagination={
           !isMobile
             ? {
-                current: page,
-                pageSize: pageSize,
-                total: total,
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
                 onChange: (newPage: number) => changePage(newPage),
               }
             : undefined

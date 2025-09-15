@@ -97,9 +97,9 @@ export function CustomerFormDialog({
     // Convert empty strings to undefined for optional fields
     const cleanedData = {
       ...data,
-      email: data.email?.trim() || undefined,
-      contactPerson: data.contactPerson?.trim() || undefined,
-      notes: data.notes?.trim() || undefined,
+      email: data.email?.trim() || "",
+      contactPerson: data.contactPerson?.trim() || "",
+      notes: data.notes?.trim() || "",
     };
 
     if (isEditing && customer) {
