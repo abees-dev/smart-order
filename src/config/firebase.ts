@@ -1,6 +1,11 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  CACHE_SIZE_UNLIMITED,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC025zpofE17R993V5edngMKUA8886mVps",
@@ -18,9 +23,12 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication
 const auth = getAuth(app);
 
-// Initialize Firestore
+// Initialize Firestore with optimized caching
 const db = initializeFirestore(app, {
-  localCache: persistentLocalCache(),
+  localCache: persistentLocalCache({
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    tabManager: persistentMultipleTabManager(),
+  }),
 });
 
 // Configure Google Auth Provider
