@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { DocumentSnapshot } from "firebase/firestore";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SupplyService } from "../services/supply.service";
 import type {
   Supply,
@@ -15,75 +16,170 @@ import type {
   SupplyImportFilters,
 } from "../types";
 
-export function useSupplies(initialFilters: SupplyFilters = {}) {
+export function useSupplies(initialFilters: SupplyFilters = {}, pageSize = 10) {
+  const isMobile = useIsMobile();
+
   const [state, setState] = useState<SupplyListState>({
     supplies: [],
-    loading: false,
+    loading: true,
     error: null,
-    hasMore: false,
     total: 0,
+    page: 1,
+    pageSize,
+    hasMore: false,
   });
-  const [filters, setFilters] = useState<SupplyFilters>(initialFilters);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot>();
 
-  const fetchSupplies = useCallback(
-    async (reset = false) => {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const loadSupplies = useCallback(
+    async (reset = false, targetPage = 1) => {
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        error: null,
+      }));
 
       try {
-        const docToUse = reset ? undefined : lastDoc;
-        const {
-          supplies,
-          hasMore,
-          lastDoc: newLastDoc,
-        } = await SupplyService.getAllSupplies(filters, 10, docToUse);
+        let result;
+
+        if (isMobile) {
+          // Mobile: Use infinite loading with Firestore pagination
+          result = await SupplyService.getAllSupplies(
+            initialFilters,
+            pageSize,
+            reset ? undefined : lastDoc || undefined
+          );
+        } else {
+          // Desktop: Use traditional pagination
+          result = await SupplyService.getSuppliesWithPagination(
+            initialFilters,
+            pageSize,
+            targetPage
+          );
+        }
+
+        const supplies = result.supplies;
+        const newHasMore = result.hasMore;
+        const newLastDoc = result.lastDoc;
+        const newTotal =
+          "total" in result ? (result.total as number) : undefined;
 
         setState((prev) => ({
           ...prev,
-          supplies: reset ? supplies : [...prev.supplies, ...supplies],
-          hasMore,
-          total: reset ? supplies.length : prev.total + supplies.length,
+          supplies:
+            isMobile && !reset ? [...prev.supplies, ...supplies] : supplies,
           loading: false,
+          total:
+            newTotal !== undefined
+              ? newTotal
+              : reset
+              ? supplies.length
+              : prev.total + supplies.length,
+          page: isMobile ? (reset ? 1 : prev.page + 1) : targetPage,
+          hasMore: newHasMore,
         }));
 
-        setLastDoc(newLastDoc);
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+
+        return { success: true };
       } catch (error) {
         setState((prev) => ({
           ...prev,
-          error: error instanceof Error ? error.message : "Đã có lỗi xảy ra",
           loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
         }));
+
+        return { success: false, error };
       }
     },
-    [filters, lastDoc]
+    [initialFilters, pageSize, lastDoc, isMobile]
   );
 
-  const refreshSupplies = useCallback(() => {
-    setLastDoc(undefined);
-    fetchSupplies(true);
-  }, [fetchSupplies]);
+  const refreshSupplies = useCallback(async () => {
+    setLastDoc(null);
+    setHasMore(true);
+    await loadSupplies(true, 1);
+  }, [loadSupplies]);
 
-  const loadMoreSupplies = useCallback(() => {
-    if (state.hasMore && !state.loading) {
-      fetchSupplies(false);
+  const loadMore = useCallback(async () => {
+    if (!state.loading && hasMore && isMobile && !loadingMore) {
+      setLoadingMore(true);
+      try {
+        await loadSupplies(false);
+      } finally {
+        setLoadingMore(false);
+      }
     }
-  }, [fetchSupplies, state.hasMore, state.loading]);
+  }, [state.loading, hasMore, isMobile, loadingMore, loadSupplies]);
 
-  const updateFilters = useCallback((newFilters: SupplyFilters) => {
-    setFilters(newFilters);
-    setLastDoc(undefined);
-  }, []);
+  const changePage = useCallback(
+    async (newPage: number) => {
+      if (!isMobile) {
+        await loadSupplies(true, newPage);
+      }
+    },
+    [isMobile, loadSupplies]
+  );
 
+  // Load initial data
   useEffect(() => {
-    refreshSupplies();
-  }, [filters]);
+    const loadData = async () => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+      setLastDoc(null);
+      setHasMore(true);
+
+      try {
+        let result;
+
+        if (isMobile) {
+          result = await SupplyService.getAllSupplies(initialFilters, pageSize);
+        } else {
+          result = await SupplyService.getSuppliesWithPagination(
+            initialFilters,
+            pageSize,
+            1
+          );
+        }
+
+        const { supplies, hasMore: newHasMore, lastDoc: newLastDoc } = result;
+        const total =
+          "total" in result ? (result.total as number) : supplies.length;
+
+        setState({
+          supplies,
+          loading: false,
+          error: null,
+          total,
+          page: 1,
+          pageSize,
+          hasMore: newHasMore,
+        });
+
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+        }));
+      }
+    };
+
+    loadData();
+  }, [JSON.stringify(initialFilters), pageSize, isMobile]);
 
   return {
     ...state,
-    filters,
-    updateFilters,
+    hasMore,
+    loadMore,
     refreshSupplies,
-    loadMoreSupplies,
+    changePage,
+    isMobile,
+    loadingMore,
   };
 }
 

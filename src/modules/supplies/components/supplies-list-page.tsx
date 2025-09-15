@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,13 @@ import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { SUPPLY_CATEGORY_MAP } from "../utils/supply-categrory";
 
 export function SuppliesListPage() {
+  const { t } = useTranslation();
   useDocumentTitle();
+
+  // Set document title manually for this page
+  useEffect(() => {
+    document.title = `${t("supplies.title") || "Vật tư"} - ${t("app.title")}`;
+  }, [t]);
 
   const [filters, setFilters] = useState<SupplyFilters>({});
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -26,8 +33,20 @@ export function SuppliesListPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
 
-  const { supplies, loading, refreshSupplies, loadMoreSupplies, hasMore } =
-    useSupplies(filters);
+  const {
+    supplies,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    refreshSupplies,
+    total,
+    page,
+    pageSize,
+    changePage,
+    isMobile,
+    loadingMore,
+  } = useSupplies(filters, 7);
 
   // Get supplier IDs from supplies and fetch supplier data
   const supplierIds = useMemo(
@@ -258,33 +277,55 @@ export function SuppliesListPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Vật tư</h1>
-          <p className="text-muted-foreground">
-            Quản lý danh sách vật tư của cửa hàng
-          </p>
+      {error && (
+        <div className="text-center text-red-600">
+          <p>{error}</p>
+          <Button onClick={refreshSupplies} className="mt-2">
+            {t("common.retry") || "Thử lại"}
+          </Button>
         </div>
-        <Button onClick={() => setShowFormDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm vật tư
-        </Button>
-      </div>
+      )}
 
       <EnhancedTable<Supply>
-        title="Danh sách vật tư"
+        title={t("supplies.title") || "Vật tư"}
+        description={
+          t("supplies.description") || "Quản lý danh sách vật tư của cửa hàng"
+        }
         columns={columns}
         dataSource={supplies}
-        actions={tableActions}
-        loading={loading}
-        searchable
-        onSearchChange={handleSearch}
-        searchPlaceholder="Tìm kiếm vật tư..."
-        emptyText="Không tìm thấy vật tư nào"
-        mobileCardRender={mobileCardRender}
-        hasMore={hasMore}
-        onLoadMore={loadMoreSupplies}
         rowKey="id"
+        loading={loading}
+        emptyText={t("supplies.noSuppliesFound") || "Không tìm thấy vật tư nào"}
+        actions={tableActions}
+        hasMore={hasMore}
+        onLoadMore={loadMore}
+        isMobile={isMobile}
+        loadingMore={loadingMore}
+        searchValue={filters.search || ""}
+        pagination={
+          !isMobile
+            ? {
+                current: page,
+                pageSize: pageSize,
+                total: total,
+                onChange: (newPage: number) => changePage(newPage),
+              }
+            : undefined
+        }
+        searchable
+        searchPlaceholder={
+          t("supplies.searchPlaceholder") || "Tìm kiếm vật tư..."
+        }
+        onSearchChange={handleSearch}
+        mobileCardRender={mobileCardRender}
+        headerActions={
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowFormDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("supplies.addSupply") || "Thêm vật tư"}
+            </Button>
+          </div>
+        }
       />
 
       {/* Dialogs */}
@@ -317,15 +358,6 @@ export function SuppliesListPage() {
         supply={selectedSupply}
         onSuccess={handleDeleteSuccess}
       />
-
-      {showDeleteDialog && (
-        <DeleteSupplyDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          supply={selectedSupply}
-          onSuccess={handleDeleteSuccess}
-        />
-      )}
     </div>
   );
 }

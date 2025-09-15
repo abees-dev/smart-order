@@ -288,5 +288,13 @@
     "feature3": "Tích hợp ứng dụng di động",
     "feature4": "Thông báo tự động",
     "q1_2026": "Quý 1 năm 2026"
+  },
+  "supplies": {
+    "title": "Vật tư",
+    "description": "Quản lý vật tư của bạn",
+    "addSupply": "Thêm vật tư",
+    "editSupply": "Chỉnh sửa vật tư",
+    "deleteSupply": "Xóa vật tư",
+    "searchPlaceholder": "Tìm kiếm vật tư..."
   }
 }

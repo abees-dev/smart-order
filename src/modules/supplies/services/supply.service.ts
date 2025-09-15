@@ -15,6 +15,7 @@ import {
   DocumentSnapshot,
   QueryConstraint,
   writeBatch,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import type {
@@ -113,6 +114,113 @@ export class SupplyService {
       };
     } catch (error) {
       console.error("Error fetching supplies:", error);
+      throw new Error("Không thể tải danh sách vật tư");
+    }
+  }
+
+  static async getSuppliesWithPagination(
+    filters: SupplyFilters = {},
+    pageSize = 10,
+    page = 1
+  ): Promise<{
+    supplies: Supply[];
+    hasMore: boolean;
+    total: number;
+    lastDoc?: DocumentSnapshot;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [];
+
+      // Add filters
+      if (filters.category) {
+        constraints.push(where("category", "==", filters.category));
+      }
+      if (filters.supplierId) {
+        constraints.push(where("supplierId", "==", filters.supplierId));
+      }
+      if (filters.location) {
+        constraints.push(where("location", "==", filters.location));
+      }
+      if (filters.isActive !== undefined) {
+        constraints.push(where("isActive", "==", filters.isActive));
+      }
+
+      // Add search filter (simple text search on name)
+      if (filters.search) {
+        constraints.push(where("name", ">=", filters.search));
+        constraints.push(where("name", "<=", filters.search + "\uf8ff"));
+        constraints.push(orderBy("name"));
+      } else {
+        // Add ordering only when not searching
+        constraints.push(orderBy("createdAt", "desc"));
+      }
+
+      // Get total count
+      const countQuery = query(this.suppliesRef, ...constraints);
+      const countSnapshot = await getCountFromServer(countQuery);
+      const total = countSnapshot.data().count;
+
+      // Get paginated data
+      const skip = (page - 1) * pageSize;
+      constraints.push(limit(pageSize));
+
+      // For pagination in Firestore, we need to use cursor-based pagination
+      // Since traditional offset doesn't exist, we'll simulate it by getting documents up to the skip point
+      let querySnapshot;
+      if (skip > 0) {
+        const skipQuery = query(
+          this.suppliesRef,
+          ...constraints.slice(0, -1), // Remove limit constraint
+          limit(skip)
+        );
+        const skipSnapshot = await getDocs(skipQuery);
+        const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
+
+        if (lastVisible) {
+          const finalQuery = query(
+            this.suppliesRef,
+            ...constraints.slice(0, -1), // Remove limit constraint
+            startAfter(lastVisible),
+            limit(pageSize)
+          );
+          querySnapshot = await getDocs(finalQuery);
+        } else {
+          // If no documents to skip, return empty result
+          return {
+            supplies: [],
+            hasMore: false,
+            total,
+            lastDoc: undefined,
+          };
+        }
+      } else {
+        const finalQuery = query(this.suppliesRef, ...constraints);
+        querySnapshot = await getDocs(finalQuery);
+      }
+
+      let supplies: Supply[] = [];
+      querySnapshot.forEach((doc) => {
+        supplies.push({ id: doc.id, ...doc.data() } as Supply);
+      });
+
+      // Client-side filtering for complex queries that Firestore doesn't support directly
+      if (filters.lowStock) {
+        supplies = supplies.filter(
+          (supply) => supply.currentStock <= supply.minStock
+        );
+      }
+
+      const hasMore = total > page * pageSize;
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+      return {
+        supplies,
+        hasMore,
+        total,
+        lastDoc,
+      };
+    } catch (error) {
+      console.error("Error getting supplies with pagination:", error);
       throw new Error("Không thể tải danh sách vật tư");
     }
   }

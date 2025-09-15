@@ -223,5 +223,13 @@
     "feature3": "Mobile app integration",
     "feature4": "Automated notifications",
     "q1_2026": "Q1 2026"
+  },
+  "supplies": {
+    "title": "Supplies",
+    "description": "Manage your supplies",
+    "addSupply": "Add Supply",
+    "editSupply": "Edit Supply",
+    "deleteSupply": "Delete Supply",
+    "searchPlaceholder": "Search supplies..."
   }
 }
