@@ -2,11 +2,19 @@
 
 ## Architecture Overview
 
-This is a React + TypeScript + Vite application built for both web and **Zalo Mini App (ZMP)** deployment. Features a modular architecture with Vietnamese-first i18n, Firebase backend, and shadcn/ui component system.
+This is a React + TypeScript + Vite application built for both web and **Zalo Mini App (ZMP)** deployment. Features a modular architecture with Vietnamese-first i18n, **hybrid backend** (migrating from Firebase to REST API), and shadcn/ui component system.
 
 ### Current Modules
 
-Active modules: `auth`, `customer`, `suppliers`, `supplies`, `product`, `order` - each follows identical structure patterns.
+Active modules: `auth`, `customer`, `suppliers`, `supplies`, `product`, `order`, `invoice`, `reports` - each follows identical structure patterns.
+
+### Backend Architecture (HYBRID STATE)
+
+**⚠️ CRITICAL: Mixed Backend Patterns**
+
+- **New modules** (e.g., `customer`): Use REST API with Axios (`@/utils/axios`)
+- **Legacy modules** (e.g., `supplies`, `invoice`, `reports`): Still use Firebase/Firestore
+- Use the correct service pattern based on the module you're working with
 
 ### Key Patterns & Conventions
 
@@ -15,7 +23,7 @@ Each feature lives in `src/modules/[feature]/` with this exact structure:
 
 - `components/` - UI components with barrel exports via `index.ts`
 - `hooks/` - React hooks for state/business logic (e.g., `use-customer.ts`)
-- `services/` - Firebase service classes (e.g., `CustomerService`)
+- `services/` - **Service classes** (REST API or Firebase - see Backend Architecture)
 - `types/` - TypeScript interfaces exported from `index.ts`
 - `validation/` - Zod schemas with form type inference
 - `router.tsx` - Exports `RouteObject[]` for React Router v7
@@ -37,6 +45,8 @@ const router = createBrowserRouter(
         ...suppliesRouter,
         ...productRouter,
         ...orderRouter,
+        ...invoiceRouter,
+        reportsRouter, // Note: this one doesn't spread (single RouteObject)
       ],
     },
   ],
@@ -54,10 +64,28 @@ const router = createBrowserRouter(
 - `zmp-sdk` package included for Zalo-specific features
 - SSL dev server (port 4000) with local certificates for ZMP testing
 
-**Firebase Service Pattern:**
+**REST API Service Pattern (New Modules):**
 
 ```typescript
-// All services follow this class-based pattern
+// New pattern using Axios for REST API
+export class CustomerService {
+  static async getAllCustomers(
+    filters: CustomerFilters = {}
+  ): Promise<ApiResponsePagination<Customer[]>> {
+    return await axiosInstance.get("/customers", { params: filters });
+  }
+
+  static async createCustomer(data: CreateCustomerData): Promise<Customer> {
+    return await axiosInstance.post("/customers", data);
+  }
+  // Axios instance auto-handles response.data extraction
+}
+```
+
+**Firebase Service Pattern (Legacy Modules):**
+
+```typescript
+// Legacy pattern still used in supplies, invoice, reports
 export class CustomerService {
   private static collectionRef = collection(db, "customers");
 
@@ -80,17 +108,28 @@ export class CustomerService {
 **Custom Hook Patterns:**
 
 ```typescript
-// Standard pattern: useEntity, useEntityActions, useEntitySearch
-export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
-  const [state, setState] = useState<CustomerListState>({
-    customers: [],
+// REST API pattern (new modules) - uses React Query infinite queries
+export function useCustomers(filters: CustomerFilters = {}) {
+  const { data, fetchNextPage, hasNextPage, isFetching, refetch, error } =
+    useInfiniteQuery({
+      queryKey: ["customers", { ...filters }],
+      queryFn: ({ pageParam = filters.page }) =>
+        CustomerService.getAllCustomers({ ...filters, page: pageParam }),
+      // Returns { customers: flatMapped data, pagination, fetchNextPage, ... }
+    });
+}
+
+// Firebase pattern (legacy modules) - manual state management
+export function useSupplies(filters: SupplyFilters = {}, pageSize = 10) {
+  const [state, setState] = useState<SupplyListState>({
+    supplies: [],
     loading: true,
     error: null,
     total: 0,
     page: 1,
     pageSize,
   });
-  // Returns { state, refreshCustomers, loadMore, hasMore }
+  // Returns { state, refreshSupplies, loadMore, hasMore }
 }
 ```
 
@@ -99,10 +138,10 @@ export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
 **Commands:**
 
 ```bash
-npm run dev              # Vite dev server on https://localhost:4000 (SSL for ZMP)
-npm run build-miniapp    # ZMP build with app-config.json
-npm run build            # Standard web build
-npm run seed:customers   # Seed customer data via tsx script
+yarn dev                 # Vite dev server on https://localhost:4000 (SSL for ZMP)
+yarn build-miniapp       # ZMP build with app-config.json
+yarn build               # Standard web build
+yarn seed:customers      # Seed customer data via tsx script
 ```
 
 **Dev Console Utilities:**

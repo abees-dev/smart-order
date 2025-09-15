@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export interface Customer {
   id: string;
   name: string;
@@ -13,8 +11,8 @@ export interface Customer {
   customerCode?: string;
   taxCode?: string;
   isActive: boolean;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateCustomerData {
