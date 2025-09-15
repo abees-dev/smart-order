@@ -105,8 +105,6 @@ export function SupplierSelect({
     [onValueChange]
   );
 
-  console.log("SupplierSelect render, suppliers:", suppliers);
-
   return (
     <FormItem className={className}>
       {label && (

@@ -190,7 +190,11 @@ export function SupplyImportFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            noValidate
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
             {/* Import Information */}
             <Card>
               <CardHeader>
@@ -404,6 +408,7 @@ export function SupplyImportFormDialog({
                                   >
                                     <SelectTrigger>
                                       <SelectValue
+                                        className="w-[240px]"
                                         placeholder={
                                           suppliesLoading
                                             ? "Đang tải..."
@@ -411,7 +416,7 @@ export function SupplyImportFormDialog({
                                         }
                                       >
                                         {field.value && selectedSupply && (
-                                          <div className="flex items-center justify-between w-full">
+                                          <div className="flex items-center justify-between w-[240px]">
                                             <span className="font-medium text-sm truncate">
                                               {selectedSupply.name}
                                             </span>
