@@ -10,8 +10,8 @@ export const createSupplySchema = z.object({
     .min(2, "Mã SKU phải có ít nhất 2 ký tự")
     .max(50, "Mã SKU không được vượt quá 50 ký tự")
     .regex(
-      /^[A-Z0-9\-_]+$/,
-      "Mã SKU chỉ được chứa chữ hoa, số, gạch ngang và gạch dưới"
+      /^[A-Z0-9\-_.]+$/,
+      "Mã SKU chỉ được chứa chữ hoa, số, gạch ngang, gạch dưới và dấu chấm"
     ),
   description: z
     .string()
