@@ -3,7 +3,6 @@ import {
   doc,
   getDocs,
   getDoc,
-  addDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -23,7 +22,7 @@ import type {
   UpdateCustomerData,
   CustomerFilters,
 } from "../types";
-import { normalizeText } from "@/utils";
+import axiosInstance from "@/utils/axios";
 
 const COLLECTION_NAME = "customers";
 
@@ -251,27 +250,7 @@ export class CustomerService {
   }
 
   static async createCustomer(data: CreateCustomerData): Promise<Customer> {
-    try {
-      const now = Timestamp.now();
-      const cleanedData = this.cleanCustomerData(data);
-      const customerData = {
-        ...cleanedData,
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-        search: normalizeText(cleanedData.name || ""),
-      };
-
-      const docRef = await addDoc(this.collectionRef, customerData);
-
-      return {
-        id: docRef.id,
-        ...customerData,
-      } as Customer;
-    } catch (error) {
-      console.error("Error creating customer:", error);
-      throw new Error("Không thể tạo khách hàng mới");
-    }
+    return await axiosInstance.post("/customers", data);
   }
 
   // Helper method to clean update data for Firebase
@@ -321,55 +300,19 @@ export class CustomerService {
   static async updateCustomer(
     id: string,
     data: UpdateCustomerData
-  ): Promise<Customer> {
-    try {
-      const docRef = doc(db, COLLECTION_NAME, id);
-      const cleanedData = this.cleanUpdateData(data);
-      const updateData = {
-        ...cleanedData,
-        updatedAt: Timestamp.now(),
-      };
-
-      await updateDoc(docRef, updateData);
-
-      // Get updated document
-      return await this.getCustomerById(id);
-    } catch (error) {
-      console.error("Error updating customer:", error);
-      throw new Error("Không thể cập nhật thông tin khách hàng");
-    }
+  ): Promise<unknown> {
+    return await axiosInstance.patch(
+      `/customers/${id}`,
+      this.cleanUpdateData(data)
+    );
   }
 
-  static async deleteCustomer(id: string): Promise<void> {
-    try {
-      const docRef = doc(db, COLLECTION_NAME, id);
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.error("Error deleting customer:", error);
-      throw new Error("Không thể xóa khách hàng");
-    }
+  static async deleteCustomer(id: string): Promise<unknown> {
+    return await axiosInstance.delete(`/customers/${id}`);
   }
 
-  static async toggleCustomerStatus(id: string): Promise<Customer> {
-    try {
-      const customer = await this.getCustomerById(id);
-      return await this.updateCustomer(id, { isActive: !customer.isActive });
-    } catch (error) {
-      console.error("Error toggling customer status:", error);
-      throw new Error("Không thể thay đổi trạng thái khách hàng");
-    }
-  }
-
-  static async searchCustomers(searchTerm: string): Promise<Customer[]> {
-    try {
-      const { customers } = await this.getAllCustomers(
-        { search: searchTerm },
-        50 // Return more results for search
-      );
-      return customers;
-    } catch (error) {
-      console.error("Error searching customers:", error);
-      throw new Error("Không thể tìm kiếm khách hàng");
-    }
+  static async toggleCustomerStatus(id: string): Promise<unknown> {
+    const customer = await this.getCustomerById(id);
+    return await this.updateCustomer(id, { isActive: !customer.isActive });
   }
 }

@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Form } from "@/components/ui/form";
-import { useCustomerActions } from "../hooks/use-customer";
 import {
   createCustomerSchema,
   type CreateCustomerFormData,
@@ -11,6 +10,10 @@ import {
 import type { Customer } from "../types";
 import FormTextField from "@/components/forms/form-textfield";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import {
+  useCreateCustomer,
+  useUpdateCustomer,
+} from "../hooks/use-customer-action";
 
 interface CustomerFormDialogProps {
   open: boolean;
@@ -26,8 +29,18 @@ export function CustomerFormDialog({
   onSuccess,
 }: CustomerFormDialogProps) {
   const { t } = useTranslation();
-  const { createCustomer, updateCustomer, loading, error } =
-    useCustomerActions();
+
+  const { createCustomer, error } = useCreateCustomer({
+    onSuccess: () => {
+      onSuccess();
+    },
+  });
+
+  const { updateCustomer } = useUpdateCustomer({
+    onSuccess: () => {
+      onSuccess();
+    },
+  });
 
   const isEditing = !!customer;
 
@@ -81,24 +94,18 @@ export function CustomerFormDialog({
   }, [open, customer, form]);
 
   const onSubmit = async (data: CreateCustomerFormData) => {
-    try {
-      // Convert empty strings to undefined for optional fields
-      const cleanedData = {
-        ...data,
-        email: data.email?.trim() || undefined,
-        contactPerson: data.contactPerson?.trim() || undefined,
-        notes: data.notes?.trim() || undefined,
-      };
+    // Convert empty strings to undefined for optional fields
+    const cleanedData = {
+      ...data,
+      email: data.email?.trim() || undefined,
+      contactPerson: data.contactPerson?.trim() || undefined,
+      notes: data.notes?.trim() || undefined,
+    };
 
-      if (isEditing && customer) {
-        await updateCustomer(customer.id, cleanedData);
-      } else {
-        await createCustomer(cleanedData);
-      }
-      onSuccess();
-    } catch (error) {
-      // Error is handled by the hook
-      console.error("Form submission error:", error);
+    if (isEditing && customer) {
+      updateCustomer({ id: customer.id, data: cleanedData });
+    } else {
+      createCustomer(cleanedData);
     }
   };
 
@@ -211,12 +218,10 @@ export function CustomerFormDialog({
         cancel: {
           label: t("common.cancel"),
           onClick: () => onOpenChange(false),
-          disabled: loading,
         },
         submit: {
           label: isEditing ? t("common.update") : t("common.create"),
-          onClick: () => form.handleSubmit(onSubmit)(),
-          disabled: loading,
+          onClick: () => {},
         },
       }}
       formId="customer-form"

@@ -2,14 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DocumentSnapshot } from "firebase/firestore";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CustomerService } from "../services/customer.service";
-import type {
-  Customer,
-  CustomerFilters,
-  CustomerListState,
-  CustomerFormState,
-  CreateCustomerData,
-  UpdateCustomerData,
-} from "../types";
+import type { Customer, CustomerFilters, CustomerListState } from "../types";
 
 export function useCustomers(filters: CustomerFilters = {}, pageSize = 10) {
   const isMobile = useIsMobile();
@@ -209,120 +202,5 @@ export function useCustomer(id: string | null) {
     loading,
     error,
     refetch: loadCustomer,
-  };
-}
-
-export function useCustomerActions() {
-  const [state, setState] = useState<CustomerFormState>({
-    loading: false,
-    error: null,
-  });
-
-  const createCustomer = useCallback(async (data: CreateCustomerData) => {
-    setState({ loading: true, error: null });
-
-    try {
-      const newCustomer = await CustomerService.createCustomer(data);
-      setState({ loading: false, error: null });
-      return newCustomer;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Đã xảy ra lỗi";
-      setState({ loading: false, error: errorMessage });
-      throw error;
-    }
-  }, []);
-
-  const updateCustomer = useCallback(
-    async (id: string, data: UpdateCustomerData) => {
-      setState({ loading: true, error: null });
-
-      try {
-        const updatedCustomer = await CustomerService.updateCustomer(id, data);
-        setState({ loading: false, error: null });
-        return updatedCustomer;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Đã xảy ra lỗi";
-        setState({ loading: false, error: errorMessage });
-        throw error;
-      }
-    },
-    []
-  );
-
-  const deleteCustomer = useCallback(async (id: string) => {
-    setState({ loading: true, error: null });
-
-    try {
-      await CustomerService.deleteCustomer(id);
-      setState({ loading: false, error: null });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Đã xảy ra lỗi";
-      setState({ loading: false, error: errorMessage });
-      throw error;
-    }
-  }, []);
-
-  const toggleCustomerStatus = useCallback(async (id: string) => {
-    setState({ loading: true, error: null });
-
-    try {
-      const updatedCustomer = await CustomerService.toggleCustomerStatus(id);
-      setState({ loading: false, error: null });
-      return updatedCustomer;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Đã xảy ra lỗi";
-      setState({ loading: false, error: errorMessage });
-      throw error;
-    }
-  }, []);
-
-  return {
-    ...state,
-    createCustomer,
-    updateCustomer,
-    deleteCustomer,
-    toggleCustomerStatus,
-  };
-}
-
-export function useCustomerSearch() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const searchCustomers = useCallback(async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setCustomers([]);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const results = await CustomerService.searchCustomers(searchTerm);
-      setCustomers(results);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Đã xảy ra lỗi");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const clearSearch = useCallback(() => {
-    setCustomers([]);
-    setError(null);
-  }, []);
-
-  return {
-    customers,
-    loading,
-    error,
-    searchCustomers,
-    clearSearch,
   };
 }

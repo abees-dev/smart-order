@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useCustomerActions } from "../hooks/use-customer";
 import type { Customer } from "../types";
+import { useDeleteCustomer } from "../hooks/use-customer-action";
+import { toast } from "sonner";
 
 interface DeleteCustomerDialogProps {
   open: boolean;
@@ -35,19 +36,20 @@ export function DeleteCustomerDialog({
   onSuccess,
 }: DeleteCustomerDialogProps) {
   const { t } = useTranslation();
-  const { deleteCustomer, loading, error } = useCustomerActions();
+  const { deleteCustomer, loading } = useDeleteCustomer({
+    onSuccess: () => {
+      onSuccess();
+    },
+    onError: (error) => {
+      toast.error(error.message || t("customers.deleteCustomerError"));
+    },
+  });
   const isMobile = useIsMobile();
 
   if (!customer) return null;
 
   const handleDelete = async () => {
-    try {
-      await deleteCustomer(customer.id);
-      onSuccess();
-    } catch (error) {
-      // Error is handled by the hook
-      console.error("Delete customer error:", error);
-    }
+    deleteCustomer(customer.id);
   };
 
   const content = (
@@ -63,12 +65,6 @@ export function DeleteCustomerDialog({
           </p>
         </div>
       </div>
-
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-          {error}
-        </div>
-      )}
     </>
   );
 

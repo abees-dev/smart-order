@@ -5,12 +5,7 @@ export {
   DeleteCustomerDialog,
 } from "./components";
 
-export {
-  useCustomers,
-  useCustomer,
-  useCustomerActions,
-  useCustomerSearch,
-} from "./hooks/use-customer";
+export { useCustomers, useCustomer } from "./hooks/use-customer";
 
 export { CustomerService } from "./services/customer.service";
 

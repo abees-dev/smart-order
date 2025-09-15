@@ -9,7 +9,7 @@ import {
   type TableAction,
 } from "@/components/tables";
 
-import { useCustomers, useCustomerActions } from "../hooks/use-customer";
+import { useCustomers } from "../hooks/use-customer";
 import { CustomerFormDialog } from "./customer-form-dialog";
 import { CustomerDetailDialog } from "./customer-detail-dialog";
 import { DeleteCustomerDialog } from "./delete-customer-dialog";
@@ -50,7 +50,6 @@ export function CustomersListPage() {
     loadingMore,
   } = useCustomers(filters, 7);
 
-  useCustomerActions();
   const { createColumn, createStatusColumn } =
     useEnhancedTableColumns<Customer>();
 
