@@ -401,68 +401,186 @@ export function useStockActions() {
   };
 }
 
-export function useSupplyImports(initialFilters: SupplyImportFilters = {}) {
-  const [imports, setImports] = useState<SupplyImport[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [filters, setFilters] = useState<SupplyImportFilters>(initialFilters);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot>();
+export function useSupplyImports(
+  initialFilters: SupplyImportFilters = {},
+  pageSize = 10
+) {
+  const isMobile = useIsMobile();
 
-  const fetchImports = useCallback(
-    async (reset = false) => {
-      setLoading(true);
-      setError(null);
+  const [state, setState] = useState({
+    imports: [] as SupplyImport[],
+    loading: true,
+    error: null as string | null,
+    total: 0,
+    page: 1,
+    pageSize,
+    hasMore: false,
+  });
+
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [filters, setFilters] = useState<SupplyImportFilters>(initialFilters);
+
+  const loadImports = useCallback(
+    async (reset = false, targetPage = 1) => {
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        error: null,
+      }));
 
       try {
-        const docToUse = reset ? undefined : lastDoc;
-        const {
-          imports: newImports,
-          hasMore: newHasMore,
-          lastDoc: newLastDoc,
-        } = await SupplyService.getAllSupplyImports(filters, 10, docToUse);
+        let result;
 
-        setImports((prev) => (reset ? newImports : [...prev, ...newImports]));
+        if (isMobile) {
+          // Mobile: Use infinite loading with Firestore pagination
+          result = await SupplyService.getAllSupplyImports(
+            filters,
+            pageSize,
+            reset ? undefined : lastDoc || undefined
+          );
+        } else {
+          // Desktop: Use traditional pagination
+          result = await SupplyService.getSupplyImportsWithPagination(
+            filters,
+            pageSize,
+            targetPage
+          );
+        }
+
+        const imports = result.imports;
+        const newHasMore = result.hasMore;
+        const newLastDoc = result.lastDoc;
+        const newTotal =
+          "total" in result ? (result.total as number) : undefined;
+
+        setState((prev) => ({
+          ...prev,
+          imports: isMobile && !reset ? [...prev.imports, ...imports] : imports,
+          loading: false,
+          total:
+            newTotal !== undefined
+              ? newTotal
+              : reset
+              ? imports.length
+              : prev.total + imports.length,
+          page: isMobile ? (reset ? 1 : prev.page + 1) : targetPage,
+          hasMore: newHasMore,
+        }));
+
         setHasMore(newHasMore);
-        setLastDoc(newLastDoc);
+        setLastDoc(newLastDoc || null);
+
+        return { success: true };
       } catch (error) {
-        setError(error instanceof Error ? error.message : "Đã có lỗi xảy ra");
-      } finally {
-        setLoading(false);
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+        }));
+
+        return { success: false, error };
       }
     },
-    [filters, lastDoc]
+    [filters, pageSize, lastDoc, isMobile]
   );
 
-  const refreshImports = useCallback(() => {
-    setLastDoc(undefined);
-    fetchImports(true);
-  }, [fetchImports]);
+  const refreshImports = useCallback(async () => {
+    setLastDoc(null);
+    setHasMore(true);
+    await loadImports(true, 1);
+  }, [loadImports]);
 
-  const loadMoreImports = useCallback(() => {
-    if (hasMore && !loading) {
-      fetchImports(false);
+  const loadMore = useCallback(async () => {
+    if (!state.loading && hasMore && isMobile && !loadingMore) {
+      setLoadingMore(true);
+      try {
+        await loadImports(false);
+      } finally {
+        setLoadingMore(false);
+      }
     }
-  }, [fetchImports, hasMore, loading]);
+  }, [state.loading, hasMore, isMobile, loadingMore, loadImports]);
+
+  const changePage = useCallback(
+    async (newPage: number) => {
+      if (!isMobile) {
+        await loadImports(true, newPage);
+      }
+    },
+    [isMobile, loadImports]
+  );
 
   const updateFilters = useCallback((newFilters: SupplyImportFilters) => {
     setFilters(newFilters);
-    setLastDoc(undefined);
+    setLastDoc(null);
+    setHasMore(true);
   }, []);
 
+  // Load initial data
   useEffect(() => {
-    refreshImports();
-  }, [filters]);
+    const loadData = async () => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+      setLastDoc(null);
+      setHasMore(true);
+
+      try {
+        let result;
+
+        if (isMobile) {
+          result = await SupplyService.getAllSupplyImports(filters, pageSize);
+        } else {
+          result = await SupplyService.getSupplyImportsWithPagination(
+            filters,
+            pageSize,
+            1
+          );
+        }
+
+        const { imports, hasMore: newHasMore, lastDoc: newLastDoc } = result;
+        const total =
+          "total" in result ? (result.total as number) : imports.length;
+
+        setState({
+          imports,
+          loading: false,
+          error: null,
+          total,
+          page: 1,
+          pageSize,
+          hasMore: newHasMore,
+        });
+
+        setHasMore(newHasMore);
+        setLastDoc(newLastDoc || null);
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+        }));
+      }
+    };
+
+    loadData();
+  }, [filters, pageSize, isMobile]);
 
   return {
-    imports,
-    loading,
-    error,
+    imports: state.imports,
+    loading: state.loading,
+    error: state.error,
     hasMore,
     filters,
+    total: state.total,
+    page: state.page,
+    pageSize: state.pageSize,
+    loadingMore,
+    isMobile,
     updateFilters,
     refreshImports,
-    loadMoreImports,
+    loadMore,
+    changePage,
   };
 }
 

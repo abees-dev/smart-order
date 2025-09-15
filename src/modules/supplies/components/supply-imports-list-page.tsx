@@ -52,8 +52,22 @@ export function SupplyImportsListPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const { imports, loading, error, filters, updateFilters, refreshImports } =
-    useSupplyImports();
+  const {
+    imports,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    refreshImports,
+    total,
+    page,
+    pageSize,
+    changePage,
+    isMobile,
+    loadingMore,
+    filters,
+    updateFilters,
+  } = useSupplyImports({}, 7);
 
   const {
     error: actionError,
@@ -600,6 +614,19 @@ export function SupplyImportsListPage() {
           }
           mobileCardRender={mobileCardRender}
           rowKey="id"
+          hasMore={hasMore}
+          onLoadMore={loadMore}
+          loadingMore={loadingMore}
+          pagination={
+            !isMobile
+              ? {
+                  current: page,
+                  pageSize: pageSize,
+                  total: total,
+                  onChange: (newPage: number) => changePage(newPage),
+                }
+              : undefined
+          }
         />
       </div>
 

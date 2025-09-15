@@ -739,4 +739,111 @@ export class SupplyService {
       throw new Error("Không thể hủy phiếu nhập kho");
     }
   }
+
+  static async getSupplyImportsWithPagination(
+    filters: SupplyImportFilters = {},
+    pageSize = 10,
+    page = 1
+  ): Promise<{
+    imports: SupplyImport[];
+    hasMore: boolean;
+    total: number;
+    lastDoc?: DocumentSnapshot;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [];
+
+      // Add filters
+      if (filters.supplierId) {
+        constraints.push(where("supplierId", "==", filters.supplierId));
+      }
+      if (filters.status) {
+        constraints.push(where("status", "==", filters.status));
+      }
+      if (filters.dateFrom) {
+        constraints.push(where("importDate", ">=", filters.dateFrom));
+      }
+      if (filters.dateTo) {
+        constraints.push(where("importDate", "<=", filters.dateTo));
+      }
+
+      // Add search filter (simple text search on invoiceNumber)
+      if (filters.search) {
+        constraints.push(where("invoiceNumber", ">=", filters.search));
+        constraints.push(
+          where("invoiceNumber", "<=", filters.search + "\uf8ff")
+        );
+        constraints.push(orderBy("invoiceNumber"));
+      } else {
+        // Add ordering only when not searching
+        constraints.push(orderBy("importDate", "desc"));
+      }
+
+      // Get total count
+      const countQuery = query(
+        collection(db, SUPPLY_IMPORTS_COLLECTION),
+        ...constraints
+      );
+      const countSnapshot = await getCountFromServer(countQuery);
+      const total = countSnapshot.data().count;
+
+      // Get paginated data
+      const skip = (page - 1) * pageSize;
+      constraints.push(limit(pageSize));
+
+      // For pagination in Firestore, we need to use cursor-based pagination
+      if (skip > 0) {
+        const skipQuery = query(
+          collection(db, SUPPLY_IMPORTS_COLLECTION),
+          ...constraints.slice(0, -1), // Remove limit constraint
+          limit(skip)
+        );
+        const skipSnapshot = await getDocs(skipQuery);
+
+        if (skipSnapshot.docs.length > 0) {
+          const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
+          constraints.push(startAfter(lastVisible));
+        }
+      }
+
+      const q = query(
+        collection(db, SUPPLY_IMPORTS_COLLECTION),
+        ...constraints
+      );
+      const querySnapshot = await getDocs(q);
+
+      let imports = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as SupplyImport[];
+
+      // Client-side filtering for complex search if needed
+      if (filters.search && !filters.search.match(/^[a-zA-Z0-9\-_]+$/)) {
+        const searchTerm = filters.search.toLowerCase();
+        imports = imports.filter(
+          (imp) =>
+            imp.invoiceNumber.toLowerCase().includes(searchTerm) ||
+            imp.supplierId.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      const hasMore = total > page * pageSize;
+
+      return {
+        imports,
+        hasMore,
+        total,
+        lastDoc:
+          imports.length > 0
+            ? querySnapshot.docs[imports.length - 1]
+            : undefined,
+      };
+    } catch (error) {
+      console.error("Error fetching supply imports with pagination:", error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Không thể tải danh sách phiếu nhập kho");
+    }
+  }
 }
