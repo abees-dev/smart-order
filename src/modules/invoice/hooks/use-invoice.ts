@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { DocumentSnapshot } from "firebase/firestore";
 import { InvoiceService } from "../services/invoice.service";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type {
   InvoiceFilters,
   InvoiceListState,
@@ -69,6 +70,234 @@ export function useInvoices(filters: InvoiceFilters = {}, pageSize = 10) {
     refreshInvoices,
     loadMore,
     hasMore: state.hasMore,
+  };
+}
+
+// Hook for input invoices with pagination (similar to products pattern)
+export function useInputInvoicesWithPagination(
+  filters: Omit<InvoiceFilters, "type"> = {},
+  pageSize = 10
+) {
+  const isMobile = useIsMobile();
+  const [state, setState] = useState({
+    inputInvoices: [] as InputInvoice[],
+    loading: true,
+    error: null as string | null,
+    total: 0,
+    page: 1,
+    pageSize,
+    hasMore: false,
+    loadingMore: false,
+  });
+
+  const [currentFilters, setCurrentFilters] = useState(filters);
+
+  const loadInputInvoices = useCallback(
+    async (page = 1, reset = false) => {
+      try {
+        setState((prev) => ({
+          ...prev,
+          loading: reset,
+          loadingMore: !reset,
+          error: null,
+        }));
+
+        const result = await InvoiceService.getInputInvoicesWithPagination(
+          currentFilters,
+          page,
+          pageSize
+        );
+
+        setState((prev) => ({
+          ...prev,
+          inputInvoices: reset
+            ? result.inputInvoices
+            : [...prev.inputInvoices, ...result.inputInvoices],
+          total: result.total,
+          page: result.page,
+          hasMore: result.hasMore,
+          loading: false,
+          loadingMore: false,
+        }));
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          loadingMore: false,
+          error: error instanceof Error ? error.message : "Có lỗi xảy ra",
+        }));
+      }
+    },
+    [currentFilters, pageSize]
+  );
+
+  const refreshInputInvoices = useCallback(() => {
+    loadInputInvoices(1, true);
+  }, [loadInputInvoices]);
+
+  const loadMore = useCallback(() => {
+    if (!state.loading && !state.loadingMore && state.hasMore) {
+      loadInputInvoices(state.page + 1, false);
+    }
+  }, [
+    state.loading,
+    state.loadingMore,
+    state.hasMore,
+    state.page,
+    loadInputInvoices,
+  ]);
+
+  const changePage = useCallback(
+    (newPage: number) => {
+      loadInputInvoices(newPage, true);
+    },
+    [loadInputInvoices]
+  );
+
+  const updateFilters = useCallback(
+    (newFilters: Omit<InvoiceFilters, "type">) => {
+      setCurrentFilters(newFilters);
+    },
+    []
+  );
+
+  useEffect(() => {
+    refreshInputInvoices();
+  }, [refreshInputInvoices]);
+
+  useEffect(() => {
+    refreshInputInvoices();
+  }, [currentFilters]);
+
+  return {
+    inputInvoices: state.inputInvoices,
+    loading: state.loading,
+    error: state.error,
+    hasMore: state.hasMore,
+    loadMore,
+    refreshInputInvoices,
+    total: state.total,
+    page: state.page,
+    pageSize: state.pageSize,
+    changePage,
+    isMobile,
+    loadingMore: state.loadingMore,
+    filters: currentFilters,
+    updateFilters,
+  };
+}
+
+// Hook for output invoices with pagination (similar to products pattern)
+export function useOutputInvoicesWithPagination(
+  filters: Omit<InvoiceFilters, "type"> = {},
+  pageSize = 10
+) {
+  const isMobile = useIsMobile();
+  const [state, setState] = useState({
+    outputInvoices: [] as OutputInvoice[],
+    loading: true,
+    error: null as string | null,
+    total: 0,
+    page: 1,
+    pageSize,
+    hasMore: false,
+    loadingMore: false,
+  });
+
+  const [currentFilters, setCurrentFilters] = useState(filters);
+
+  const loadOutputInvoices = useCallback(
+    async (page = 1, reset = false) => {
+      try {
+        setState((prev) => ({
+          ...prev,
+          loading: reset,
+          loadingMore: !reset,
+          error: null,
+        }));
+
+        const result = await InvoiceService.getOutputInvoicesWithPagination(
+          currentFilters,
+          page,
+          pageSize
+        );
+
+        setState((prev) => ({
+          ...prev,
+          outputInvoices: reset
+            ? result.outputInvoices
+            : [...prev.outputInvoices, ...result.outputInvoices],
+          total: result.total,
+          page: result.page,
+          hasMore: result.hasMore,
+          loading: false,
+          loadingMore: false,
+        }));
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          loadingMore: false,
+          error: error instanceof Error ? error.message : "Có lỗi xảy ra",
+        }));
+      }
+    },
+    [currentFilters, pageSize]
+  );
+
+  const refreshOutputInvoices = useCallback(() => {
+    loadOutputInvoices(1, true);
+  }, [loadOutputInvoices]);
+
+  const loadMore = useCallback(() => {
+    if (!state.loading && !state.loadingMore && state.hasMore) {
+      loadOutputInvoices(state.page + 1, false);
+    }
+  }, [
+    state.loading,
+    state.loadingMore,
+    state.hasMore,
+    state.page,
+    loadOutputInvoices,
+  ]);
+
+  const changePage = useCallback(
+    (newPage: number) => {
+      loadOutputInvoices(newPage, true);
+    },
+    [loadOutputInvoices]
+  );
+
+  const updateFilters = useCallback(
+    (newFilters: Omit<InvoiceFilters, "type">) => {
+      setCurrentFilters(newFilters);
+    },
+    []
+  );
+
+  useEffect(() => {
+    refreshOutputInvoices();
+  }, [refreshOutputInvoices]);
+
+  useEffect(() => {
+    refreshOutputInvoices();
+  }, [currentFilters]);
+
+  return {
+    outputInvoices: state.outputInvoices,
+    loading: state.loading,
+    error: state.error,
+    hasMore: state.hasMore,
+    loadMore,
+    refreshOutputInvoices,
+    total: state.total,
+    page: state.page,
+    pageSize: state.pageSize,
+    changePage,
+    isMobile,
+    loadingMore: state.loadingMore,
+    filters: currentFilters,
+    updateFilters,
   };
 }
 

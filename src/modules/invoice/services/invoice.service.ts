@@ -145,6 +145,112 @@ export class InvoiceService {
     };
   }
 
+  // Get input invoices with pagination
+  static async getInputInvoicesWithPagination(
+    filters: Omit<InvoiceFilters, "type"> = {},
+    page = 1,
+    pageSize = 10
+  ): Promise<{
+    inputInvoices: InputInvoice[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasMore: boolean;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [];
+
+      // Only completed imports
+      constraints.push(where("status", "==", "completed"));
+
+      // Filters
+      if (filters.partnerId) {
+        constraints.push(where("supplierId", "==", filters.partnerId));
+      }
+
+      if (filters.dateFrom) {
+        constraints.push(
+          where("importDate", ">=", Timestamp.fromDate(filters.dateFrom))
+        );
+      }
+
+      if (filters.dateTo) {
+        constraints.push(
+          where("importDate", "<=", Timestamp.fromDate(filters.dateTo))
+        );
+      }
+
+      constraints.push(orderBy("importDate", "desc"));
+
+      // Get total count first
+      const countQuery = query(
+        collection(db, COLLECTIONS.SUPPLY_IMPORTS),
+        ...constraints
+      );
+      const countSnapshot = await getDocs(countQuery);
+      let allInvoices = [];
+
+      // Get supplier names
+      const supplierIds = [
+        ...new Set(countSnapshot.docs.map((doc) => doc.data().supplierId)),
+      ];
+      const supplierDocs = await Promise.all(
+        supplierIds.map((id) => getDoc(doc(db, COLLECTIONS.SUPPLIERS, id)))
+      );
+      const supplierMap = new Map(
+        supplierDocs.map((doc) => [
+          doc.id,
+          doc.exists() ? doc.data().name : "Không xác định",
+        ])
+      );
+
+      allInvoices = countSnapshot.docs.map((docSnap) => {
+        const supplyImport = {
+          id: docSnap.id,
+          ...docSnap.data(),
+        } as SupplyImport;
+        const supplierName =
+          supplierMap.get(supplyImport.supplierId) || "Không xác định";
+        return this.transformToInputInvoice(supplyImport, supplierName);
+      });
+
+      // Client-side filtering
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        allInvoices = allInvoices.filter(
+          (inv) =>
+            inv.invoiceNumber.toLowerCase().includes(searchTerm) ||
+            inv.supplierName.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (filters.taxType) {
+        allInvoices = allInvoices.filter(
+          (inv) => inv.taxType === filters.taxType
+        );
+      }
+
+      const total = allInvoices.length;
+      const totalPages = Math.ceil(total / pageSize);
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const inputInvoices = allInvoices.slice(startIndex, endIndex);
+
+      return {
+        inputInvoices,
+        total,
+        page,
+        pageSize,
+        totalPages,
+        hasMore: page < totalPages,
+      };
+    } catch (error) {
+      console.error("Error fetching input invoices with pagination:", error);
+      throw new Error("Không thể tải danh sách hoá đơn đầu vào");
+    }
+  }
+
   // Get input invoices from supply imports
   static async getInputInvoices(
     filters: Omit<InvoiceFilters, "type"> = {},
@@ -242,6 +348,113 @@ export class InvoiceService {
     } catch (error) {
       console.error("Error fetching input invoices:", error);
       throw new Error("Không thể tải danh sách hoá đơn đầu vào");
+    }
+  }
+
+  // Get output invoices with pagination
+  static async getOutputInvoicesWithPagination(
+    filters: Omit<InvoiceFilters, "type"> = {},
+    page = 1,
+    pageSize = 10
+  ): Promise<{
+    outputInvoices: OutputInvoice[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasMore: boolean;
+  }> {
+    try {
+      const constraints: QueryConstraint[] = [];
+
+      // Only completed orders
+      constraints.push(where("status", "==", "completed"));
+
+      // Filters
+      if (filters.partnerId) {
+        constraints.push(where("customerId", "==", filters.partnerId));
+      }
+
+      if (filters.dateFrom) {
+        constraints.push(
+          where("updatedAt", ">=", Timestamp.fromDate(filters.dateFrom))
+        );
+      }
+
+      if (filters.dateTo) {
+        constraints.push(
+          where("updatedAt", "<=", Timestamp.fromDate(filters.dateTo))
+        );
+      }
+
+      constraints.push(orderBy("updatedAt", "desc"));
+
+      // Get total count first
+      const countQuery = query(
+        collection(db, COLLECTIONS.ORDERS),
+        ...constraints
+      );
+      const countSnapshot = await getDocs(countQuery);
+      let allInvoices = [];
+
+      // Get customer names for orders that have customerId
+      const customerIds = [
+        ...new Set(
+          countSnapshot.docs.map((doc) => doc.data().customerId).filter(Boolean)
+        ),
+      ];
+      const customerDocs = await Promise.all(
+        customerIds.map((id) => getDoc(doc(db, COLLECTIONS.CUSTOMERS, id)))
+      );
+      const customerMap = new Map(
+        customerDocs.map((doc) => [
+          doc.id,
+          doc.exists() ? doc.data().name : "Không xác định",
+        ])
+      );
+
+      allInvoices = countSnapshot.docs.map((docSnap) => {
+        const order = { id: docSnap.id, ...docSnap.data() } as Order;
+        const customerName = order.customerId
+          ? customerMap.get(order.customerId)
+          : order.customerName;
+        return this.transformToOutputInvoice(order, customerName);
+      });
+
+      // Client-side filtering
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        allInvoices = allInvoices.filter(
+          (inv) =>
+            inv.invoiceNumber.toLowerCase().includes(searchTerm) ||
+            (inv.customerName &&
+              inv.customerName.toLowerCase().includes(searchTerm))
+        );
+      }
+
+      if (filters.taxType) {
+        allInvoices = allInvoices.filter(
+          (inv) => inv.taxType === filters.taxType
+        );
+      }
+
+      const total = allInvoices.length;
+      const totalPages = Math.ceil(total / pageSize);
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const outputInvoices = allInvoices.slice(startIndex, endIndex);
+
+      return {
+        outputInvoices,
+        total,
+        page,
+        pageSize,
+        totalPages,
+        hasMore: page < totalPages,
+      };
+    } catch (error) {
+      console.error("Error fetching output invoices with pagination:", error);
+      throw new Error("Không thể tải danh sách hoá đơn đầu ra");
     }
   }
 
