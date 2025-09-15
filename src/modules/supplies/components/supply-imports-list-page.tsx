@@ -479,7 +479,6 @@ export function SupplyImportsListPage() {
               {new Intl.NumberFormat("vi-VN", {
                 style: "currency",
                 currency: "VND",
-                notation: "compact",
               }).format(totalValue)}
             </div>
           </CardContent>
