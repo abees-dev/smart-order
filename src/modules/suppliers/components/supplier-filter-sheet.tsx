@@ -151,10 +151,12 @@ export function SupplierFilterSheet({
                   <Select
                     onValueChange={(value) =>
                       field.onChange(
-                        value === "" ? undefined : value === "true"
+                        value === "all" ? undefined : value === "true"
                       )
                     }
-                    value={field.value === undefined ? "" : String(field.value)}
+                    value={
+                      field.value === undefined ? "all" : String(field.value)
+                    }
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -162,7 +164,7 @@ export function SupplierFilterSheet({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">{t("common.all")}</SelectItem>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
                       <SelectItem value="true">{t("common.active")}</SelectItem>
                       <SelectItem value="false">
                         {t("common.inactive")}

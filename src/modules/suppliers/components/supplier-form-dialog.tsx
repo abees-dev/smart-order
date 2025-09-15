@@ -1,9 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Form } from "@/components/ui/form";
-import { useSupplierForm } from "../hooks/use-supplier";
 import {
   createSupplierSchema,
   type CreateSupplierFormData,
@@ -11,6 +10,10 @@ import {
 import type { Supplier } from "../types";
 import FormTextField from "@/components/forms/form-textfield";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import {
+  useCreateSupplier,
+  useUpdateSupplier,
+} from "../hooks/use-supplier-action";
 
 interface SupplierFormDialogProps {
   open: boolean;
@@ -26,8 +29,26 @@ export function SupplierFormDialog({
   onSuccess,
 }: SupplierFormDialogProps) {
   const { t } = useTranslation();
-  const { createSupplier, updateSupplier, loading, error } = useSupplierForm();
 
+  const [error, setError] = useState<string | null>(null);
+  const { loading: createLoading, createSupplier } = useCreateSupplier({
+    onSuccess: () => {
+      onSuccess();
+    },
+    onError: (error) => {
+      setError(error.message);
+    },
+  });
+  const { loading: updateLoading, updateSupplier } = useUpdateSupplier({
+    onSuccess: () => {
+      onSuccess();
+    },
+    onError: (error) => {
+      setError(error.message);
+    },
+  });
+
+  const loading = createLoading || updateLoading;
   const isEditing = !!supplier;
 
   const form = useForm<CreateSupplierFormData>({
@@ -86,16 +107,10 @@ export function SupplierFormDialog({
   }, [open, supplier, form]);
 
   const onSubmit = async (data: CreateSupplierFormData) => {
-    try {
-      if (isEditing && supplier) {
-        await updateSupplier(supplier.id, data);
-      } else {
-        await createSupplier(data);
-      }
-      onSuccess();
-    } catch (error) {
-      // Error is handled by the hook
-      console.error("Error submitting supplier form:", error);
+    if (isEditing && supplier) {
+      updateSupplier({ id: supplier.id, data });
+    } else {
+      createSupplier(data);
     }
   };
 

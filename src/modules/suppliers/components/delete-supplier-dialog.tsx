@@ -18,9 +18,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSupplierForm } from "../hooks/use-supplier";
 import { Trash2, AlertTriangle } from "lucide-react";
 import type { Supplier } from "../types";
+import { useDeleteSupplier } from "../hooks/use-supplier-action";
+import { toast } from "sonner";
 
 interface DeleteSupplierDialogProps {
   open: boolean;
@@ -36,19 +37,18 @@ export function DeleteSupplierDialog({
   onSuccess,
 }: DeleteSupplierDialogProps) {
   const { t } = useTranslation();
-  const { deleteSupplier, loading, error } = useSupplierForm();
+  const { deleteSupplier, loading, error } = useDeleteSupplier({
+    onSuccess,
+    onError: (error) => {
+      toast.error(error.message || t("suppliers.deleteError"));
+    },
+  });
   const isMobile = useIsMobile();
 
   if (!supplier) return null;
 
   const handleDelete = async () => {
-    try {
-      await deleteSupplier(supplier.id);
-      onSuccess();
-    } catch (error) {
-      // Error is handled by the hook
-      console.error("Error deleting supplier:", error);
-    }
+    deleteSupplier(supplier.id);
   };
 
   const handleClose = () => {

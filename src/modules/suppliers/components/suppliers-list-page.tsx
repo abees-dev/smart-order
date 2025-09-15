@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, Eye, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   EnhancedTable,
@@ -15,6 +15,8 @@ import { DeleteSupplierDialog } from "./delete-supplier-dialog";
 import { SupplierFilterSheet } from "./supplier-filter-sheet";
 import type { Supplier, SupplierFilters } from "../types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { debounce } from "lodash";
 
 export function SuppliersListPage() {
   const { t } = useTranslation();
@@ -34,13 +36,39 @@ export function SuppliersListPage() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const isMobile = useIsMobile();
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
 
-  const { suppliers, loading, error, refreshSuppliers } = useSuppliers(filters);
+  const {
+    suppliers,
+    loading,
+    error,
+    refetchSuppliers,
+    hasNextPage,
+    fetchNextPage,
+    pagination,
+  } = useSuppliers({
+    ...filters,
+    page: page,
+    limit: 10,
+    search: searchTerm || undefined,
+  });
   const { createColumn, createStatusColumn } =
     useEnhancedTableColumns<Supplier>();
 
+  const debouncedSearchTerm = useCallback(
+    debounce((term: string) => {
+      setSearchTerm(term);
+    }, 300),
+    []
+  );
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
+    debouncedSearchTerm(value);
   };
 
   // Define table columns
@@ -166,19 +194,19 @@ export function SuppliersListPage() {
 
   const handleSupplierCreated = () => {
     setShowCreateDialog(false);
-    refreshSuppliers();
+    refetchSuppliers();
   };
 
   const handleSupplierUpdated = () => {
     setShowEditDialog(false);
     setSelectedSupplier(null);
-    refreshSuppliers();
+    refetchSuppliers();
   };
 
   const handleSupplierDeleted = () => {
     setShowDeleteDialog(false);
     setSelectedSupplier(null);
-    refreshSuppliers();
+    refetchSuppliers();
   };
 
   const handleFiltersApply = (newFilters: SupplierFilters) => {
@@ -191,7 +219,12 @@ export function SuppliersListPage() {
       <div className="p-6">
         <div className="text-center text-red-600">
           <p>{error}</p>
-          <Button onClick={refreshSuppliers} className="mt-2">
+          <Button
+            onClick={() => {
+              refetchSuppliers();
+            }}
+            className="mt-2"
+          >
             {t("common.retry")}
           </Button>
         </div>
@@ -214,12 +247,25 @@ export function SuppliersListPage() {
         searchPlaceholder={t("suppliers.searchPlaceholder")}
         onSearchChange={handleSearch}
         mobileCardRender={mobileCardRender}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
+        searchValue={filters.search || ""}
+        pagination={
+          !isMobile
+            ? {
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
+                onChange: (newPage: number) => changePage(newPage),
+              }
+            : undefined
+        }
         headerActions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowFilterSheet(true)}>
+            {/* <Button variant="outline" onClick={() => setShowFilterSheet(true)}>
               <Filter className="mr-2 h-4 w-4" />
               {t("common.filter")}
-            </Button>
+            </Button> */}
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="mr-2 h-4 w-4" />
               {t("suppliers.add")}

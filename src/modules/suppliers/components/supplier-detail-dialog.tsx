@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Phone, MapPin, Building2, CreditCard, FileText } from "lucide-react";
 import type { Supplier } from "../types";
-import type { Timestamp } from "firebase/firestore";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import { formatDate } from "@/utils";
 
 interface SupplierDetailDialogProps {
   open: boolean;
@@ -22,11 +22,6 @@ export function SupplierDetailDialog({
   const { t } = useTranslation();
 
   if (!supplier) return null;
-
-  const formatDate = (timestamp: Timestamp) => {
-    if (!timestamp?.toDate) return "-";
-    return timestamp.toDate().toLocaleDateString("vi-VN");
-  };
 
   const detailContent = (
     <div className="space-y-6">

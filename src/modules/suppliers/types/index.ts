@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export interface Supplier {
   id: string;
   name: string;
@@ -15,8 +13,8 @@ export interface Supplier {
   paymentTerms?: string;
   notes?: string;
   isActive: boolean;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateSupplierData {
@@ -43,6 +41,8 @@ export interface SupplierFilters {
   city?: string;
   country?: string;
   isActive?: boolean;
+  page?: number;
+  limit?: number;
 }
 
 export interface SupplierListState {
