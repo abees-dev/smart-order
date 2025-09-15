@@ -333,7 +333,6 @@ export class InvoiceService {
       if (filters.taxType) {
         invoices = invoices.filter((inv) => inv.taxType === filters.taxType);
       }
-      console.log("Filtered input invoices:", invoices);
 
       const hasMore = invoices.length > pageSize;
       if (hasMore) {

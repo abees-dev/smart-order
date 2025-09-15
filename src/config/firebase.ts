@@ -26,9 +26,11 @@ const auth = getAuth(app);
 // Initialize Firestore with optimized caching
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
     tabManager: persistentMultipleTabManager(),
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
   }),
+  ignoreUndefinedProperties: true,
+  experimentalForceLongPolling: false, // Set to true if you encounter connectivity issues (e.g., behind a firewall
 });
 
 // Configure Google Auth Provider

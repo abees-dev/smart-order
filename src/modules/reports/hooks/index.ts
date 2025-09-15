@@ -10,7 +10,6 @@ import type {
   ComparisonReport,
 } from "../types";
 
-// Hook chính cho báo cáo
 export function useReports() {
   const [state, setState] = useState<ReportState>({
     summary: null,
