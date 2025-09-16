@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DialogResponsive from "@/components/ui/dialog-responsive";
 import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
+import { formatDate } from "@/utils";
 
 interface ProductDetailDialogProps {
   open: boolean;
@@ -27,16 +28,6 @@ export function ProductDetailDialog({
       style: "currency",
       currency: "VND",
     }).format(amount);
-  };
-
-  const formatDate = (date: { toDate: () => Date }) => {
-    return date.toDate().toLocaleString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const content = (

@@ -1,11 +1,9 @@
-import type { Timestamp, DocumentSnapshot } from "firebase/firestore";
-
 export interface ProductSupply {
   supplyId: string;
-  supplyName: string;
   quantity: number;
   unit: string;
   purchasePrice?: number; // optional purchase price at the time of adding the supply
+  supplyName?: string; // optional supply name for easier reference
 }
 
 export interface Product {
@@ -18,8 +16,8 @@ export interface Product {
   cost?: number;
   supplies?: ProductSupply[]; // Optional supplies used to make this product
   isActive: boolean;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateProductData {
@@ -37,22 +35,11 @@ export interface UpdateProductData extends Partial<CreateProductData> {
 }
 
 export interface ProductFilters {
-  category?: string;
   isActive?: boolean;
-  hasSupplies?: boolean;
   search?: string; // search by name or productCode
-  searchBy?: "name" | "productCode" | "both"; // specify what to search by
-}
-
-export interface ProductListState {
-  products: Product[];
-  loading: boolean;
-  error: string | null;
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-  lastDoc?: DocumentSnapshot;
+  page?: number;
+  limit?: number;
+  category?: string;
 }
 
 export interface ProductFormState {

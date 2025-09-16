@@ -7,8 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useProductActions } from "../hooks/use-product";
 import type { Product } from "../types";
+import { useDeleteProduct } from "../hooks/use-product-actions";
+import { toast } from "sonner";
 
 interface DeleteProductDialogProps {
   open: boolean;
@@ -23,18 +24,20 @@ export function DeleteProductDialog({
   product,
   onSuccess,
 }: DeleteProductDialogProps) {
-  const { state, deleteProduct } = useProductActions();
+  const { deleteProduct, loading } = useDeleteProduct({
+    onSuccess: () => {
+      onSuccess?.();
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting product:", error);
+      toast.error("Xóa sản phẩm thất bại. Vui lòng thử lại.");
+    },
+  });
 
   const handleDelete = async () => {
     if (!product?.id) return;
-
-    try {
-      await deleteProduct(product.id);
-      onSuccess?.();
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error deleting product:", error);
-    }
+    deleteProduct(product.id);
   };
 
   if (!product) return null;
@@ -76,7 +79,7 @@ export function DeleteProductDialog({
               variant="outline"
               className="flex-1"
               onClick={() => onOpenChange(false)}
-              disabled={state.loading}
+              disabled={loading}
             >
               Hủy
             </Button>
@@ -84,15 +87,11 @@ export function DeleteProductDialog({
               variant="destructive"
               className="flex-1"
               onClick={handleDelete}
-              disabled={state.loading}
+              disabled={loading}
             >
-              {state.loading ? "Đang xóa..." : "Xóa sản phẩm"}
+              {loading ? "Đang xóa..." : "Xóa sản phẩm"}
             </Button>
           </div>
-
-          {state.error && (
-            <p className="text-sm text-red-500 text-center">{state.error}</p>
-          )}
         </div>
       </DialogContent>
     </Dialog>

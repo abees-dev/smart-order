@@ -10,13 +10,14 @@ import {
   type TableAction,
 } from "@/components/tables";
 
-import { useProducts, useProductActions } from "../hooks/use-product";
+import { useProducts } from "../hooks/use-product";
 import { ProductFormDialog } from "./product-form-dialog";
 import { ProductDetailDialog } from "./product-detail-dialog";
 import { DeleteProductDialog } from "./delete-product-dialog";
 import type { Product, ProductFilters } from "../types";
 import ReactMarkdown from "react-markdown";
 import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function ProductsListPage() {
   const { t } = useTranslation();
@@ -33,23 +34,26 @@ export function ProductsListPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [page, setPage] = useState(1);
+  const isMobile = useIsMobile();
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const {
     products,
     loading,
     error,
-    hasMore,
-    loadMore,
-    refreshProducts,
-    total,
-    page,
-    pageSize,
-    changePage,
-    isMobile,
-    loadingMore,
-  } = useProducts(filters, 7);
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    pagination,
+    refetchProducts,
+  } = useProducts({
+    ...filters,
+    page: page,
+  });
 
-  useProductActions();
   const { createColumn, createCurrencyColumn, createStatusColumn } =
     useEnhancedTableColumns<Product>();
 
@@ -231,19 +235,19 @@ export function ProductsListPage() {
 
   const handleProductCreated = () => {
     setShowCreateDialog(false);
-    refreshProducts();
+    refetchProducts();
   };
 
   const handleProductUpdated = () => {
     setShowEditDialog(false);
     setSelectedProduct(null);
-    refreshProducts();
+    refetchProducts();
   };
 
   const handleProductDeleted = () => {
     setShowDeleteDialog(false);
     setSelectedProduct(null);
-    refreshProducts();
+    refetchProducts();
   };
 
   if (error) {
@@ -251,7 +255,12 @@ export function ProductsListPage() {
       <div className="p-6">
         <div className="text-center text-red-600">
           <p>{error}</p>
-          <Button onClick={refreshProducts} className="mt-2">
+          <Button
+            onClick={() => {
+              refetchProducts();
+            }}
+            className="mt-2"
+          >
             {t("common.retry") || "Thử lại"}
           </Button>
         </div>
@@ -274,17 +283,17 @@ export function ProductsListPage() {
           t("products.noProductsFound") || "Không tìm thấy sản phẩm nào"
         }
         actions={tableActions}
-        hasMore={hasMore}
-        onLoadMore={loadMore}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
         isMobile={isMobile}
-        loadingMore={loadingMore}
+        loadingMore={isFetching}
         searchValue={filters.search || ""}
         pagination={
           !isMobile
             ? {
-                current: page,
-                pageSize: pageSize,
-                total: total,
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
                 onChange: (newPage: number) => changePage(newPage),
               }
             : undefined

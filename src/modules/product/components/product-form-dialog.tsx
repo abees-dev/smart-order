@@ -1,23 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Package,
-  DollarSign,
-  Box,
-  AlertTriangle,
-  Trash2,
-  Plus,
-} from "lucide-react";
+import { Package, DollarSign, Box, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { Form, FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  useProductActions,
-  useProductCodeValidation,
-} from "../hooks/use-product";
+
 import { useSupplySelect } from "../hooks/use-supply-select";
 import { SupplySelectDialog } from "./supply-select-dialog";
 import {
@@ -32,11 +22,16 @@ import { FormSelectField } from "@/components/forms";
 import { PRODUCT_CATEGORIES } from "@/constants/category";
 import FormTextField from "@/components/forms/form-textfield";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import {
+  useCreateProduct,
+  useUpdateProduct,
+} from "../hooks/use-product-actions";
+import { toast } from "sonner";
 
 interface ProductFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (product: Product) => void;
+  onSuccess?: () => void;
   product?: Product | null;
   mode?: "create" | "edit";
 }
@@ -53,8 +48,32 @@ export function ProductFormDialog({
   );
   const isEditMode = mode === "edit" && product;
 
-  const { createProduct, updateProduct, state } = useProductActions();
-  const { checkProductCode } = useProductCodeValidation();
+  const handleSuccess = () => {
+    onSuccess?.();
+    form.reset();
+    setSupplies([]);
+    onOpenChange(false); // Close dialog after successful creation
+    if (!isEditMode) {
+      toast.success("Tạo sản phẩm thành công");
+    } else {
+      toast.success("Cập nhật sản phẩm thành công");
+    }
+  };
+
+  const { updateProduct } = useUpdateProduct({
+    onSuccess: handleSuccess,
+    onError: (error) => {
+      console.error("Error updating product:", error);
+      toast.error("Cập nhật sản phẩm thất bại. Vui lòng thử lại.");
+    },
+  });
+  const { createProduct } = useCreateProduct({
+    onSuccess: handleSuccess,
+    onError: (error) => {
+      console.error("Error creating product:", error);
+      toast.error("Tạo sản phẩm thất bại. Vui lòng thử lại.");
+    },
+  });
   const { supplies: availableSupplies, loading: suppliesLoading } =
     useSupplySelect();
 
@@ -73,56 +92,34 @@ export function ProductFormDialog({
     },
   });
 
+  console.log("Supplies in form:", form.formState.errors);
+
   const onSubmit = async (
     data: CreateProductFormData | UpdateProductFormData
   ) => {
-    // Prevent multiple submissions
-    if (state.loading) {
-      return;
-    }
+    const productData = {
+      ...data,
+      supplies: supplies.map((supply) => ({
+        supplyId: supply.supplyId,
+        quantity: supply.quantity,
+      })), // ensure supplies is included
+      price: Number(
+        data.price ||
+          supplies.reduce(
+            (total, supply) =>
+              total + (supply.purchasePrice || 0) * supply.quantity,
+            0
+          )
+      ),
+    };
 
-    try {
-      const isValid = await checkProductCode(data.productCode!, product?.id);
-      if (!isValid) {
-        form.setError("productCode", {
-          type: "manual",
-          message: "Mã sản phẩm đã tồn tại",
-        });
-        return;
-      }
-
-      const productData = {
-        ...data,
-        supplies,
-        price: Number(
-          data.price ||
-            supplies.reduce(
-              (total, supply) =>
-                total + (supply.purchasePrice || 0) * supply.quantity,
-              0
-            )
-        ),
-      };
-
-      let result: Product;
-      if (isEditMode && product) {
-        result = await updateProduct(
-          product.id,
-          productData as UpdateProductFormData
-        );
-      } else {
-        result = await createProduct(productData as CreateProductFormData);
-      }
-
-      form.reset();
-      setSupplies([]);
-      onOpenChange(false); // Close dialog after successful creation/update
-      onSuccess?.(result);
-    } catch (error) {
-      console.error(
-        `Error ${isEditMode ? "updating" : "creating"} product:`,
-        error
-      );
+    if (isEditMode && product) {
+      updateProduct({
+        id: product.id,
+        data: productData as UpdateProductFormData,
+      });
+    } else {
+      createProduct(productData as CreateProductFormData);
     }
   };
 
@@ -349,12 +346,12 @@ export function ProductFormDialog({
           )}
         </div>
 
-        {state.error && (
+        {/* {state.error && (
           <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
             <span>{state.error}</span>
           </div>
-        )}
+        )} */}
       </form>
     </Form>
   );
@@ -375,11 +372,9 @@ export function ProductFormDialog({
         cancel: {
           label: "Hủy bỏ",
           onClick: () => onOpenChange(false),
-          disabled: state.loading,
         },
         submit: {
           label: isEditMode ? "Cập nhật sản phẩm" : "Tạo sản phẩm",
-          disabled: state.loading,
           onClick: () => {},
         },
       }}
