@@ -94,15 +94,19 @@ export interface CreateStockMovementData {
 
 export interface SupplyImport {
   id: string;
-  importDate: Timestamp;
+  importDate: Date;
   invoiceNumber: string;
   supplierId: string;
   totalAmount: number;
-  status: "pending" | "completed" | "cancelled";
+  status: "pending" | "completed" | "cancelled" | "warehouse";
   notes?: string;
   items: SupplyImportItem[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  supplier: {
+    id: string;
+    name: string;
+  } | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface SupplyImportItem {
@@ -124,13 +128,24 @@ export interface CreateSupplyImportData {
 
 export interface UpdateSupplyImportData
   extends Partial<CreateSupplyImportData> {
-  status?: "pending" | "completed" | "cancelled";
+  status?: "pending" | "completed" | "warehouse" | "cancelled";
 }
 
 export interface SupplyImportFilters {
   supplierId?: string;
-  status?: "pending" | "completed" | "cancelled";
+  status?: "pending" | "completed" | "warehouse" | "cancelled";
   dateFrom?: Timestamp;
   dateTo?: Timestamp;
   search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SupplyImportSummary {
+  totalImports: number;
+  pendingImports: number;
+  completedImports: number;
+  cancelledImports: number;
+  totalAmountCompleted: number;
+  totalAmountPending: number;
 }

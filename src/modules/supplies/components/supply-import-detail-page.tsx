@@ -11,7 +11,6 @@ import {
   Hash,
   MessageSquare,
   ArrowLeft,
-  MoreHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,22 +18,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDocumentTitle } from "@/hooks/use-document-title";
-import {
-  useSupplyImportById,
-  useSupplyImportActions,
-} from "../hooks/use-supply";
+
 import type { SupplyImport } from "../types";
 import type { Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useSupplyImportDetail } from "../hooks/use-supply-import";
+import { calculateCurrencyWithVat } from "@/utils/currency";
 
 export function SupplyImportDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,39 +36,14 @@ export function SupplyImportDetailPage() {
 
   useDocumentTitle();
 
-  // Get supply import data
-  const { importRecord, loading, error, refetch } = useSupplyImportById(
-    id || ""
-  );
-
   const {
-    error: actionError,
-    completeImport,
-    cancelImport,
-  } = useSupplyImportActions();
+    supplyImport,
+    loading: detailLoading,
+    error: detailError,
+  } = useSupplyImportDetail(id);
 
   const handleBack = () => {
     navigate("/dashboard/supplies/imports");
-  };
-
-  const handleComplete = async () => {
-    if (!importRecord) return;
-    try {
-      await completeImport(importRecord.id);
-      refetch();
-    } catch (error) {
-      console.error("Failed to complete import:", error);
-    }
-  };
-
-  const handleCancel = async () => {
-    if (!importRecord) return;
-    try {
-      await cancelImport(importRecord.id);
-      refetch();
-    } catch (error) {
-      console.error("Failed to cancel import:", error);
-    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -123,11 +91,11 @@ export function SupplyImportDetailPage() {
     return format(date, "dd/MM/yyyy HH:mm", { locale: vi });
   };
 
-  if (loading) {
+  if (detailLoading) {
     return <SupplyImportDetailSkeleton />;
   }
 
-  if (error || !importRecord) {
+  if (detailError || !supplyImport) {
     return (
       <div className="container mx-auto p-4 space-y-6">
         <div className="flex items-center gap-4">
@@ -138,18 +106,18 @@ export function SupplyImportDetailPage() {
         </div>
         <Alert variant="destructive">
           <AlertDescription>
-            {error || "Không tìm thấy phiếu nhập hàng"}
+            {detailError || "Không tìm thấy phiếu nhập hàng"}
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const totalQuantity = importRecord.items.reduce(
+  const totalQuantity = supplyImport.items.reduce(
     (sum, item) => sum + item.quantity,
     0
   );
-  const totalItems = importRecord.items.length;
+  const totalItems = supplyImport.items.length;
 
   return (
     <div className="container mx-auto p-4 space-y-6 max-w-7xl">
@@ -163,40 +131,6 @@ export function SupplyImportDetailPage() {
               {isMobile ? "" : "Quay lại"}
             </Button>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {importRecord.status === "pending" && (
-                  <>
-                    <DropdownMenuItem onClick={handleComplete}>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Hoàn thành
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleCancel}
-                      className="text-red-600"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Hủy phiếu
-                    </DropdownMenuItem>
-                  </>
-                )}
-
-                {importRecord.status !== "pending" && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
-                    Không có hành động nào khả dụng
-                  </div>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
 
         {/* Title & Status */}
@@ -206,24 +140,24 @@ export function SupplyImportDetailPage() {
               Chi tiết phiếu nhập hàng
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
-              {importRecord.invoiceNumber}
+              {supplyImport.invoiceNumber}
             </p>
           </div>
-          {getStatusBadge(importRecord.status)}
+          {getStatusBadge(supplyImport.status)}
         </div>
       </div>
 
-      {actionError && (
+      {/* {actionError && (
         <Alert variant="destructive">
           <AlertDescription>{actionError}</AlertDescription>
         </Alert>
-      )}
+      )} */}
 
       {/* Content */}
       {isMobile ? (
         <MobileDetailView
-          importRecord={importRecord}
-          supplierName={importRecord.supplierId}
+          importRecord={supplyImport}
+          supplierName={supplyImport.supplier?.name || supplyImport.supplierId}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
           totalQuantity={totalQuantity}
@@ -231,8 +165,8 @@ export function SupplyImportDetailPage() {
         />
       ) : (
         <DesktopDetailView
-          importRecord={importRecord}
-          supplierName={importRecord.supplierId}
+          importRecord={supplyImport}
+          supplierName={supplyImport.supplier?.name || supplyImport.supplierId}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
           totalQuantity={totalQuantity}
@@ -540,7 +474,13 @@ function DesktopDetailView({
                       </td>
                       <td className="p-4 text-right">{item.vatRate}%</td>
                       <td className="p-4 text-right font-semibold text-green-600">
-                        {formatCurrency(item.totalPrice)}
+                        {formatCurrency(
+                          calculateCurrencyWithVat({
+                            amount: item.unitPrice,
+                            vatRate: item.vatRate,
+                            quantity: item.quantity,
+                          })
+                        )}
                       </td>
                     </tr>
                   ))}

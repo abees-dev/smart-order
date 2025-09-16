@@ -338,7 +338,8 @@ export function useEnhancedTableColumns<T>() {
       width: 100,
       render: (value) => (
         <Badge
-          variant={value ? "default" : "secondary"}
+          variant={"outline"}
+          color={value ? "success" : "error"}
           className="text-xs font-medium"
         >
           {value ? "Hoạt động" : "Không hoạt động"}

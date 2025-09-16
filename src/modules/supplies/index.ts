@@ -5,7 +5,7 @@ export {
   DeleteSupplyDialog,
 } from "./components";
 
-export { useSupplies, useSupply } from "./hooks/use-supply";
+export { useSupplies } from "./hooks/use-supply";
 
 export { SupplyService } from "./services/supply.service";
 

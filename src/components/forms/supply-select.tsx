@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { SupplyService } from "@/modules/supplies/services/supply.service";
 import type { Supply } from "@/modules/supplies/types";
 import { FormSelectField, type SelectOption } from "./form-select";
+import { useQuery } from "@tanstack/react-query";
 
 interface SupplySelectProps {
   value?: string;
@@ -27,55 +28,17 @@ export function SupplySelect({
   error,
 }: SupplySelectProps) {
   const [supplies, setSupplies] = useState<Supply[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  // Load selected supply by ID when value changes
+  const { data: suppliesData, isLoading } = useQuery({
+    queryKey: ["supplies-selection"],
+    queryFn: () => SupplyService.getSuppliesSelection(),
+  });
+
   useEffect(() => {
-    const loadSelectedSupply = async () => {
-      if (!value) return;
-
-      // Check if we already have this supply in our list
-      const existingSupply = supplies.find((s) => s.id === value);
-      if (existingSupply) return;
-
-      try {
-        const supply = await SupplyService.getSupplyById(value);
-        if (supply) {
-          setSupplies((prev) => {
-            const exists = prev.some((s) => s.id === supply.id);
-            return exists ? prev : [...prev, supply];
-          });
-        }
-      } catch (error) {
-        console.error("Error loading selected supply:", error);
-      }
-    };
-
-    loadSelectedSupply();
-  }, [value, supplies]);
-
-  const loadSupplies = useCallback(async (searchTerm?: string) => {
-    try {
-      setLoading(true);
-
-      const filters = {
-        isActive: true,
-        ...(searchTerm && { search: searchTerm }),
-      };
-
-      // Load all supplies without pagination for selection
-      const result = await SupplyService.getAllSupplies(filters, 1000);
-      setSupplies(result.supplies);
-    } catch (error) {
-      console.error("Error loading supplies:", error);
-    } finally {
-      setLoading(false);
+    if (suppliesData && !isLoading) {
+      setSupplies(suppliesData);
     }
-  }, []);
-
-  useEffect(() => {
-    loadSupplies();
-  }, [loadSupplies]);
+  }, [suppliesData, isLoading]);
 
   const handleValueChange = useCallback(
     (selectedValue: string) => {
@@ -159,7 +122,7 @@ export function SupplySelect({
         emptyMessage="Không tìm thấy vật tư nào."
         required={required}
         disabled={disabled}
-        loading={loading}
+        loading={isLoading}
         clearable
         renderOption={renderOption}
       />

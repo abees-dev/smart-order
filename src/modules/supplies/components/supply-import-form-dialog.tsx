@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/select";
 import { SupplierSelectField, SupplySelectField } from "@/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSupplyImportActions } from "../hooks/use-supply";
 import {
   createSupplyImportSchema,
   type CreateSupplyImportFormData,
@@ -37,6 +36,12 @@ import {
 import { SupplyFormDialog } from "./supply-form-dialog";
 import type { Supply, SupplyImport } from "../types";
 import FormTextField from "@/components/forms/form-textfield";
+import {
+  useCreateSupplyImport,
+  useUpdateSupplyImport,
+} from "../hooks/use-supply-import-actions";
+import { t } from "i18next";
+import { toast } from "sonner";
 
 interface SupplyImportFormDialogProps {
   open: boolean;
@@ -51,8 +56,46 @@ export function SupplyImportFormDialog({
   onSuccess,
   editImport = null,
 }: SupplyImportFormDialogProps) {
-  const { createImport, updateImport, loading, error } =
-    useSupplyImportActions();
+  const [error, setError] = useState<string | null>(null);
+  const { createSupplyImport, isLoading: loadingCreateSupplyImport } =
+    useCreateSupplyImport({
+      onSuccess: () => {
+        onSuccess();
+        form.reset({
+          invoiceNumber: "",
+          supplierId: "",
+          notes: "",
+          items: [
+            {
+              supplyId: "",
+              quantity: 1,
+              unitPrice: 0,
+              vatRate: 0,
+              totalPrice: 0,
+            },
+          ],
+        });
+        onOpenChange(false);
+      },
+      onError: (error) => {
+        console.error("Failed to create supply import:", error);
+        setError(error.message || t("Tạo phiếu nhập thất bại"));
+      },
+    });
+
+  const { updateSupplyImport, isLoading: loadingUpdateSupplyImport } =
+    useUpdateSupplyImport({
+      onSuccess: () => {
+        onSuccess();
+        onOpenChange(false);
+        toast.success("Cập nhật phiếu nhập thành công");
+      },
+      onError: (error) => {
+        console.error("Failed to update supply import:", error);
+        setError(error.message || t("Cập nhật phiếu nhập thất bại"));
+      },
+    });
+  const loading = loadingCreateSupplyImport || loadingUpdateSupplyImport;
   const [showSupplyForm, setShowSupplyForm] = useState(false);
 
   const isEditing = !!editImport;
@@ -96,46 +139,24 @@ export function SupplyImportFormDialog({
   });
 
   const onSubmit = async (data: CreateSupplyImportFormData) => {
-    try {
-      // Validate items before submitting
-      const hasInvalidItems = data.items.some(
-        (item) => !item.supplyId || item.quantity <= 0 || item.unitPrice < 0
-      );
+    const hasInvalidItems = data.items.some(
+      (item) => !item.supplyId || item.quantity <= 0 || item.unitPrice < 0
+    );
 
-      if (hasInvalidItems) {
-        form.setError("items", {
-          message: "Vui lòng điền đầy đủ thông tin cho tất cả vật tư",
-        });
-        return;
-      }
-
-      if (isEditing && editImport) {
-        await updateImport(editImport.id, data);
-      } else {
-        await createImport(data);
-      }
-
-      // Reset form and close dialog
-      form.reset({
-        invoiceNumber: "",
-        supplierId: "",
-        notes: "",
-        items: [
-          {
-            supplyId: "",
-            quantity: 1,
-            unitPrice: 0,
-            vatRate: 0,
-            totalPrice: 0,
-          },
-        ],
+    if (hasInvalidItems) {
+      form.setError("items", {
+        message: "Vui lòng điền đầy đủ thông tin cho tất cả vật tư",
       });
+      return;
+    }
 
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error saving supply import:", error);
-      // Error is already handled by the hook
+    if (isEditing && editImport) {
+      updateSupplyImport({
+        importId: editImport.id,
+        data,
+      });
+    } else {
+      createSupplyImport(data);
     }
   };
 

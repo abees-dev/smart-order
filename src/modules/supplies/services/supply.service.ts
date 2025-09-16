@@ -2,8 +2,6 @@ import {
   collection,
   doc,
   getDocs,
-  getDoc,
-  updateDoc,
   query,
   where,
   orderBy,
@@ -27,6 +25,7 @@ import type {
   CreateSupplyImportData,
   UpdateSupplyImportData,
   SupplyImportFilters,
+  SupplyImportSummary,
 } from "../types";
 import type { ApiResponsePagination } from "@/types/response";
 import axiosInstance from "@/utils/axios";
@@ -43,6 +42,10 @@ export class SupplyService {
     filters: SupplyFilters = {}
   ): Promise<ApiResponsePagination<Supply[]>> {
     return axiosInstance.get("/supplies", { params: filters });
+  }
+
+  static async getSuppliesSelection(): Promise<Supply[]> {
+    return await axiosInstance.get("/supplies/selection");
   }
 
   static async getSupplyById(id: string): Promise<Supply | null> {
@@ -202,297 +205,45 @@ export class SupplyService {
   // Supply Import methods
   static async createSupplyImport(
     data: CreateSupplyImportData
-  ): Promise<string> {
-    try {
-      const batch = writeBatch(db);
-      const now = Timestamp.now();
-
-      // Validate that all supplies exist
-      const suppliesExist = await Promise.all(
-        data.items.map((item) => this.getSupplyById(item.supplyId))
-      );
-
-      const missingSupplies = suppliesExist
-        .map((supply, index) => ({ supply, index }))
-        .filter(({ supply }) => !supply)
-        .map(({ index }) => data.items[index].supplyId);
-
-      if (missingSupplies.length > 0) {
-        throw new Error(
-          `Không tìm thấy vật tư với ID: ${missingSupplies.join(", ")}`
-        );
-      }
-
-      // Get supply details for import items
-      const itemsWithDetails = await Promise.all(
-        data.items.map(async (item) => {
-          const supply = await this.getSupplyById(item.supplyId);
-          const subtotalPrice = item.quantity * item.unitPrice;
-          const vatAmount = subtotalPrice * (item.vatRate / 100);
-          const totalPrice = subtotalPrice + vatAmount;
-
-          return {
-            ...item,
-            supplyName: supply!.name,
-            sku: supply!.sku,
-            totalPrice,
-          };
-        })
-      );
-
-      // Calculate total amount from all items (already includes VAT per item)
-      const totalAmount = itemsWithDetails.reduce(
-        (sum, item) => sum + item.totalPrice,
-        0
-      );
-
-      // Create import record
-      const importData: Omit<SupplyImport, "id"> = {
-        importDate: now,
-        invoiceNumber: data.invoiceNumber,
-        supplierId: data.supplierId,
-        totalAmount,
-        status: "pending",
-        notes: data.notes,
-        items: itemsWithDetails,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      const importRef = doc(collection(db, SUPPLY_IMPORTS_COLLECTION));
-      batch.set(importRef, importData);
-
-      await batch.commit();
-      return importRef.id;
-    } catch (error) {
-      console.error("Error creating supply import:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Không thể tạo phiếu nhập kho");
-    }
+  ): Promise<unknown> {
+    return axiosInstance.post("/supplies/imports", data);
   }
 
   static async completeSupplyImport(importId: string): Promise<void> {
-    try {
-      const batch = writeBatch(db);
+    return axiosInstance.patch(`/supplies/imports/${importId}`, {
+      status: "completed",
+    });
+  }
 
-      // Get import details
-      const importDoc = await getDoc(
-        doc(db, SUPPLY_IMPORTS_COLLECTION, importId)
-      );
-      if (!importDoc.exists()) {
-        throw new Error("Không tìm thấy phiếu nhập kho");
-      }
-
-      const importData = importDoc.data() as SupplyImport;
-      if (importData.status !== "pending") {
-        throw new Error("Phiếu nhập kho đã được xử lý hoặc đã hủy");
-      }
-
-      // Update stock for each item and create stock movements
-      for (const item of importData.items) {
-        const supply = await this.getSupplyById(item.supplyId);
-        if (!supply) continue;
-
-        // Update supply stock and purchase price
-        const supplyRef = doc(db, SUPPLIES_COLLECTION, item.supplyId);
-        batch.update(supplyRef, {
-          currentStock: supply.currentStock + item.quantity,
-          purchasePrice: item.unitPrice, // Update purchase price to latest
-          updatedAt: Timestamp.now(),
-        });
-
-        // Create stock movement
-        const movementRef = doc(collection(db, STOCK_MOVEMENTS_COLLECTION));
-        batch.set(movementRef, {
-          supplyId: item.supplyId,
-          type: "import",
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalValue: item.totalPrice,
-          invoiceNumber: importData.invoiceNumber,
-          reason: `Nhập kho từ nhà cung cấp ID: ${importData.supplierId}`,
-          performedBy: "system",
-          createdAt: Timestamp.now(),
-        });
-      }
-
-      // Update import status
-      const importRef = doc(db, SUPPLY_IMPORTS_COLLECTION, importId);
-      batch.update(importRef, {
-        status: "completed",
-        updatedAt: Timestamp.now(),
-      });
-
-      await batch.commit();
-    } catch (error) {
-      console.error("Error completing supply import:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Không thể hoàn thành nhập kho");
-    }
+  static async addToWarehouseSupply(importId: string): Promise<void> {
+    return axiosInstance.post(`/supplies/imports/${importId}/add-to-warehouse`);
   }
 
   static async getAllSupplyImports(
-    filters: SupplyImportFilters = {},
-    pageSize = 10,
-    lastDoc?: DocumentSnapshot
-  ): Promise<{
-    imports: SupplyImport[];
-    hasMore: boolean;
-    lastDoc?: DocumentSnapshot;
-  }> {
-    try {
-      const constraints: QueryConstraint[] = [];
+    filters: SupplyImportFilters = {}
+  ): Promise<ApiResponsePagination<SupplyImport[]>> {
+    return axiosInstance.get("/supplies/imports", { params: filters });
+  }
 
-      if (filters.supplierId) {
-        constraints.push(where("supplierId", "==", filters.supplierId));
-      }
-      if (filters.status) {
-        constraints.push(where("status", "==", filters.status));
-      }
-
-      if (filters.dateFrom) {
-        constraints.push(where("importDate", ">=", filters.dateFrom));
-      }
-
-      if (filters.dateTo) {
-        constraints.push(where("importDate", "<=", filters.dateTo));
-      }
-
-      constraints.push(orderBy("importDate", "desc"));
-      constraints.push(limit(pageSize + 1));
-
-      if (lastDoc) {
-        constraints.push(startAfter(lastDoc));
-      }
-
-      const q = query(
-        collection(db, SUPPLY_IMPORTS_COLLECTION),
-        ...constraints
-      );
-      const querySnapshot = await getDocs(q);
-      const docs = querySnapshot.docs;
-
-      let imports = docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as SupplyImport[];
-
-      // Client-side filtering for search
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        imports = imports.filter(
-          (imp) =>
-            imp.invoiceNumber.toLowerCase().includes(searchTerm) ||
-            imp.supplierId.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      const hasMore = imports.length > pageSize;
-      if (hasMore) {
-        imports = imports.slice(0, pageSize);
-      }
-
-      return {
-        imports,
-        hasMore,
-        lastDoc: imports.length > 0 ? docs[imports.length - 1] : undefined,
-      };
-    } catch (error) {
-      console.error("Error fetching supply imports:", error);
-      throw new Error("Không thể tải danh sách phiếu nhập kho");
-    }
+  static async getSupplySummary(): Promise<SupplyImportSummary> {
+    return axiosInstance.get("/supplies/imports/summary");
   }
 
   static async getSupplyImportById(id: string): Promise<SupplyImport | null> {
-    try {
-      const docRef = doc(db, SUPPLY_IMPORTS_COLLECTION, id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        return {
-          id: docSnap.id,
-          ...docSnap.data(),
-        } as SupplyImport;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error fetching supply import:", error);
-      throw new Error("Không thể tải thông tin phiếu nhập kho");
-    }
+    return await axiosInstance.get(`/supplies/imports/${id}`);
   }
 
   static async updateSupplyImport(
     importId: string,
     data: UpdateSupplyImportData
   ): Promise<void> {
-    try {
-      const importRef = doc(db, SUPPLY_IMPORTS_COLLECTION, importId);
-      const importDoc = await getDoc(importRef);
-
-      if (!importDoc.exists()) {
-        throw new Error("Không tìm thấy phiếu nhập kho");
-      }
-
-      const importData = importDoc.data() as SupplyImport;
-      if (importData.status !== "pending") {
-        throw new Error("Chỉ có thể chỉnh sửa phiếu nhập kho đang chờ xử lý");
-      }
-
-      // Calculate total amount if items are updated
-      let totalAmount = importData.totalAmount;
-      if (data.items) {
-        totalAmount = data.items.reduce(
-          (sum: number, item) => sum + item.totalPrice,
-          0
-        );
-      }
-
-      const updateData = {
-        ...data,
-        totalAmount,
-        updatedAt: Timestamp.now(),
-      };
-
-      await updateDoc(importRef, updateData);
-    } catch (error) {
-      console.error("Error updating supply import:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Không thể cập nhật phiếu nhập kho");
-    }
+    return axiosInstance.patch(`/supplies/imports/${importId}`, data);
   }
 
   static async cancelSupplyImport(importId: string): Promise<void> {
-    try {
-      const importRef = doc(db, SUPPLY_IMPORTS_COLLECTION, importId);
-      const importDoc = await getDoc(importRef);
-
-      if (!importDoc.exists()) {
-        throw new Error("Không tìm thấy phiếu nhập kho");
-      }
-
-      const importData = importDoc.data() as SupplyImport;
-      if (importData.status !== "pending") {
-        throw new Error("Chỉ có thể hủy phiếu nhập kho đang chờ xử lý");
-      }
-
-      await updateDoc(importRef, {
-        status: "cancelled",
-        updatedAt: Timestamp.now(),
-      });
-    } catch (error) {
-      console.error("Error cancelling supply import:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Không thể hủy phiếu nhập kho");
-    }
+    return axiosInstance.patch(`/supplies/imports/${importId}`, {
+      status: "cancelled",
+    });
   }
 
   static async getSupplyImportsWithPagination(

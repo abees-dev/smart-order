@@ -80,12 +80,12 @@ export function SuppliesListPage() {
 
   const getStockStatus = (supply: Supply) => {
     if (supply.currentStock <= supply.minStock) {
-      return { label: "Hết hàng", color: "destructive" as const };
+      return { label: "Hết hàng", color: "error" as const };
     }
     if (supply.currentStock <= supply.minStock * 1.5) {
-      return { label: "Sắp hết", color: "outline" as const };
+      return { label: "Sắp hết", color: "warning" as const };
     }
-    return { label: "Còn hàng", color: "default" as const };
+    return { label: "Còn hàng", color: "info" as const };
   };
 
   // Define table columns
@@ -112,7 +112,11 @@ export function SuppliesListPage() {
               <span className="font-semibold">
                 {record.currentStock} {record.unit}
               </span>
-              <Badge variant={status.color} className="text-xs">
+              <Badge
+                variant={"outline"}
+                color={status.color}
+                className="text-xs"
+              >
                 {status.label}
               </Badge>
             </div>
@@ -142,7 +146,11 @@ export function SuppliesListPage() {
             <div className="font-bold text-lg mb-1">
               {record.currentStock} {record.unit}
             </div>
-            <Badge variant={status.color} className="text-xs mb-2">
+            <Badge
+              variant={"outline"}
+              color={status.color}
+              className="text-xs mb-2"
+            >
               {status.label}
             </Badge>
             <div className="text-xs text-muted-foreground">
@@ -215,7 +223,11 @@ export function SuppliesListPage() {
               <Badge variant="secondary" className="text-xs">
                 {SUPPLY_CATEGORY_MAP[record.category] || record.category}
               </Badge>
-              <Badge variant={status.color} className="text-xs">
+              <Badge
+                variant={"outline"}
+                color={status.color}
+                className="text-xs"
+              >
                 {status.label}
               </Badge>
             </div>
