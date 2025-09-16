@@ -35,7 +35,12 @@ import {
   type OrderFilters,
   type OrderStatus,
 } from "../types";
-import { useOrderActions, useOrders } from "../hooks/use-order";
+import { useOrders } from "../hooks/use-order";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  useChangeOrderStatus,
+  useDeleteOrder,
+} from "../hooks/user-order-actions";
 
 export function OrdersListPage() {
   const [filters, setFilters] = useState<OrderFilters>({});
@@ -43,25 +48,41 @@ export function OrdersListPage() {
   const [showFormDialog, setShowFormDialog] = useState(false);
 
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
-
+  const isMobile = useIsMobile(); // useIsMobile();
+  const [page, setPage] = useState(1);
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
   const {
     orders,
     loading,
     error,
-    hasMore,
-    refreshOrders,
-    loadMore,
-    changePage,
-    isMobile,
-    loadingMore,
-    page,
-    total,
-    pageSize,
-  } = useOrders(filters);
+    hasNextPage,
+    fetchNextPage,
+    isFetching,
+    pagination,
+    refetchOrders,
+  } = useOrders({
+    ...filters,
+    page: page,
+  });
 
-  const { deleteOrder, changeOrderStatus } = useOrderActions();
+  const { deleteOrder } = useDeleteOrder({});
   const { createColumn, createCurrencyColumn, createDateColumn } =
     useEnhancedTableColumns<Order>();
+
+  const { changeOrderStatus } = useChangeOrderStatus({
+    onSuccess: () => {
+      refetchOrders();
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi thay đổi trạng thái đơn hàng"
+      );
+    },
+  });
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -84,7 +105,7 @@ export function OrdersListPage() {
       onConfirm: async () => {
         try {
           await deleteOrder(order.id);
-          refreshOrders();
+          refetchOrders();
           toast.success("Đơn hàng đã được xóa thành công.");
         } catch (error) {
           console.error("Error deleting order:", error);
@@ -127,29 +148,7 @@ export function OrdersListPage() {
       cancelText: "Hủy",
       variant,
       onConfirm: async () => {
-        try {
-          await changeOrderStatus(order.id, newStatus);
-          refreshOrders();
-
-          if (newStatus === "cancelled" && order.status === "exported") {
-            toast.success(
-              `Đơn hàng đã được hủy thành công. Tồn kho đã được hoàn lại.`
-            );
-          } else if (newStatus === "exported") {
-            toast.success(
-              `Đơn hàng đã được xuất kho thành công. Tồn kho đã được cập nhật.`
-            );
-          } else {
-            toast.success(`Đơn hàng đã được ${actionMessage} thành công.`);
-          }
-        } catch (error) {
-          console.error("Error changing status:", error);
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Có lỗi xảy ra khi thay đổi trạng thái đơn hàng";
-          toast.error(errorMessage);
-        }
+        changeOrderStatus({ orderId: order.id, status: newStatus });
       },
     });
   };
@@ -202,7 +201,11 @@ export function OrdersListPage() {
         const status = value as OrderStatus;
         const StatusIcon = getStatusIcon(status);
         return (
-          <Badge variant={ORDER_STATUS_COLORS[status]} className="gap-1">
+          <Badge
+            variant={"outline"}
+            color={ORDER_STATUS_COLORS[status]}
+            className="gap-1"
+          >
             <StatusIcon className="h-3 w-3" />
             {ORDER_STATUS_LABELS[status]}
           </Badge>
@@ -286,7 +289,11 @@ export function OrdersListPage() {
           <div className="text-sm text-muted-foreground">
             {record.customerName || "Khách lẻ"}
           </div>
-          <Badge variant={ORDER_STATUS_COLORS[record.status]} className="gap-1">
+          <Badge
+            variant={"outline"}
+            color={ORDER_STATUS_COLORS[record.status]}
+            className="gap-1"
+          >
             {(() => {
               const StatusIcon = getStatusIcon(record.status);
               return <StatusIcon className="h-3 w-3" />;
@@ -325,7 +332,12 @@ export function OrdersListPage() {
       <div className="p-6">
         <div className="text-center text-red-600">
           <p>{error}</p>
-          <Button onClick={refreshOrders} className="mt-2">
+          <Button
+            onClick={() => {
+              refetchOrders();
+            }}
+            className="mt-2"
+          >
             Thử lại
           </Button>
         </div>
@@ -344,17 +356,17 @@ export function OrdersListPage() {
         loading={loading}
         emptyText="Không tìm thấy đơn hàng nào"
         actions={tableActions}
-        hasMore={hasMore}
-        onLoadMore={loadMore}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
         isMobile={isMobile}
-        loadingMore={loadingMore}
+        loadingMore={isFetching}
         searchValue={filters.search || ""}
         pagination={
           !isMobile
             ? {
-                current: page,
-                pageSize: pageSize,
-                total: total,
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
                 onChange: (newPage: number) => changePage(newPage),
               }
             : undefined
@@ -401,7 +413,7 @@ export function OrdersListPage() {
           }}
           editOrder={selectedOrder}
           onSuccess={() => {
-            refreshOrders();
+            refetchOrders();
             setShowFormDialog(false);
             setSelectedOrder(null);
             toast.success(

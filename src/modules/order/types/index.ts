@@ -13,9 +13,6 @@ export interface OrderItem {
   id?: string; // for temporary ID during creation
   type: OrderItemType; // product hoặc supply
   itemId: string; // productId hoặc supplyId
-  itemName: string;
-  itemCode: string; // productCode hoặc sku
-  category: string; // category của item
   quantity: number;
   unitPrice: number; // giá tự field hoặc nhập thủ công
   totalPrice: number; // quantity * unitPrice
@@ -64,7 +61,9 @@ export interface OrderFilters {
   customerId?: string;
   dateFrom?: Date;
   dateTo?: Date;
-  search?: string; // tìm theo orderNumber hoặc customerName
+  search?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface OrderListState {
@@ -103,11 +102,11 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 // Status colors for badges
 export const ORDER_STATUS_COLORS: Record<
   OrderStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  "info" | "success" | "warning" | "error" | "violet" | "neutral"
 > = {
-  draft: "outline",
-  confirmed: "secondary",
-  exported: "default",
-  completed: "default",
-  cancelled: "destructive",
+  draft: "neutral",
+  confirmed: "warning",
+  exported: "info",
+  completed: "success",
+  cancelled: "error",
 };

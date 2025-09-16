@@ -5,7 +5,6 @@ export const orderItemSchema = z.object({
     message: "Loại mặt hàng không hợp lệ",
   }),
   itemId: z.string().min(1, "Vui lòng chọn sản phẩm/vật tư"),
-  category: z.string().min(1, "Danh mục là bắt buộc"),
   quantity: z
     .number()
     .min(1, "Số lượng phải lớn hơn 0")

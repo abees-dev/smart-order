@@ -25,14 +25,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormSelectField } from "@/components/forms/form-select";
 import { createOrderSchema, type CreateOrderFormData } from "../validation";
 import type { Order } from "../types";
-import { ProductService } from "../../product/services/product.service";
-import { SupplyService } from "../../supplies/services/supply.service";
-import { CustomerService } from "../../customer/services/customer.service";
 import type { Product } from "../../product/types";
 import type { Supply } from "../../supplies/types";
 import type { Customer } from "../../customer/types";
-import { useOrderActions } from "../hooks/use-order";
 import { generateOrderNumber } from "@/utils";
+import { useOrderSelectionMenu } from "../hooks/use-order-selection";
+import { useCreateOrder, useUpdateOrder } from "../hooks/user-order-actions";
+import { toast } from "sonner";
 
 interface OrderFormDialogProps {
   open: boolean;
@@ -47,12 +46,43 @@ export function OrderFormDialog({
   onSuccess,
   editOrder = null,
 }: OrderFormDialogProps) {
-  const { createOrder, updateOrder, loading, error } = useOrderActions();
+  const { createOrder, isPending: loadingCreateOrder } = useCreateOrder({
+    onSuccess: () => {
+      onSuccess();
+      onOpenChange(false);
+      toast.success("Tạo đơn hàng thành công");
+    },
+    onError: (error) => {
+      console.error("Error creating order:", error);
+    },
+  });
+  const { updateOrder, isPending: loadingUpdateOrder } = useUpdateOrder({
+    onSuccess: () => {
+      onSuccess();
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error("Error updating order:", error);
+      toast.error("Cập nhật đơn hàng thất bại");
+    },
+  });
+
+  const loading = loadingCreateOrder || loadingUpdateOrder;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loadingItems, setLoadingItems] = useState(false);
+
+  const { data: ordersSelection, loading: loadingItems } =
+    useOrderSelectionMenu();
+
+  useEffect(() => {
+    if (!loadingItems) {
+      setCustomers(ordersSelection?.customers || []);
+      setProducts(ordersSelection?.products || []);
+      setSupplies(ordersSelection?.supplies || []);
+    }
+  }, [loadingItems]);
 
   // Options for form selects
   const itemTypeOptions = [
@@ -75,7 +105,7 @@ export function OrderFormDialog({
         style: "currency",
         currency: "VND",
       }).format(product.price)}`,
-      description: product.description,
+      description: product.productCode,
       metadata: { price: product.price, category: product.category },
     }));
 
@@ -86,7 +116,7 @@ export function OrderFormDialog({
         style: "currency",
         currency: "VND",
       }).format(supply.salePrice)}`,
-      description: supply.description,
+      description: supply.sku,
       metadata: { price: supply.salePrice, category: supply.category },
     }));
 
@@ -109,7 +139,6 @@ export function OrderFormDialog({
         {
           type: "product",
           itemId: "",
-          category: "goods",
           quantity: 1,
           unitPrice: 0,
           totalPrice: 0,
@@ -130,37 +159,6 @@ export function OrderFormDialog({
     }
   }, [open, editOrder, form]);
 
-  // Fetch products, supplies and customers
-  useEffect(() => {
-    const fetchItems = async () => {
-      setLoadingItems(true);
-      try {
-        console.log("Fetching products, supplies and customers...");
-        const [productsResponse, suppliesResponse, customersResponse] =
-          await Promise.all([
-            ProductService.getAllProducts({}, 100),
-            SupplyService.getAllSupplies({ category: "goods" }, 100),
-            CustomerService.getAllCustomers({}, 100),
-          ]);
-
-        console.log("Products loaded:", productsResponse.products.length);
-        console.log("Supplies loaded:", suppliesResponse.supplies.length);
-        console.log("Customers loaded:", customersResponse.customers.length);
-        setProducts(productsResponse.products);
-        setSupplies(suppliesResponse.supplies);
-        setCustomers(customersResponse.customers);
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      } finally {
-        setLoadingItems(false);
-      }
-    };
-
-    if (open) {
-      fetchItems();
-    }
-  }, [open]);
-
   // Fill form when editing
   useEffect(() => {
     if (editOrder) {
@@ -173,7 +171,6 @@ export function OrderFormDialog({
         items: editOrder.items.map((item) => ({
           type: item.type,
           itemId: item.itemId,
-          category: item.category,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           totalPrice: item.totalPrice,
@@ -187,7 +184,6 @@ export function OrderFormDialog({
     append({
       type: "product",
       itemId: "",
-      category: "goods",
       quantity: 1,
       unitPrice: 0,
       totalPrice: 0,
@@ -214,37 +210,23 @@ export function OrderFormDialog({
   };
 
   const onSubmit = async (data: CreateOrderFormData) => {
-    try {
-      // Enrich items with itemCode and itemName
-      const enrichedItems = data.items.map((item) => {
-        const selectedItem =
-          item.type === "product"
-            ? products.find((p) => p.id === item.itemId)
-            : supplies.find((s) => s.id === item.itemId);
-
-        return {
-          ...item,
-          itemName: selectedItem?.name || "",
-          itemCode:
-            item.type === "product"
-              ? (selectedItem as Product)?.productCode || ""
-              : (selectedItem as Supply)?.sku || "",
-        };
-      });
-
-      const enrichedData = {
-        ...data,
-        items: enrichedItems,
+    // Enrich items with itemCode and itemName
+    const enrichedItems = data.items.map((item) => {
+      return {
+        ...item,
+        category: undefined,
       };
+    });
 
-      if (editOrder) {
-        await updateOrder(editOrder.id, enrichedData);
-      } else {
-        await createOrder(enrichedData);
-      }
-      onSuccess();
-    } catch (error) {
-      console.error("Error saving invoice:", error);
+    const enrichedData = {
+      ...data,
+      items: enrichedItems,
+    };
+
+    if (editOrder) {
+      updateOrder({ id: editOrder.id, data: enrichedData });
+    } else {
+      createOrder(enrichedData);
     }
   };
 
@@ -259,7 +241,6 @@ export function OrderFormDialog({
         {
           type: "product",
           itemId: "",
-          category: "goods",
           quantity: 1,
           unitPrice: 0,
           totalPrice: 0,
@@ -382,10 +363,6 @@ export function OrderFormDialog({
                                   // Reset item selection when type changes
                                   form.setValue(`items.${index}.itemId`, "");
                                   form.setValue(`items.${index}.unitPrice`, 0);
-                                  form.setValue(
-                                    `items.${index}.category`,
-                                    "goods"
-                                  );
                                   form.setValue(`items.${index}.totalPrice`, 0);
                                 },
                               }}
@@ -429,10 +406,6 @@ export function OrderFormDialog({
                                       form.setValue(
                                         `items.${index}.unitPrice`,
                                         unitPrice
-                                      );
-                                      form.setValue(
-                                        `items.${index}.category`,
-                                        selectedItem.category
                                       );
 
                                       // Calculate total price
@@ -648,8 +621,6 @@ export function OrderFormDialog({
                 </div>
               </CardContent>
             </Card>
-
-            {error && <div className="text-red-600 text-sm">{error}</div>}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>

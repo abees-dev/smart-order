@@ -25,6 +25,7 @@ export function useSupplies(filters: SupplyFilters = {}) {
       lastPage.pagination.hasPrevPage
         ? lastPage.pagination.page - 1
         : undefined,
+    refetchOnMount: true,
   });
 
   return {

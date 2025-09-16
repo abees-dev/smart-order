@@ -23,6 +23,8 @@ const badgeVariants = cva(
         success: "",
         warning: "",
         error: "",
+        violet: "",
+        neutral: "",
       },
     },
     defaultVariants: {
@@ -53,6 +55,18 @@ const badgeVariants = cva(
         color: "error",
         className:
           "bg-red-50 text-red-700 border-red-200 [a&]:hover:bg-red-200 focus-visible:ring-red-200 dark:focus-visible:ring-red-400",
+      },
+      {
+        variant: "outline",
+        color: "violet",
+        className:
+          "bg-violet-50 text-violet-700 border-violet-200 [a&]:hover:bg-violet-200 focus-visible:ring-violet-200 dark:focus-visible:ring-violet-400",
+      },
+      {
+        variant: "outline",
+        color: "neutral",
+        className:
+          "bg-neutral-50 text-neutral-700 border-neutral-200 [a&]:hover:bg-neutral-200 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-400",
       },
     ],
   }
