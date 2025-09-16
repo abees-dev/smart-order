@@ -91,3 +91,63 @@ export type UpdateOrderFormData = z.infer<typeof updateOrderSchema>;
 export type OrderFiltersFormData = z.infer<typeof orderFiltersSchema>;
 export type ChangeOrderStatusFormData = z.infer<typeof changeOrderStatusSchema>;
 export type OrderItemFormData = z.infer<typeof orderItemSchema>;
+
+// Cost Incurred validation schemas
+export const createCostIncurredSchema = z.object({
+  orderId: z.string().min(1, "ID đơn hàng là bắt buộc"),
+  costType: z.enum(["material", "labor", "equipment", "transport", "other"], {
+    message: "Loại chi phí không hợp lệ",
+  }),
+  description: z
+    .string()
+    .min(1, "Mô tả là bắt buộc")
+    .max(200, "Mô tả không được vượt quá 200 ký tự"),
+  amount: z
+    .number()
+    .min(0.01, "Số tiền phải lớn hơn 0")
+    .max(99999999, "Số tiền quá lớn"),
+  quantity: z
+    .number()
+    .min(0.01, "Số lượng phải lớn hơn 0")
+    .max(999999, "Số lượng quá lớn")
+    .optional(),
+  unitPrice: z
+    .number()
+    .min(0, "Đơn giá không được âm")
+    .max(99999999, "Đơn giá quá lớn")
+    .optional(),
+  invoiceNumber: z
+    .string()
+    .max(50, "Số hóa đơn không được vượt quá 50 ký tự")
+    .optional()
+    .or(z.literal("")),
+  incurredDate: z.string().min(1, "Ngày phát sinh là bắt buộc"),
+  notes: z
+    .string()
+    .max(500, "Ghi chú không được vượt quá 500 ký tự")
+    .optional()
+    .or(z.literal("")),
+});
+
+export const updateCostIncurredSchema = createCostIncurredSchema.partial();
+
+export const costIncurredFiltersSchema = z.object({
+  orderId: z.string().optional(),
+  costType: z
+    .enum(["material", "labor", "equipment", "transport", "other"])
+    .optional(),
+  dateFrom: z.date().optional(),
+  dateTo: z.date().optional(),
+  search: z.string().optional(),
+});
+
+// Cost Incurred form data types
+export type CreateCostIncurredFormData = z.infer<
+  typeof createCostIncurredSchema
+>;
+export type UpdateCostIncurredFormData = z.infer<
+  typeof updateCostIncurredSchema
+>;
+export type CostIncurredFiltersFormData = z.infer<
+  typeof costIncurredFiltersSchema
+>;

@@ -4,6 +4,10 @@ import type {
   OrderFilters,
   OrderStatus,
   UpdateOrderData,
+  CostIncurred,
+  CreateCostIncurredData,
+  UpdateCostIncurredData,
+  CostIncurredFilters,
 } from "../types";
 import type { ApiResponsePagination } from "@/types/response";
 import axiosInstance from "@/utils/axios";
@@ -55,5 +59,42 @@ export class OrderService {
   // Delete invoice (only drafts)
   static async deleteOrder(id: string): Promise<void> {
     return axiosInstance.delete(`/orders/${id}`);
+  }
+
+  // Cost Incurred methods
+  static async getCostIncurredByOrderId(
+    orderId: string,
+    filters: CostIncurredFilters = {}
+  ): Promise<ApiResponsePagination<CostIncurred[]>> {
+    return axiosInstance.get(`/orders/${orderId}/cost-incurred`, {
+      params: filters,
+    });
+  }
+
+  static async getAllCostIncurred(
+    filters: CostIncurredFilters = {}
+  ): Promise<ApiResponsePagination<CostIncurred[]>> {
+    return axiosInstance.get("/cost-incurred", { params: filters });
+  }
+
+  static async getCostIncurredById(id: string): Promise<CostIncurred | null> {
+    return axiosInstance.get(`/cost-incurred/${id}`);
+  }
+
+  static async createCostIncurred(
+    data: CreateCostIncurredData
+  ): Promise<string> {
+    return axiosInstance.post("/costs-incurred", data);
+  }
+
+  static async updateCostIncurred(
+    id: string,
+    data: UpdateCostIncurredData
+  ): Promise<void> {
+    return axiosInstance.patch(`/cost-incurred/${id}`, data);
+  }
+
+  static async deleteCostIncurred(id: string): Promise<void> {
+    return axiosInstance.delete(`/cost-incurred/${id}`);
   }
 }

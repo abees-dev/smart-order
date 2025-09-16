@@ -1,7 +1,7 @@
 import type { Order, OrderFilters } from "../types";
 import { OrderService } from "../services/order.service";
 import type { ApiResponsePagination } from "@/types/response";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 // Hook for managing order list with filters and pagination
 export function useOrders(filters: OrderFilters = {}) {
@@ -48,4 +48,23 @@ export function useOrders(filters: OrderFilters = {}) {
   };
 }
 
-// Hook for getting a single order
+// Hook for getting a single order by ID
+export function useOrderById(id: string) {
+  const {
+    data: order,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["order", id],
+    queryFn: () => OrderService.getOrderById(id),
+    enabled: !!id,
+  });
+
+  return {
+    order,
+    isLoading,
+    error: error?.message || null,
+    refetch,
+  };
+}

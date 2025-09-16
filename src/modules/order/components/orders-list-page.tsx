@@ -9,6 +9,7 @@ import {
   Package,
   X,
   FileEdit,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,11 +42,17 @@ import {
   useChangeOrderStatus,
   useDeleteOrder,
 } from "../hooks/user-order-actions";
+import { CreateCostIncurredDialog } from "./create-cost-incurred-dialog";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/constants";
 
 export function OrdersListPage() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<OrderFilters>({});
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showFormDialog, setShowFormDialog] = useState(false);
+  const [showCreateCostIncurredDialog, setShowCreateCostIncurredDialog] =
+    useState(false);
 
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const isMobile = useIsMobile(); // useIsMobile();
@@ -222,9 +229,20 @@ export function OrdersListPage() {
       key: "view",
       label: "Xem chi tiết",
       icon: Eye,
-      onClick: () => {
+      onClick: (record) => {
         // TODO: Implement view detail dialog
+        navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
         toast.info("Chức năng xem chi tiết đang được phát triển");
+      },
+    },
+    {
+      key: "cost-incurred",
+      label: "Chi phí phát sinh",
+      icon: Receipt,
+      show: (record) => record.status !== "draft",
+      onClick: (record) => {
+        setShowCreateCostIncurredDialog(true);
+        setSelectedOrder(record);
       },
     },
     {
@@ -422,6 +440,18 @@ export function OrdersListPage() {
               } thành công.`
             );
           }}
+        />
+      )}
+      {selectedOrder && showCreateCostIncurredDialog && (
+        <CreateCostIncurredDialog
+          open={showCreateCostIncurredDialog}
+          onOpenChange={(open) => {
+            setShowCreateCostIncurredDialog(open);
+            if (!open) {
+              setSelectedOrder(null);
+            }
+          }}
+          orderId={selectedOrder.id}
         />
       )}
 

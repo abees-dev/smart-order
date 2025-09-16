@@ -110,3 +110,74 @@ export const ORDER_STATUS_COLORS: Record<
   completed: "success",
   cancelled: "error",
 };
+
+// Cost Incurred types and interfaces
+export type CostType =
+  | "material"
+  | "labor"
+  | "equipment"
+  | "transport"
+  | "other";
+
+export interface CostIncurred {
+  id?: string;
+  orderId: string;
+  costType: CostType;
+  description: string;
+  amount: number;
+  quantity?: number;
+  unitPrice?: number;
+  supplier?: string;
+  invoiceNumber?: string;
+  incurredDate: string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CreateCostIncurredData {
+  orderId: string;
+  costType: CostType;
+  description: string;
+  amount: number;
+  quantity?: number;
+  unitPrice?: number;
+  supplier?: string;
+  invoiceNumber?: string;
+  incurredDate: string;
+  notes?: string;
+}
+
+export type UpdateCostIncurredData = Partial<CreateCostIncurredData>;
+
+export interface CostIncurredFilters {
+  orderId?: string;
+  costType?: CostType;
+  dateFrom?: Date;
+  dateTo?: Date;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Cost type labels for UI
+export const COST_TYPE_LABELS: Record<CostType, string> = {
+  material: "Vật liệu",
+  labor: "Nhân công",
+  equipment: "Thiết bị",
+  transport: "Vận chuyển",
+  other: "Khác",
+};
+
+// Cost type colors for badges
+export const COST_TYPE_COLORS: Record<
+  CostType,
+  "info" | "success" | "warning" | "error" | "violet" | "neutral"
+> = {
+  material: "info",
+  labor: "success",
+  equipment: "warning",
+  transport: "violet",
+  other: "neutral",
+};
