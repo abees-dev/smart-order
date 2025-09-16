@@ -3,9 +3,7 @@ import {
   doc,
   getDocs,
   getDoc,
-  addDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -30,6 +28,8 @@ import type {
   UpdateSupplyImportData,
   SupplyImportFilters,
 } from "../types";
+import type { ApiResponsePagination } from "@/types/response";
+import axiosInstance from "@/utils/axios";
 
 const SUPPLIES_COLLECTION = "supplies";
 const STOCK_MOVEMENTS_COLLECTION = "stock_movements";
@@ -40,271 +40,26 @@ export class SupplyService {
   private static stockMovementsRef = collection(db, STOCK_MOVEMENTS_COLLECTION);
 
   static async getAllSupplies(
-    filters: SupplyFilters = {},
-    pageSize = 100,
-    lastDoc?: DocumentSnapshot
-  ): Promise<{
-    supplies: Supply[];
-    hasMore: boolean;
-    lastDoc?: DocumentSnapshot;
-  }> {
-    try {
-      const constraints: QueryConstraint[] = [];
-
-      // Add filters
-      if (filters.category) {
-        constraints.push(where("category", "==", filters.category));
-      }
-      if (filters.supplierId) {
-        constraints.push(where("supplierId", "==", filters.supplierId));
-      }
-      if (filters.location) {
-        constraints.push(where("location", "==", filters.location));
-      }
-      if (filters.isActive !== undefined) {
-        constraints.push(where("isActive", "==", filters.isActive));
-      }
-      if (filters.lowStock) {
-        // Note: This will be filtered client-side as Firestore doesn't support
-        // cross-field comparisons directly
-      }
-
-      // Add ordering and pagination
-      constraints.push(orderBy("createdAt", "asc"));
-      constraints.push(limit(pageSize + 1)); // Get one extra to check if there are more
-
-      if (lastDoc) {
-        constraints.push(startAfter(lastDoc));
-      }
-
-      const q = query(this.suppliesRef, ...constraints);
-      const querySnapshot = await getDocs(q);
-      const docs = querySnapshot.docs;
-
-      let supplies = docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Supply[];
-
-      // Client-side filtering for complex queries
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        supplies = supplies.filter(
-          (supply) =>
-            supply.name.toLowerCase().includes(searchTerm) ||
-            supply.sku.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      if (filters.lowStock) {
-        supplies = supplies.filter(
-          (supply) => supply.currentStock <= supply.minStock
-        );
-      }
-
-      const hasMore = supplies.length > pageSize;
-      if (hasMore) {
-        supplies = supplies.slice(0, pageSize);
-      }
-
-      return {
-        supplies,
-        hasMore,
-        lastDoc: supplies.length > 0 ? docs[supplies.length - 1] : undefined,
-      };
-    } catch (error) {
-      console.error("Error fetching supplies:", error);
-      throw new Error("Không thể tải danh sách vật tư");
-    }
-  }
-
-  static async getSuppliesWithPagination(
-    filters: SupplyFilters = {},
-    pageSize = 10,
-    page = 1
-  ): Promise<{
-    supplies: Supply[];
-    hasMore: boolean;
-    total: number;
-    lastDoc?: DocumentSnapshot;
-  }> {
-    try {
-      const constraints: QueryConstraint[] = [];
-
-      // Add filters
-      if (filters.category) {
-        constraints.push(where("category", "==", filters.category));
-      }
-      if (filters.supplierId) {
-        constraints.push(where("supplierId", "==", filters.supplierId));
-      }
-      if (filters.location) {
-        constraints.push(where("location", "==", filters.location));
-      }
-      if (filters.isActive !== undefined) {
-        constraints.push(where("isActive", "==", filters.isActive));
-      }
-
-      // Add search filter (simple text search on name)
-      if (filters.search) {
-        constraints.push(where("name", ">=", filters.search));
-        constraints.push(where("name", "<=", filters.search + "\uf8ff"));
-        constraints.push(orderBy("name"));
-      } else {
-        // Add ordering only when not searching
-        constraints.push(orderBy("createdAt", "desc"));
-      }
-
-      // Get total count
-      const countQuery = query(this.suppliesRef, ...constraints);
-      const countSnapshot = await getCountFromServer(countQuery);
-      const total = countSnapshot.data().count;
-
-      // Get paginated data
-      const skip = (page - 1) * pageSize;
-      constraints.push(limit(pageSize));
-
-      // For pagination in Firestore, we need to use cursor-based pagination
-      // Since traditional offset doesn't exist, we'll simulate it by getting documents up to the skip point
-      let querySnapshot;
-      if (skip > 0) {
-        const skipQuery = query(
-          this.suppliesRef,
-          ...constraints.slice(0, -1), // Remove limit constraint
-          limit(skip)
-        );
-        const skipSnapshot = await getDocs(skipQuery);
-        const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
-
-        if (lastVisible) {
-          const finalQuery = query(
-            this.suppliesRef,
-            ...constraints.slice(0, -1), // Remove limit constraint
-            startAfter(lastVisible),
-            limit(pageSize)
-          );
-          querySnapshot = await getDocs(finalQuery);
-        } else {
-          // If no documents to skip, return empty result
-          return {
-            supplies: [],
-            hasMore: false,
-            total,
-            lastDoc: undefined,
-          };
-        }
-      } else {
-        const finalQuery = query(this.suppliesRef, ...constraints);
-        querySnapshot = await getDocs(finalQuery);
-      }
-
-      let supplies: Supply[] = [];
-      querySnapshot.forEach((doc) => {
-        supplies.push({ id: doc.id, ...doc.data() } as Supply);
-      });
-
-      // Client-side filtering for complex queries that Firestore doesn't support directly
-      if (filters.lowStock) {
-        supplies = supplies.filter(
-          (supply) => supply.currentStock <= supply.minStock
-        );
-      }
-
-      const hasMore = total > page * pageSize;
-      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-
-      return {
-        supplies,
-        hasMore,
-        total,
-        lastDoc,
-      };
-    } catch (error) {
-      console.error("Error getting supplies with pagination:", error);
-      throw new Error("Không thể tải danh sách vật tư");
-    }
+    filters: SupplyFilters = {}
+  ): Promise<ApiResponsePagination<Supply[]>> {
+    return axiosInstance.get("/supplies", { params: filters });
   }
 
   static async getSupplyById(id: string): Promise<Supply | null> {
-    try {
-      const docRef = doc(this.suppliesRef, id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        return {
-          id: docSnap.id,
-          ...docSnap.data(),
-        } as Supply;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error fetching supply:", error);
-      throw new Error("Không thể tải thông tin vật tư");
-    }
+    const response = await axiosInstance.get(`/supplies/${id}`);
+    return response.data;
   }
 
-  static async createSupply(data: CreateSupplyData): Promise<string> {
-    try {
-      // Check if SKU already exists
-      const existingSku = await this.getSupplyBySku(data.sku);
-      if (existingSku) {
-        throw new Error("Mã SKU đã tồn tại");
-      }
-
-      const now = Timestamp.now();
-      const supplyData = {
-        ...data,
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      const docRef = await addDoc(this.suppliesRef, supplyData);
-      return docRef.id;
-    } catch (error) {
-      console.error("Error creating supply:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Không thể tạo vật tư mới");
-    }
+  static async createSupply(data: CreateSupplyData): Promise<unknown> {
+    return axiosInstance.post("/supplies", data);
   }
 
   static async updateSupply(id: string, data: UpdateSupplyData): Promise<void> {
-    try {
-      // If updating SKU, check if it already exists
-      if (data.sku) {
-        const existingSku = await this.getSupplyBySku(data.sku);
-        if (existingSku && existingSku.id !== id) {
-          throw new Error("Mã SKU đã tồn tại");
-        }
-      }
-
-      const docRef = doc(this.suppliesRef, id);
-      const updateData = {
-        ...data,
-        updatedAt: Timestamp.now(),
-      };
-
-      await updateDoc(docRef, updateData);
-    } catch (error) {
-      console.error("Error updating supply:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Không thể cập nhật vật tư");
-    }
+    return axiosInstance.patch(`/supplies/${id}`, data);
   }
 
   static async deleteSupply(id: string): Promise<void> {
-    try {
-      const docRef = doc(this.suppliesRef, id);
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.error("Error deleting supply:", error);
-      throw new Error("Không thể xóa vật tư");
-    }
+    return axiosInstance.delete(`/supplies/${id}`);
   }
 
   static async getSupplyBySku(sku: string): Promise<Supply | null> {

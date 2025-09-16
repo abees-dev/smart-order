@@ -1,8 +1,4 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 import {
-  Loader2,
-  Edit3,
   Package,
   MapPin,
   AlertTriangle,
@@ -28,26 +24,11 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { SupplierSelectField } from "@/components/forms";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSupplyActions } from "../hooks/use-supply";
-import { useSuppliersByIds } from "@/hooks/use-supplier-select";
-import { updateSupplySchema, type UpdateSupplyFormData } from "../validation";
 import type { Supply } from "../types";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 interface SupplyDetailDialogProps {
   supply: Supply | null;
@@ -60,48 +41,8 @@ export function SupplyDetailDialog({
   supply,
   open,
   onOpenChange,
-  onSuccess,
 }: SupplyDetailDialogProps) {
   const isMobile = useIsMobile();
-  const [isEditing, setIsEditing] = useState(false);
-  const { updateSupply, loading, error } = useSupplyActions();
-
-  // Get supplier name for display
-  const { getSupplierName } = useSuppliersByIds(
-    supply?.supplierId ? [supply.supplierId] : []
-  );
-
-  const form = useForm<UpdateSupplyFormData>({
-    resolver: zodResolver(updateSupplySchema),
-    values: supply
-      ? {
-          name: supply.name,
-          sku: supply.sku,
-          description: supply.description || "",
-          category: supply.category,
-          unit: supply.unit,
-          currentStock: supply.currentStock,
-          minStock: supply.minStock,
-          purchasePrice: supply.purchasePrice,
-          salePrice: supply.salePrice,
-          supplierId: supply.supplierId || "",
-          location: supply.location || "",
-          isActive: supply.isActive,
-        }
-      : undefined,
-  });
-
-  const onSubmit = async (data: UpdateSupplyFormData) => {
-    if (!supply) return;
-
-    try {
-      await updateSupply(supply.id, data);
-      setIsEditing(false);
-      onSuccess();
-    } catch (error) {
-      console.error("Error updating supply:", error);
-    }
-  };
 
   const getStockStatus = () => {
     if (!supply) return null;
@@ -279,7 +220,8 @@ export function SupplyDetailDialog({
             <div className="flex items-center gap-3">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
-                {getSupplierName(supply.supplierId)}
+                {/* {getSupplierName(supply.supplierId)} */}
+                {supply.supplier?.name || "Chưa có"}
               </span>
             </div>
           )}
@@ -322,298 +264,6 @@ export function SupplyDetailDialog({
     </div>
   );
 
-  const editFormContent = (
-    <Form {...form}>
-      <form
-        noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6"
-      >
-        {/* Basic Information Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted">
-            <Package className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm text-primary">
-              Thông tin cơ bản
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tên vật tư *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nhập tên vật tư" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="sku"
-              render={({ field, formState: { errors } }) => (
-                <FormItem>
-                  <FormLabel>Mã SKU *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ví dụ: VT-001"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(e.target.value.toUpperCase())
-                      }
-                    />
-                  </FormControl>
-                  {!errors.sku && (
-                    <FormDescription>
-                      Mã định danh duy nhất cho vật tư
-                    </FormDescription>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Danh mục *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ví dụ: Điện tử, Vật liệu xây dựng..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Đơn vị tính *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ví dụ: cái, kg, lít..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mô tả</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Mô tả chi tiết về vật tư, công dụng, đặc điểm..."
-                    rows={3}
-                    className="resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Stock Management Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm text-primary">
-              Quản lý tồn kho
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <FormField
-              control={form.control}
-              name="currentStock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tồn kho hiện tại *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="minStock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tồn kho tối thiểu *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Cảnh báo khi tồn kho dưới mức này
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Pricing Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted">
-            <DollarSign className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm text-primary">
-              Thông tin giá cả
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <FormField
-              control={form.control}
-              name="purchasePrice"
-              render={({ field, formState: { errors } }) => (
-                <FormItem>
-                  <FormLabel>Giá mua *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
-                  {!errors.purchasePrice && (
-                    <FormDescription>
-                      Giá mua vào từ nhà cung cấp (VND)
-                    </FormDescription>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="salePrice"
-              render={({ field, formState: { errors } }) => (
-                <FormItem>
-                  <FormLabel>Giá bán *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
-                  {!errors.salePrice && (
-                    <FormDescription>
-                      Giá bán ra cho khách hàng (VND)
-                    </FormDescription>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Additional Information Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted">
-            <MapPin className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm text-primary">
-              Thông tin bổ sung
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <FormField
-              control={form.control}
-              name="supplierId"
-              render={({ field, fieldState }) => (
-                <SupplierSelectField
-                  field={field}
-                  fieldState={fieldState}
-                  label="Nhà cung cấp"
-                  placeholder="Chọn nhà cung cấp"
-                  allowCreate
-                  onCreateNew={() => {
-                    // TODO: Open supplier creation dialog
-                    console.log("Open supplier creation dialog");
-                  }}
-                />
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vị trí lưu trữ</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ví dụ: Kho A - Kệ 1" {...field} />
-                  </FormControl>
-                  <FormDescription>Vị trí cụ thể trong kho</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-      </form>
-    </Form>
-  );
-
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -628,44 +278,14 @@ export function SupplyDetailDialog({
             </DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-4 max-h-[80vh] overflow-y-auto">
-            {!isEditing ? detailsContent : editFormContent}
+            {detailsContent}
           </div>
           <div className="flex flex-col-reverse sm:flex-row gap-3 p-4 border-t">
-            {!isEditing ? (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  className="flex-1"
-                >
-                  Đóng
-                </Button>
-                <Button onClick={() => setIsEditing(true)} className="flex-1">
-                  <Edit3 className="mr-2 h-4 w-4" />
-                  Chỉnh sửa
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1"
-                  disabled={loading}
-                >
-                  Hủy bỏ
-                </Button>
-                <Button
-                  onClick={form.handleSubmit(onSubmit)}
-                  disabled={loading}
-                  className="flex-1"
-                >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {loading ? "Đang cập nhật..." : "Cập nhật vật tư"}
-                </Button>
-              </>
-            )}
+            <>
+              <Button type="button" variant="outline" className="flex-1">
+                Hủy bỏ
+              </Button>
+            </>
           </div>
         </DrawerContent>
       </Drawer>
@@ -684,46 +304,18 @@ export function SupplyDetailDialog({
             Thông tin chi tiết về vật tư trong hệ thống
           </DialogDescription>
         </DialogHeader>
-        {!isEditing ? detailsContent : editFormContent}
+        {detailsContent}
         <DialogFooter className="border-t pt-6">
-          {!isEditing ? (
-            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="flex-1 sm:flex-none"
-              >
-                Đóng
-              </Button>
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="flex-1 sm:flex-none"
-              >
-                <Edit3 className="mr-2 h-4 w-4" />
-                Chỉnh sửa
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsEditing(false)}
-                className="flex-1 sm:flex-none"
-                disabled={loading}
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={loading}
-                className="flex-1 sm:flex-none"
-              >
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {loading ? "Đang cập nhật..." : "Cập nhật vật tư"}
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              onClick={() => onOpenChange(false)}
+            >
+              Hủy bỏ
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

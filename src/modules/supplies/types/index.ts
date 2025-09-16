@@ -17,6 +17,10 @@ export interface Supply {
   isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  supplier: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface CreateSupplyData {
@@ -45,6 +49,8 @@ export interface SupplyFilters {
   isActive?: boolean;
   lowStock?: boolean; // filter for supplies below minimum stock
   search?: string; // search by name or SKU
+  page?: number;
+  limit?: number;
 }
 
 export interface SupplyListState {

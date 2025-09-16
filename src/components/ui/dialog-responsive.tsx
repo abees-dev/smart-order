@@ -99,7 +99,7 @@ const DialogResponsive = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("p-0", className)}>
+      <DialogContent className={cn("p-0 min-w-3xl", className)}>
         <DialogHeader className="px-4 pt-4 text-left">
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useSupplyImports, useSupplyImportActions } from "../hooks/use-supply";
-import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import {
   EnhancedTable,
   useEnhancedTableColumns,
@@ -74,14 +73,6 @@ export function SupplyImportsListPage() {
     completeImport,
     cancelImport,
   } = useSupplyImportActions();
-
-  // Get supplier IDs from imports and fetch supplier data
-  const supplierIds = useMemo(
-    () => imports.map((imp) => imp.supplierId),
-    [imports]
-  );
-
-  const { getSupplierName } = useSuppliersByIds(supplierIds);
 
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<SupplyImport>();
@@ -185,8 +176,7 @@ export function SupplyImportsListPage() {
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
-            Nhà cung cấp:{" "}
-            {getSupplierName(record.supplierId) || "Chưa xác định"}
+            Nhà cung cấp: {record.supplierId || "Chưa xác định"}
           </div>
           <div className="flex items-center gap-2 sm:hidden">
             {getStatusBadge(record.status)}
@@ -282,9 +272,7 @@ export function SupplyImportsListPage() {
       <div className="space-y-2 text-sm">
         <div>
           <span className="text-muted-foreground">Nhà cung cấp:</span>
-          <p className="font-medium">
-            {getSupplierName(record.supplierId) || "Chưa xác định"}
-          </p>
+          <p className="font-medium">{record.supplierId || "Chưa xác định"}</p>
         </div>
 
         <div>
@@ -562,7 +550,7 @@ export function SupplyImportsListPage() {
                 )}
                 {filters.supplierId && (
                   <Badge variant="secondary" className="gap-1">
-                    Nhà cung cấp: {getSupplierName(filters.supplierId)}
+                    Nhà cung cấp: {filters.supplierId}
                     <button
                       onClick={() =>
                         updateFilters({ ...filters, supplierId: undefined })

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Input } from "./input";
@@ -137,6 +137,28 @@ export function SelectSearch({
   const displayValue = open ? searchValue : selectedOption?.label || "";
   const displayPlaceholder = open ? searchPlaceholder : placeholder;
 
+  const defaultRenderOption = React.useCallback(
+    (option: SelectSearchOption) => {
+      return (
+        <div>
+          <div className="flex flex-col items-start gap-1 w-full">
+            <div className="flex items-center gap-2 w-full">
+              <span
+                className={cn(
+                  "font-medium line-clamp-1 text-neutral-800 text-sm",
+                  option.disabled && "text-muted-foreground"
+                )}
+              >
+                {option.label}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    },
+    []
+  );
+
   return (
     <Popover open={open} onOpenChange={handleOpenChange} {...props}>
       <div className="relative w-full">
@@ -224,17 +246,7 @@ export function SelectSearch({
                   {option.renderOption ? (
                     <div className="w-full">{option.renderOption(option)}</div>
                   ) : (
-                    <div>
-                      <CheckIcon
-                        className={cn(
-                          "h-4 w-4",
-                          selectedValue === option.value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <span className="truncate">{option.label}</span>
-                    </div>
+                    <div className="w-full">{defaultRenderOption(option)}</div>
                   )}
                 </div>
               ))

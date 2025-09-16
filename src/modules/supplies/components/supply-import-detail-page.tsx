@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Package,
@@ -26,7 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import {
@@ -55,13 +53,6 @@ export function SupplyImportDetailPage() {
     completeImport,
     cancelImport,
   } = useSupplyImportActions();
-
-  // Get supplier information
-  const supplierIds = useMemo(
-    () => (importRecord ? [importRecord.supplierId] : []),
-    [importRecord]
-  );
-  const { getSupplierName } = useSuppliersByIds(supplierIds);
 
   const handleBack = () => {
     navigate("/dashboard/supplies/imports");
@@ -232,7 +223,7 @@ export function SupplyImportDetailPage() {
       {isMobile ? (
         <MobileDetailView
           importRecord={importRecord}
-          supplierName={getSupplierName(importRecord.supplierId)}
+          supplierName={importRecord.supplierId}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
           totalQuantity={totalQuantity}
@@ -241,7 +232,7 @@ export function SupplyImportDetailPage() {
       ) : (
         <DesktopDetailView
           importRecord={importRecord}
-          supplierName={getSupplierName(importRecord.supplierId)}
+          supplierName={importRecord.supplierId}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
           totalQuantity={totalQuantity}

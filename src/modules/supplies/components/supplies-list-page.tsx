@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,8 @@ import { SupplyFormDialog } from "./supply-form-dialog";
 import { SupplyDetailDialog } from "./supply-detail-dialog";
 import { DeleteSupplyDialog } from "./delete-supply-dialog";
 import type { Supply, SupplyFilters } from "../types";
-import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { SUPPLY_CATEGORY_MAP } from "../utils/supply-categrory";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function SuppliesListPage() {
   const { t } = useTranslation();
@@ -32,29 +32,27 @@ export function SuppliesListPage() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
+  const isMobile = useIsMobile();
+  const [page, setPage] = useState(1);
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const {
-    supplies,
     loading,
     error,
-    hasMore,
-    loadMore,
-    refreshSupplies,
-    total,
-    page,
-    pageSize,
-    changePage,
-    isMobile,
-    loadingMore,
-  } = useSupplies(filters, 7);
+    supplies,
+    fetchNextPage,
+    hasNextPage,
+    isFetching: loadingMore,
+    pagination,
+    refetchSupplies,
+  } = useSupplies({
+    ...filters,
+    page: page,
+    limit: 10,
+  });
 
-  // Get supplier IDs from supplies and fetch supplier data
-  const supplierIds = useMemo(
-    () => supplies.map((supply) => supply.supplierId),
-    [supplies]
-  );
-
-  const { getSupplierName } = useSuppliersByIds(supplierIds);
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<Supply>();
 
@@ -63,13 +61,13 @@ export function SuppliesListPage() {
   };
 
   const handleFormSuccess = () => {
-    refreshSupplies();
+    refetchSupplies();
     setSelectedSupply(null);
     setShowFormDialog(false);
   };
 
   const handleDeleteSuccess = () => {
-    refreshSupplies();
+    refetchSupplies();
     setSelectedSupply(null);
   };
 
@@ -162,11 +160,7 @@ export function SuppliesListPage() {
       responsive: false,
       render: (_, record: Supply) => (
         <div className="text-sm max-w-48 min-w-24">
-          <div className="truncate">
-            {getSupplierName(record.supplierId) || (
-              <span className="text-muted-foreground">Chưa có</span>
-            )}
-          </div>
+          <div className="truncate">{record.supplier?.name || "-"}</div>
         </div>
       ),
     }),
@@ -267,9 +261,7 @@ export function SuppliesListPage() {
 
         <div className="text-sm">
           <span className="text-muted-foreground">Nhà cung cấp:</span>
-          <p className="font-medium">
-            {getSupplierName(record.supplierId) || "Chưa có"}
-          </p>
+          <p className="font-medium">{record.supplier?.name || "-"}</p>
         </div>
       </div>
     );
@@ -280,7 +272,12 @@ export function SuppliesListPage() {
       {error && (
         <div className="text-center text-red-600">
           <p>{error}</p>
-          <Button onClick={refreshSupplies} className="mt-2">
+          <Button
+            onClick={() => {
+              refetchSupplies();
+            }}
+            className="mt-2"
+          >
             {t("common.retry") || "Thử lại"}
           </Button>
         </div>
@@ -297,17 +294,17 @@ export function SuppliesListPage() {
         loading={loading}
         emptyText={t("supplies.noSuppliesFound") || "Không tìm thấy vật tư nào"}
         actions={tableActions}
-        hasMore={hasMore}
-        onLoadMore={loadMore}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={loadingMore}
         searchValue={filters.search || ""}
         pagination={
           !isMobile
             ? {
-                current: page,
-                pageSize: pageSize,
-                total: total,
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
                 onChange: (newPage: number) => changePage(newPage),
               }
             : undefined
@@ -320,9 +317,14 @@ export function SuppliesListPage() {
         mobileCardRender={mobileCardRender}
         headerActions={
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowFormDialog(true)}>
+            <Button
+              onClick={() => {
+                setShowFormDialog(true);
+                setSelectedSupply(null);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
-              {t("supplies.addSupply") || "Thêm vật tư"}
+              {t("supplies.addSupply")}
             </Button>
           </div>
         }
@@ -333,7 +335,10 @@ export function SuppliesListPage() {
       {showFormDialog && (
         <SupplyFormDialog
           open={showFormDialog}
-          onOpenChange={setShowFormDialog}
+          onOpenChange={(open) => {
+            setShowFormDialog(open);
+            if (!open) setSelectedSupply(null);
+          }}
           onSuccess={handleFormSuccess}
           supply={selectedSupply || undefined}
           mode={selectedSupply ? "edit" : "create"}
@@ -347,17 +352,19 @@ export function SuppliesListPage() {
           supply={selectedSupply}
           onSuccess={() => {
             setShowDetailDialog(false);
-            refreshSupplies();
+            refetchSupplies();
           }}
         />
       )}
 
-      <DeleteSupplyDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        supply={selectedSupply}
-        onSuccess={handleDeleteSuccess}
-      />
+      {showDeleteDialog && (
+        <DeleteSupplyDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          supply={selectedSupply}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 }

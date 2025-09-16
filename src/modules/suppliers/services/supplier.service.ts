@@ -48,4 +48,8 @@ export class SupplierService {
       throw new Error("Không thể thay đổi trạng thái nhà cung cấp");
     }
   }
+
+  static async getAllSuppliersSelection(): Promise<Supplier[]> {
+    return axiosInstance.get("/suppliers/selection");
+  }
 }

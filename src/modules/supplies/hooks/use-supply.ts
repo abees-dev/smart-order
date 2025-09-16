@@ -5,7 +5,6 @@ import { SupplyService } from "../services/supply.service";
 import type {
   Supply,
   SupplyFilters,
-  SupplyListState,
   SupplyFormState,
   CreateSupplyData,
   UpdateSupplyData,
@@ -15,171 +14,52 @@ import type {
   CreateSupplyImportData,
   SupplyImportFilters,
 } from "../types";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { ApiResponsePagination } from "@/types/response";
 
-export function useSupplies(initialFilters: SupplyFilters = {}, pageSize = 10) {
-  const isMobile = useIsMobile();
-
-  const [state, setState] = useState<SupplyListState>({
-    supplies: [],
-    loading: true,
-    error: null,
-    total: 0,
-    page: 1,
-    pageSize,
-    hasMore: false,
+export function useSupplies(filters: SupplyFilters = {}) {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    hasPreviousPage,
+    refetch,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["supplies", { ...filters }],
+    queryFn: ({ pageParam = filters.page }) =>
+      SupplyService.getAllSupplies({ ...filters, page: pageParam }),
+    initialPageParam: filters.page,
+    getNextPageParam: (lastPage: ApiResponsePagination<Supply[]>) =>
+      lastPage.pagination.hasNextPage
+        ? lastPage.pagination.page + 1
+        : undefined,
+    getPreviousPageParam: (lastPage) =>
+      lastPage.pagination.hasPrevPage
+        ? lastPage.pagination.page - 1
+        : undefined,
   });
 
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const loadSupplies = useCallback(
-    async (reset = false, targetPage = 1) => {
-      setState((prev) => ({
-        ...prev,
-        loading: true,
-        error: null,
-      }));
-
-      try {
-        let result;
-
-        if (isMobile) {
-          // Mobile: Use infinite loading with Firestore pagination
-          result = await SupplyService.getAllSupplies(
-            initialFilters,
-            pageSize,
-            reset ? undefined : lastDoc || undefined
-          );
-        } else {
-          // Desktop: Use traditional pagination
-          result = await SupplyService.getSuppliesWithPagination(
-            initialFilters,
-            pageSize,
-            targetPage
-          );
-        }
-
-        const supplies = result.supplies;
-        const newHasMore = result.hasMore;
-        const newLastDoc = result.lastDoc;
-        const newTotal =
-          "total" in result ? (result.total as number) : undefined;
-
-        setState((prev) => ({
-          ...prev,
-          supplies:
-            isMobile && !reset ? [...prev.supplies, ...supplies] : supplies,
-          loading: false,
-          total:
-            newTotal !== undefined
-              ? newTotal
-              : reset
-              ? supplies.length
-              : prev.total + supplies.length,
-          page: isMobile ? (reset ? 1 : prev.page + 1) : targetPage,
-          hasMore: newHasMore,
-        }));
-
-        setHasMore(newHasMore);
-        setLastDoc(newLastDoc || null);
-
-        return { success: true };
-      } catch (error) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
-        }));
-
-        return { success: false, error };
-      }
-    },
-    [initialFilters, pageSize, lastDoc, isMobile]
-  );
-
-  const refreshSupplies = useCallback(async () => {
-    setLastDoc(null);
-    setHasMore(true);
-    await loadSupplies(true, 1);
-  }, [loadSupplies]);
-
-  const loadMore = useCallback(async () => {
-    if (!state.loading && hasMore && isMobile && !loadingMore) {
-      setLoadingMore(true);
-      try {
-        await loadSupplies(false);
-      } finally {
-        setLoadingMore(false);
-      }
-    }
-  }, [state.loading, hasMore, isMobile, loadingMore, loadSupplies]);
-
-  const changePage = useCallback(
-    async (newPage: number) => {
-      if (!isMobile) {
-        await loadSupplies(true, newPage);
-      }
-    },
-    [isMobile, loadSupplies]
-  );
-
-  // Load initial data
-  useEffect(() => {
-    const loadData = async () => {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-      setLastDoc(null);
-      setHasMore(true);
-
-      try {
-        let result;
-
-        if (isMobile) {
-          result = await SupplyService.getAllSupplies(initialFilters, pageSize);
-        } else {
-          result = await SupplyService.getSuppliesWithPagination(
-            initialFilters,
-            pageSize,
-            1
-          );
-        }
-
-        const { supplies, hasMore: newHasMore, lastDoc: newLastDoc } = result;
-        const total =
-          "total" in result ? (result.total as number) : supplies.length;
-
-        setState({
-          supplies,
-          loading: false,
-          error: null,
-          total,
-          page: 1,
-          pageSize,
-          hasMore: newHasMore,
-        });
-
-        setHasMore(newHasMore);
-        setLastDoc(newLastDoc || null);
-      } catch (error) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
-        }));
-      }
-    };
-
-    loadData();
-  }, [JSON.stringify(initialFilters), pageSize, isMobile]);
-
   return {
-    ...state,
-    hasMore,
-    loadMore,
-    refreshSupplies,
-    changePage,
-    isMobile,
-    loadingMore,
+    supplies: data ? data.pages.flatMap((page) => page.contents) : [],
+    pagination:
+      data?.pages?.[data.pages.length - 1]?.pagination ||
+      ({
+        page: 1,
+        pageSize: 10,
+        total: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 10,
+      } as const),
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    hasPreviousPage,
+    loading: isFetching,
+    refetchSupplies: refetch,
+    error: error?.message || null,
   };
 }
 
@@ -213,191 +93,6 @@ export function useSupply(id?: string) {
     loading,
     error,
     refetch: id ? () => fetchSupply(id) : undefined,
-  };
-}
-
-export function useSupplyActions() {
-  const [state, setState] = useState<SupplyFormState>({
-    loading: false,
-    error: null,
-  });
-
-  const createSupply = useCallback(async (data: CreateSupplyData) => {
-    setState({ loading: true, error: null });
-
-    try {
-      const id = await SupplyService.createSupply(data);
-      setState({ loading: false, error: null });
-      return id;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Đã có lỗi xảy ra";
-      setState({ loading: false, error: errorMessage });
-      throw error;
-    }
-  }, []);
-
-  const updateSupply = useCallback(
-    async (id: string, data: UpdateSupplyData) => {
-      setState({ loading: true, error: null });
-
-      try {
-        await SupplyService.updateSupply(id, data);
-        setState({ loading: false, error: null });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Đã có lỗi xảy ra";
-        setState({ loading: false, error: errorMessage });
-        throw error;
-      }
-    },
-    []
-  );
-
-  const deleteSupply = useCallback(async (id: string) => {
-    setState({ loading: true, error: null });
-
-    try {
-      await SupplyService.deleteSupply(id);
-      setState({ loading: false, error: null });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Đã có lỗi xảy ra";
-      setState({ loading: false, error: errorMessage });
-      throw error;
-    }
-  }, []);
-
-  return {
-    ...state,
-    createSupply,
-    updateSupply,
-    deleteSupply,
-  };
-}
-
-export function useSupplySearch() {
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchOptions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const categoriesData = await SupplyService.getCategories();
-      setCategories(categoriesData);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Đã có lỗi xảy ra");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchOptions();
-  }, [fetchOptions]);
-
-  return {
-    categories,
-    loading,
-    error,
-    refetch: fetchOptions,
-  };
-}
-
-export function useStockMovements(supplyId?: string) {
-  const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot>();
-
-  const fetchMovements = useCallback(
-    async (reset = false) => {
-      if (!supplyId) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const docToUse = reset ? undefined : lastDoc;
-        const {
-          movements: newMovements,
-          hasMore: newHasMore,
-          lastDoc: newLastDoc,
-        } = await SupplyService.getStockMovements(supplyId, 10, docToUse);
-
-        setMovements((prev) =>
-          reset ? newMovements : [...prev, ...newMovements]
-        );
-        setHasMore(newHasMore);
-        setLastDoc(newLastDoc);
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "Đã có lỗi xảy ra");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [supplyId, lastDoc]
-  );
-
-  const refreshMovements = useCallback(() => {
-    setLastDoc(undefined);
-    fetchMovements(true);
-  }, [fetchMovements]);
-
-  const loadMoreMovements = useCallback(() => {
-    if (hasMore && !loading) {
-      fetchMovements(false);
-    }
-  }, [fetchMovements, hasMore, loading]);
-
-  useEffect(() => {
-    if (supplyId) {
-      refreshMovements();
-    }
-  }, [supplyId]);
-
-  return {
-    movements,
-    loading,
-    error,
-    hasMore,
-    refreshMovements,
-    loadMoreMovements,
-  };
-}
-
-export function useStockActions() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const addStockMovement = useCallback(
-    async (data: CreateStockMovementData) => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const id = await SupplyService.addStockMovement(data);
-        setLoading(false);
-        return id;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Đã có lỗi xảy ra";
-        setError(errorMessage);
-        setLoading(false);
-        throw error;
-      }
-    },
-    []
-  );
-
-  return {
-    loading,
-    error,
-    addStockMovement,
   };
 }
 

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   Package,
   Calendar,
@@ -23,7 +22,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useSuppliersByIds } from "@/hooks/use-supplier-select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { SupplyImport } from "../types";
 import type { Timestamp } from "firebase/firestore";
@@ -42,13 +40,6 @@ export function SupplyImportDetailDialog({
   onOpenChange,
 }: SupplyImportDetailDialogProps) {
   const isMobile = useIsMobile();
-
-  // Get supplier information
-  const supplierIds = useMemo(
-    () => (importRecord ? [importRecord.supplierId] : []),
-    [importRecord]
-  );
-  const { getSupplierName } = useSuppliersByIds(supplierIds);
 
   if (!importRecord) return null;
 
@@ -179,8 +170,8 @@ export function SupplyImportDetailDialog({
                       Nhà cung cấp
                     </div>
                     <div className="font-semibold break-words">
-                      {getSupplierName(importRecord.supplierId) ||
-                        "Chưa xác định"}
+                      {/* {getSupplierName(importRecord.supplierId)} */}
+                      {importRecord.supplierId || "Chưa có"}
                     </div>
                   </div>
 

@@ -20,8 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSupplySearch } from "../hooks/use-supply";
-import { useSuppliers } from "@/modules/suppliers";
 import type { SupplyFilters } from "../types";
 
 interface SupplyFilterSheetProps {
@@ -38,10 +36,6 @@ export function SupplyFilterSheet({
   onFiltersChange,
 }: SupplyFilterSheetProps) {
   const [localFilters, setLocalFilters] = useState<SupplyFilters>(filters);
-  const { categories, loading: searchLoading } = useSupplySearch();
-  const { suppliers, loading: suppliersLoading } = useSuppliers();
-
-  const loading = searchLoading || suppliersLoading;
 
   useEffect(() => {
     setLocalFilters(filters);
@@ -115,30 +109,9 @@ export function SupplyFilterSheet({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Tất cả danh mục</SelectItem>
-                {categories.map((category) => (
+                {[].map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Supplier */}
-          <div className="space-y-2">
-            <Label htmlFor="supplier">Nhà cung cấp</Label>
-            <Select
-              value={localFilters.supplierId || ""}
-              onValueChange={(value) => handleFilterChange("supplierId", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn nhà cung cấp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Tất cả nhà cung cấp</SelectItem>
-                {suppliers.map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -228,7 +201,7 @@ export function SupplyFilterSheet({
                   </Badge>
                 )}
 
-                {localFilters.supplierId && (
+                {/* {localFilters.supplierId && (
                   <Badge variant="outline" className="gap-1">
                     Nhà cung cấp:{" "}
                     {suppliers.find((s) => s.id === localFilters.supplierId)
@@ -242,7 +215,7 @@ export function SupplyFilterSheet({
                       <X className="h-3 w-3" />
                     </Button>
                   </Badge>
-                )}
+                )} */}
 
                 {localFilters.location && (
                   <Badge variant="outline" className="gap-1">
@@ -294,7 +267,7 @@ export function SupplyFilterSheet({
           <Button variant="outline" onClick={handleClearFilters}>
             Xóa tất cả
           </Button>
-          <Button onClick={handleApplyFilters} disabled={loading}>
+          <Button onClick={handleApplyFilters} disabled={true}>
             Áp dụng
           </Button>
         </SheetFooter>

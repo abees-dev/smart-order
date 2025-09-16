@@ -1,26 +1,14 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Loader2,
   Package,
   TrendingUp,
   DollarSign,
   MapPin,
   AlertTriangle,
-  Edit3,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Form, FormField } from "@/components/ui/form";
 import { FormSelectField, SupplierSelectField } from "@/components/forms";
-import { useSupplyActions } from "../hooks/use-supply";
 import {
   createSupplySchema,
   updateSupplySchema,
@@ -30,6 +18,9 @@ import {
 import type { Supply } from "../types";
 import { SUPPLY_CATEGORIES } from "../utils/supply-categrory";
 import FormTextField from "@/components/forms/form-textfield";
+import { useCreateSupply, useUpdateSupply } from "../hooks/use-supply-actions";
+import { useState } from "react";
+import DialogResponsive from "@/components/ui/dialog-responsive";
 
 interface SupplyFormDialogProps {
   open: boolean;
@@ -46,7 +37,30 @@ export function SupplyFormDialog({
   supply,
   mode = "create",
 }: SupplyFormDialogProps) {
-  const { createSupply, updateSupply, loading, error } = useSupplyActions();
+  const [error, setError] = useState<string | null>(null);
+  const { createSupply, loading: createSupplyLoading } = useCreateSupply({
+    onSuccess: () => {
+      onSuccess();
+      form.reset();
+    },
+    onError: (error) => {
+      console.error("Error creating supply:", error);
+      setError(error.message);
+    },
+  });
+
+  const { updateSupply, loading: updateSupplyLoading } = useUpdateSupply({
+    onSuccess: () => {
+      onSuccess();
+      form.reset();
+    },
+    onError: (error) => {
+      console.error("Error updating supply:", error);
+      setError(error.message);
+    },
+  });
+
+  const loading = createSupplyLoading || updateSupplyLoading;
   const isEditMode = mode === "edit" && supply;
 
   const form = useForm<CreateSupplyFormData | UpdateSupplyFormData>({
@@ -61,35 +75,28 @@ export function SupplyFormDialog({
       minStock: supply?.minStock ?? 0,
       purchasePrice: supply?.purchasePrice ?? 0,
       salePrice: supply?.salePrice ?? 0,
-      supplierId: supply?.supplierId ?? "",
+      supplierId: supply?.supplierId ?? undefined,
       location: supply?.location ?? "",
     },
   });
 
-  console.log("Form default values:", supply);
-
   const onSubmit = async (
     data: CreateSupplyFormData | UpdateSupplyFormData
   ) => {
-    try {
-      if (isEditMode && supply) {
-        await updateSupply(supply.id, {
+    if (isEditMode && supply) {
+      updateSupply({
+        id: supply.id,
+        data: {
           ...data,
-          sku: supply.sku.toUpperCase(),
-        } as UpdateSupplyFormData);
-      } else {
-        await createSupply({
-          ...data,
+          supplierId: data.supplierId || undefined,
           sku: data?.sku?.toUpperCase(),
-        } as CreateSupplyFormData);
-      }
-      form.reset();
-      onSuccess();
-    } catch (error) {
-      console.error(
-        `Error ${isEditMode ? "updating" : "creating"} supply:`,
-        error
-      );
+        } as UpdateSupplyFormData,
+      });
+    } else {
+      createSupply({
+        ...data,
+        sku: data?.sku?.toUpperCase(),
+      } as CreateSupplyFormData);
     }
   };
 
@@ -99,6 +106,7 @@ export function SupplyFormDialog({
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6 lg:space-y-8"
+        id="supply-form"
       >
         {/* Basic Information Section */}
         <div className="space-y-3 lg:space-y-4">
@@ -274,69 +282,40 @@ export function SupplyFormDialog({
             <span>{error}</span>
           </div>
         )}
-
-        <DialogFooter className="border-t pt-6 mt-8">
-          <div className="flex flex-col-reverse sm:flex-row gap-3 w-full justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1 sm:flex-none"
-              disabled={loading}
-            >
-              Hủy bỏ
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 sm:flex-none"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading
-                ? isEditMode
-                  ? "Đang cập nhật..."
-                  : "Đang tạo..."
-                : isEditMode
-                ? "Cập nhật vật tư"
-                : "Tạo vật tư"}
-            </Button>
-          </div>
-        </DialogFooter>
       </form>
     </Form>
   );
 
   return (
-    <Dialog
+    <DialogResponsive
       open={open}
-      onOpenChange={(open) => {
-        onOpenChange(open);
+      onOpenChange={onOpenChange}
+      title={isEditMode ? "Cập nhật vật tư" : "Thêm vật tư mới"}
+      description={
+        isEditMode
+          ? "Cập nhật thông tin vật tư trong hệ thống quản lý kho"
+          : "Tạo một vật tư mới trong hệ thống quản lý kho"
+      }
+      actions={{
+        cancel: {
+          label: "Hủy bỏ",
+          onClick: () => onOpenChange(false),
+        },
+        submit: {
+          label: isEditMode
+            ? loading
+              ? "Đang cập nhật..."
+              : "Cập nhật vật tư"
+            : loading
+            ? "Đang tạo..."
+            : "Tạo vật tư",
+          disabled: loading,
+          loading: loading,
+        },
       }}
+      formId="supply-form"
     >
-      <DialogContent className="w-[95vw] sm:max-w-[600px] lg:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="pb-4 lg:pb-6 border-b">
-          <div className="flex items-center gap-2 lg:gap-3">
-            <div className="p-1.5 lg:p-2 bg-primary/10 rounded-lg">
-              {isEditMode ? (
-                <Edit3 className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
-              ) : (
-                <Package className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
-              )}
-            </div>
-            <div>
-              <DialogTitle className="text-lg lg:text-xl">
-                {isEditMode ? "Cập nhật vật tư" : "Thêm vật tư mới"}
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground hidden sm:block">
-                {isEditMode
-                  ? "Cập nhật thông tin vật tư trong hệ thống quản lý kho"
-                  : "Tạo một vật tư mới trong hệ thống quản lý kho"}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-        {formContent}
-      </DialogContent>
-    </Dialog>
+      {formContent}
+    </DialogResponsive>
   );
 }

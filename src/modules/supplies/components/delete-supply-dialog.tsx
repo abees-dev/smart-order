@@ -8,8 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useSupplyActions } from "../hooks/use-supply";
 import type { Supply } from "../types";
+import { useDeleteSupply } from "../hooks/use-supply-actions";
+import { toast } from "sonner";
 
 interface DeleteSupplyDialogProps {
   supply: Supply | null;
@@ -24,7 +25,16 @@ export function DeleteSupplyDialog({
   onOpenChange,
   onSuccess,
 }: DeleteSupplyDialogProps) {
-  const { deleteSupply, loading, error } = useSupplyActions();
+  const { deleteSupply, loading, error } = useDeleteSupply({
+    onSuccess: () => {
+      onSuccess();
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting supply:", error);
+      toast.error("Đã có lỗi xảy ra khi xóa vật tư. Vui lòng thử lại.");
+    },
+  });
 
   const handleDelete = async () => {
     if (!supply) return;
