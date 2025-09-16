@@ -1,6 +1,4 @@
 import { useState } from "react";
-import type { DateRange } from "react-day-picker";
-import { useInputInvoicesWithPagination } from "../hooks/use-invoice";
 import {
   EnhancedTable,
   type ResponsiveTableColumn,
@@ -10,53 +8,42 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/utils/format";
 import {
   TrendingDown,
-  Search,
   Eye,
   Receipt,
   Building,
   RefreshCw,
   Calendar,
 } from "lucide-react";
-import type { InputInvoice, InvoiceFilters, TaxType } from "../types";
+import type { InputInvoice } from "../types";
+import { useInputInvoices } from "../hooks/use-invoice";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function InputInvoiceListPage() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [page, setPage] = useState(1);
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
 
+  const isMobile = useIsMobile();
   const {
     inputInvoices,
     loading,
     error,
-    hasMore,
-    loadMore,
-    refreshInputInvoices,
-    total,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    pagination,
+    refetchInputInvoices,
+  } = useInputInvoices({
     page,
-    pageSize,
-    changePage,
-    isMobile,
-    loadingMore,
-    filters,
-    updateFilters,
-  } = useInputInvoicesWithPagination({}, 7);
+    limit: 10,
+  });
 
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<InputInvoice>();
-
-  const handleSearch = (value: string) => {
-    updateFilters({ ...filters, search: value || undefined });
-  };
 
   // Define table columns for input invoices
   const columns: ResponsiveTableColumn<InputInvoice>[] = [
@@ -121,12 +108,16 @@ export function InputInvoiceListPage() {
       align: "center",
       render: (_, record: InputInvoice) => {
         const statusMap = {
-          pending: { label: "Chờ xử lý", variant: "secondary" as const },
-          completed: { label: "Đã hoàn thành", variant: "default" as const },
-          cancelled: { label: "Đã hủy", variant: "destructive" as const },
+          pending: { label: "Chờ xử lý", variant: "warning" as const },
+          completed: { label: "Đã hoàn thành", variant: "success" as const },
+          cancelled: { label: "Đã hủy", variant: "error" as const },
         };
         const status = statusMap[record.status as keyof typeof statusMap];
-        return <Badge variant={status.variant}>{status.label}</Badge>;
+        return (
+          <Badge variant={"outline"} color={status.variant}>
+            {status.label}
+          </Badge>
+        );
       },
     }),
     createColumn({
@@ -144,25 +135,6 @@ export function InputInvoiceListPage() {
     createCurrencyColumn("vatAmount", "VAT"),
     createCurrencyColumn("totalAmount", "Tổng tiền"),
   ];
-
-  const handleFilterChange = (
-    key: keyof Omit<InvoiceFilters, "type">,
-    value: string | undefined
-  ) => {
-    updateFilters({
-      ...filters,
-      [key]: value === "all" ? undefined : value,
-    });
-  };
-
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
-    updateFilters({
-      ...filters,
-      dateFrom: range?.from,
-      dateTo: range?.to,
-    });
-  };
 
   // Define table actions
   const tableActions: TableAction<InputInvoice>[] = [
@@ -230,7 +202,12 @@ export function InputInvoiceListPage() {
       <div className="p-6">
         <div className="text-center text-red-600">
           <p>{error}</p>
-          <Button onClick={refreshInputInvoices} className="mt-2">
+          <Button
+            onClick={() => {
+              refetchInputInvoices();
+            }}
+            className="mt-2"
+          >
             Thử lại
           </Button>
         </div>
@@ -249,7 +226,12 @@ export function InputInvoiceListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={refreshInputInvoices}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              refetchInputInvoices();
+            }}
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             Làm mới
           </Button>
@@ -264,7 +246,7 @@ export function InputInvoiceListPage() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{total.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{"Update this"}</div>
           </CardContent>
         </Card>
 
@@ -311,59 +293,6 @@ export function InputInvoiceListPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm hóa đơn..."
-                value={filters.search || ""}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <Select
-              value={filters.partnerId || "all"}
-              onValueChange={(value) =>
-                handleFilterChange("partnerId", value || undefined)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn nhà cung cấp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả nhà cung cấp</SelectItem>
-                {/* Add supplier options here */}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.taxType || "all"}
-              onValueChange={(value) =>
-                handleFilterChange("taxType", (value as TaxType) || undefined)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Loại thuế" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="taxed">Có thuế</SelectItem>
-                <SelectItem value="tax_free">Không thuế</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <DateRangePicker
-              date={dateRange}
-              onDateChange={handleDateRangeChange}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Input Invoices Table */}
       <EnhancedTable<InputInvoice>
         title=""
@@ -375,15 +304,15 @@ export function InputInvoiceListPage() {
         emptyText="Không có hóa đơn đầu vào nào"
         mobileCardRender={mobileCardRender}
         rowKey="id"
-        hasMore={hasMore}
-        onLoadMore={loadMore}
-        loadingMore={loadingMore}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
+        loadingMore={isFetching}
         pagination={
           !isMobile
             ? {
-                current: page,
-                pageSize: pageSize,
-                total: total,
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
                 onChange: (newPage: number) => changePage(newPage),
               }
             : undefined

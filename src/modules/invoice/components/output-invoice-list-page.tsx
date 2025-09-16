@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { DateRange } from "react-day-picker";
-import { useOutputInvoicesWithPagination } from "../hooks/use-invoice";
+import { useOutputInvoices } from "../hooks/use-invoice";
 import {
   EnhancedTable,
   type ResponsiveTableColumn,
@@ -10,19 +9,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/utils/format";
 import {
   TrendingUp,
-  Search,
   Eye,
   Receipt,
   User,
@@ -30,34 +19,31 @@ import {
   ShoppingCart,
   Calendar,
 } from "lucide-react";
-import type { OutputInvoice, InvoiceFilters, TaxType } from "../types";
+import type { OutputInvoice } from "../types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function OutputInvoiceListPage() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [page, setPage] = useState(1);
+  const isMobile = useIsMobile();
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const {
     outputInvoices,
-    loading,
-    error,
-    hasMore,
-    loadMore,
-    refreshOutputInvoices,
-    total,
-    page,
-    pageSize,
-    changePage,
-    isMobile,
-    loadingMore,
-    filters,
-    updateFilters,
-  } = useOutputInvoicesWithPagination({}, 7);
+    refetchOutputInvoices,
+    fetchNextPage,
+    hasNextPage,
+    pagination,
+    summary,
+    isFetching,
+  } = useOutputInvoices({
+    page: page,
+    limit: 10,
+  });
 
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<OutputInvoice>();
-
-  const handleSearch = (value: string) => {
-    updateFilters({ ...filters, search: value || undefined });
-  };
 
   // Define table columns for output invoices
   const columns: ResponsiveTableColumn<OutputInvoice>[] = [
@@ -68,7 +54,7 @@ export function OutputInvoiceListPage() {
         <div className="space-y-1">
           <div className="font-semibold text-foreground">
             <span className="bg-muted px-2 py-1 rounded text-xs mr-2">
-              {record.invoiceNumber}
+              {record.orderNumber}
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
@@ -76,7 +62,9 @@ export function OutputInvoiceListPage() {
           </div>
           <div className="flex items-center gap-2 sm:hidden">
             {record.status === "completed" ? (
-              <Badge variant="default">Hoàn thành</Badge>
+              <Badge variant="outline" color="success">
+                Hoàn thành
+              </Badge>
             ) : record.status === "cancelled" ? (
               <Badge variant="destructive">Đã hủy</Badge>
             ) : (
@@ -122,12 +110,16 @@ export function OutputInvoiceListPage() {
       align: "center",
       render: (_, record: OutputInvoice) => {
         const statusMap = {
-          pending: { label: "Chờ xử lý", variant: "secondary" as const },
-          completed: { label: "Đã hoàn thành", variant: "default" as const },
-          cancelled: { label: "Đã hủy", variant: "destructive" as const },
+          pending: { label: "Chờ xử lý", variant: "warning" as const },
+          completed: { label: "Đã hoàn thành", variant: "success" as const },
+          cancelled: { label: "Đã hủy", variant: "error" as const },
         };
         const status = statusMap[record.status as keyof typeof statusMap];
-        return <Badge variant={status.variant}>{status.label}</Badge>;
+        return (
+          <Badge color={status.variant} variant={"outline"}>
+            {status.label}
+          </Badge>
+        );
       },
     }),
     createColumn({
@@ -136,8 +128,11 @@ export function OutputInvoiceListPage() {
       responsive: false,
       align: "center",
       render: (_, record: OutputInvoice) => (
-        <Badge variant={record.taxType === "taxed" ? "default" : "outline"}>
-          {record.taxType === "taxed" ? "Có thuế" : "Không thuế"}
+        <Badge
+          variant={"outline"}
+          color={record.vatRate > 0 ? "info" : "neutral"}
+        >
+          {record.vatRate > 0 ? "Có thuế" : "Không thuế"}
         </Badge>
       ),
     }),
@@ -145,26 +140,6 @@ export function OutputInvoiceListPage() {
     createCurrencyColumn("vatAmount", "VAT"),
     createCurrencyColumn("totalAmount", "Tổng tiền"),
   ];
-
-  const handleFilterChange = (
-    key: keyof Omit<InvoiceFilters, "type">,
-    value: string | undefined
-  ) => {
-    updateFilters({
-      ...filters,
-      [key]: value || undefined,
-    });
-  };
-
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
-    updateFilters({
-      ...filters,
-      dateFrom: range?.from,
-      dateTo: range?.to,
-    });
-  };
-
   // Define table actions
   const tableActions: TableAction<OutputInvoice>[] = [
     {
@@ -228,19 +203,6 @@ export function OutputInvoiceListPage() {
     </div>
   );
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="text-center text-red-600">
-          <p>{error}</p>
-          <Button onClick={refreshOutputInvoices} className="mt-2">
-            Thử lại
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -252,7 +214,12 @@ export function OutputInvoiceListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={refreshOutputInvoices}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              refetchOutputInvoices();
+            }}
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             Làm mới
           </Button>
@@ -267,7 +234,7 @@ export function OutputInvoiceListPage() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{total.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{summary.totalAmount}</div>
           </CardContent>
         </Card>
 
@@ -280,9 +247,7 @@ export function OutputInvoiceListPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(
-                outputInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
-              )}
+              {formatCurrency(summary.totalAmount)}
             </div>
           </CardContent>
         </Card>
@@ -294,9 +259,7 @@ export function OutputInvoiceListPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(
-                outputInvoices.reduce((sum, inv) => sum + inv.subtotal, 0)
-              )}
+              {formatCurrency(summary.totalAmount - summary.vatAmount)}
             </div>
           </CardContent>
         </Card>
@@ -308,23 +271,21 @@ export function OutputInvoiceListPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(
-                outputInvoices.reduce((sum, inv) => sum + inv.vatAmount, 0)
-              )}
+              {formatCurrency(summary.vatAmount)}
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
+      {/* <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm kiếm hóa đơn..."
-                value={filters.search || ""}
+                // value={filters.search || ""}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9"
               />
@@ -341,7 +302,6 @@ export function OutputInvoiceListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả khách hàng</SelectItem>
-                {/* Add customer options here */}
               </SelectContent>
             </Select>
 
@@ -367,7 +327,7 @@ export function OutputInvoiceListPage() {
             />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Output Invoices Table */}
       <EnhancedTable<OutputInvoice>
@@ -375,20 +335,20 @@ export function OutputInvoiceListPage() {
         columns={columns}
         dataSource={outputInvoices}
         actions={tableActions}
-        loading={loading}
+        loading={isFetching}
         searchable={false}
         emptyText="Không có hóa đơn đầu ra nào"
         mobileCardRender={mobileCardRender}
         rowKey="id"
-        hasMore={hasMore}
-        onLoadMore={loadMore}
-        loadingMore={loadingMore}
+        hasMore={hasNextPage}
+        onLoadMore={fetchNextPage}
+        loadingMore={isFetching}
         pagination={
           !isMobile
             ? {
-                current: page,
-                pageSize: pageSize,
-                total: total,
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
                 onChange: (newPage: number) => changePage(newPage),
               }
             : undefined

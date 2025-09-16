@@ -37,6 +37,7 @@ export interface InputInvoiceItem {
 export interface OutputInvoice {
   id: string; // order id
   invoiceNumber: string; // orderNumber
+  orderNumber: string;
   invoiceDate: Timestamp; // completedAt hoặc updatedAt
   customerName?: string;
   customerId?: string;
@@ -83,12 +84,13 @@ export interface InvoiceView {
 
 // Filters
 export interface InvoiceFilters {
-  type?: InvoiceType; // input / output
   taxType?: TaxType; // taxed / non-taxed
   partnerId?: string; // supplierId hoặc customerId
   dateFrom?: Date;
   dateTo?: Date;
   search?: string; // tìm theo invoice number hoặc partner name
+  page?: number;
+  limit?: number;
 }
 
 export interface InvoiceListState {
