@@ -331,7 +331,7 @@ export function OrdersListPage() {
         <div>
           <span className="text-muted-foreground">Ngày tạo:</span>
           <p className="font-medium">
-            {record.createdAt.toDate().toLocaleDateString("vi-VN")}
+            {new Date(record.createdAt).toLocaleDateString("vi-VN")}
           </p>
         </div>
       </div>

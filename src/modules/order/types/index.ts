@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export type OrderStatus =
   | "draft" // Nháp - vừa tạo
   | "confirmed" // Đã xác nhận
@@ -11,18 +9,43 @@ export type OrderItemType = "product" | "supply";
 
 export interface OrderItem {
   id?: string; // for temporary ID during creation
+  orderId?: string;
   type: OrderItemType; // product hoặc supply
   itemId: string; // productId hoặc supplyId
   quantity: number;
   unitPrice: number; // giá tự field hoặc nhập thủ công
   totalPrice: number; // quantity * unitPrice
   description?: string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  itemData?: {
+    id: string;
+    name: string;
+    sku?: string;
+    description?: string;
+    category?: string;
+    unit?: string;
+    currentStock?: number;
+    minStock?: number;
+    purchasePrice?: number;
+    salePrice?: number;
+    supplierId?: string;
+    location?: string;
+    expiryDate?: Date | string | null;
+    isActive?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    supplier?: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export interface Order {
   id: string;
   orderNumber: string; // Số đơn hàng - unique
-  customerId?: string; // optional khách hàng
+  customerId?: string | null; // optional khách hàng
   customerName?: string;
   status: OrderStatus;
   items: OrderItem[];
@@ -30,12 +53,29 @@ export interface Order {
   vatRate: number; // % VAT
   vatAmount: number; // tiền VAT
   totalAmount: number; // tổng cuối cùng
-  notes?: string;
-  createdBy?: string;
-  exportedAt?: Timestamp; // thời gian xuất kho
-  cancelledAt?: Timestamp; // thời gian hủy
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  notes?: string | null;
+  createdBy?: string | null;
+  exportedAt?: Date | string | null; // thời gian xuất kho
+  cancelledAt?: Date | string | null; // thời gian hủy
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  // Extended fields from API response
+  customer?: {
+    id: string;
+    name: string;
+  } | null;
+  costsIncurred?: CostIncurred[];
+  maintenanceHistory?: MaintenanceRecord[];
+  costSummary?: {
+    totalCostsIncurred: number;
+    costsByType: Record<string, number>;
+  };
+  maintenanceSummary?: {
+    totalMaintenanceCost: number;
+    maintenanceCountByType: Record<string, number>;
+    lastMaintenanceDate: Date | string | null;
+    upcomingMaintenance: Date | string | null;
+  };
 }
 
 export interface CreateOrderData {
@@ -131,9 +171,24 @@ export interface CostIncurred {
   invoiceNumber?: string;
   incurredDate: string;
   notes?: string;
-  createdBy?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdBy?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface MaintenanceRecord {
+  id?: string;
+  orderId: string;
+  maintenanceType: string;
+  description: string;
+  cost: number;
+  performedBy?: string;
+  performedDate: string;
+  nextMaintenanceDate?: string;
+  notes?: string;
+  createdBy?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface CreateCostIncurredData {
