@@ -83,4 +83,8 @@ export class SupplyService {
       status: "cancelled",
     });
   }
+
+  static async deleteSupplyImport(importId: string): Promise<void> {
+    return axiosInstance.delete(`/supplies/imports/${importId}`);
+  }
 }

@@ -39,6 +39,7 @@ import {
   useAddToWarehouseSupply,
   useCancelSupplyImport,
   useCompleteSupplyImport,
+  useDeleteSupplyImport,
 } from "../hooks/use-supply-import-actions";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -114,6 +115,22 @@ export function SupplyImportsListPage() {
     },
   });
 
+  const { deleteSupplyImport } = useDeleteSupplyImport({
+    onSuccess: () => {
+      refetchSuppliesImports();
+      queryClient.invalidateQueries({
+        predicate(query) {
+          return query.queryKey[0] === "supplies";
+        },
+      });
+      toast.success("Xóa phiếu nhập thành công");
+    },
+    onError: (error) => {
+      console.error("Failed to delete import:", error);
+      toast.error("Xóa phiếu nhập thất bại, vui lòng thử lại");
+    },
+  });
+
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<SupplyImport>();
 
@@ -140,8 +157,7 @@ export function SupplyImportsListPage() {
   };
 
   const handleDeleteImport = (importRecord: SupplyImport) => {
-    // TODO: Implement delete functionality (if needed)
-    console.log("Delete import:", importRecord.id);
+    deleteSupplyImport(importRecord.id);
   };
 
   const handleCreateImport = () => {

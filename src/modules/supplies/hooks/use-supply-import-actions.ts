@@ -146,3 +146,31 @@ export const useUpdateSupplyImport = ({
     isLoading,
   };
 };
+
+export const useDeleteSupplyImport = ({
+  onError,
+  onSuccess,
+}: UseCreateSupplyImportProps) => {
+  const {
+    mutate: deleteSupplyImport,
+    isError,
+    error,
+    isPending: isLoading,
+  } = useMutation({
+    mutationFn: (importId: string) =>
+      SupplyService.deleteSupplyImport(importId),
+    onSuccess: () => {
+      onSuccess?.();
+    },
+    onError: (error) => {
+      onError?.(error);
+    },
+  });
+
+  return {
+    deleteSupplyImport,
+    isError,
+    error,
+    isLoading,
+  };
+};
