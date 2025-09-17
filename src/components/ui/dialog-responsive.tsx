@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 export interface DialogFormProps {
-  title?: string;
+  title?: string | ReactNode;
   open: boolean;
   description?: string;
   children: ReactNode;

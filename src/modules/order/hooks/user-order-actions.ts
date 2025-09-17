@@ -71,7 +71,7 @@ export const useDeleteOrder = ({
   onError,
 }: UseOrderActionsProps) => {
   const {
-    mutate: deleteOrder,
+    mutateAsync: deleteOrder,
     isError,
     error,
     isPending,

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -32,6 +31,7 @@ import { generateOrderNumber } from "@/utils";
 import { useOrderSelectionMenu } from "../hooks/use-order-selection";
 import { useCreateOrder, useUpdateOrder } from "../hooks/user-order-actions";
 import { toast } from "sonner";
+import FormTextField from "@/components/forms/form-textfield";
 
 interface OrderFormDialogProps {
   open: boolean;
@@ -271,18 +271,12 @@ export function OrderFormDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="orderNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Số đơn hàng *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="ORD-20241201-123456" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Số đơn hàng"
+                placeholder="ORD-20241201-123456"
+                required
               />
 
               <FormField
@@ -567,22 +561,12 @@ export function OrderFormDialog({
 
               <div></div>
 
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="notes"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Ghi chú</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Ghi chú thêm về hóa đơn"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Ghi chú"
+                placeholder="Ghi chú thêm về hóa đơn"
+                rows={3}
               />
             </div>
 
