@@ -1,3 +1,4 @@
+import type { ChangeEvent } from "react";
 import {
   FormControl,
   FormDescription,
@@ -22,6 +23,7 @@ interface FormTextFieldProps {
   min?: string; // for number type
   step?: string; // for number type
   value?: string | number;
+  onChange?: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 const FormTextField = ({
@@ -36,6 +38,7 @@ const FormTextField = ({
   min = "0",
   step = "1",
   value,
+  onChange,
 }: FormTextFieldProps) => {
   return (
     <FormField
@@ -44,10 +47,27 @@ const FormTextField = ({
       render={({ field }) => {
         const renderInputType = () => {
           if (type === "text") {
-            return <Input placeholder={placeholder} {...field} />;
+            return (
+              <Input
+                placeholder={placeholder}
+                {...field}
+                onChange={(e) => {
+                  field.onChange(e);
+                  onChange?.(e);
+                }}
+              />
+            );
           } else if (type === "textarea") {
             return (
-              <Textarea rows={rows} placeholder={placeholder} {...field} />
+              <Textarea
+                rows={rows}
+                placeholder={placeholder}
+                {...field}
+                onChange={(e) => {
+                  field.onChange(e);
+                  onChange?.(e);
+                }}
+              />
             );
           } else if (type === "number") {
             return (
@@ -60,6 +80,7 @@ const FormTextField = ({
                 value={(value as number) || field.value}
                 onChange={(e) => {
                   const value = e.target.value;
+                  onChange?.(e);
                   // Allow empty string to let user clear the field
                   if (value === "") {
                     field.onChange(0);

@@ -5,18 +5,10 @@ export const orderItemSchema = z.object({
     message: "Loại mặt hàng không hợp lệ",
   }),
   itemId: z.string().min(1, "Vui lòng chọn sản phẩm/vật tư"),
-  quantity: z
-    .number()
-    .min(1, "Số lượng phải lớn hơn 0")
-    .max(999999, "Số lượng quá lớn"),
-  unitPrice: z
-    .number()
-    .min(0, "Đơn giá không được âm")
-    .max(99999999, "Đơn giá quá lớn"),
-  totalPrice: z
-    .number()
-    .min(0, "Tổng giá không được âm")
-    .max(99999999, "Tổng giá quá lớn"),
+  quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
+  unitPrice: z.number().min(0, "Đơn giá không được âm"),
+
+  totalPrice: z.number().min(0, "Tổng giá không được âm"),
   description: z
     .string()
     .max(200, "Mô tả không được vượt quá 200 ký tự")
@@ -102,20 +94,9 @@ export const createCostIncurredSchema = z.object({
     .string()
     .min(1, "Mô tả là bắt buộc")
     .max(200, "Mô tả không được vượt quá 200 ký tự"),
-  amount: z
-    .number()
-    .min(0.01, "Số tiền phải lớn hơn 0")
-    .max(99999999, "Số tiền quá lớn"),
-  quantity: z
-    .number()
-    .min(0.01, "Số lượng phải lớn hơn 0")
-    .max(999999, "Số lượng quá lớn")
-    .optional(),
-  unitPrice: z
-    .number()
-    .min(0, "Đơn giá không được âm")
-    .max(99999999, "Đơn giá quá lớn")
-    .optional(),
+  amount: z.number().min(0.01, "Số tiền phải lớn hơn 0"),
+  quantity: z.number().min(0.01, "Số lượng phải lớn hơn 0").optional(),
+  unitPrice: z.number().min(0, "Đơn giá không được âm").optional(),
   invoiceNumber: z
     .string()
     .max(50, "Số hóa đơn không được vượt quá 50 ký tự")

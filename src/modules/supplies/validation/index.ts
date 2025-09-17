@@ -26,22 +26,10 @@ export const createSupplySchema = z.object({
     .string()
     .min(1, "Đơn vị tính là bắt buộc")
     .max(20, "Đơn vị tính không được vượt quá 20 ký tự"),
-  currentStock: z
-    .number()
-    .min(0, "Tồn kho hiện tại không được âm")
-    .max(999999, "Tồn kho hiện tại quá lớn"),
-  minStock: z
-    .number()
-    .min(0, "Tồn kho tối thiểu không được âm")
-    .max(999999, "Tồn kho tối thiểu quá lớn"),
-  purchasePrice: z
-    .number()
-    .min(0, "Giá mua không được âm")
-    .max(99999999, "Giá mua quá lớn"),
-  salePrice: z
-    .number()
-    .min(0, "Giá bán không được âm")
-    .max(99999999, "Giá bán quá lớn"),
+  currentStock: z.number().min(0, "Tồn kho hiện tại không được âm"),
+  minStock: z.number().min(0, "Tồn kho tối thiểu không được âm"),
+  purchasePrice: z.number().min(0, "Giá mua không được âm"),
+  salePrice: z.number().min(0, "Giá bán không được âm"),
   supplierId: z.string().optional().or(z.literal("")),
   location: z
     .string()
@@ -68,10 +56,7 @@ export const stockMovementSchema = z.object({
   type: z.enum(["in", "out", "adjustment", "import"], {
     message: "Loại giao dịch không hợp lệ",
   }),
-  quantity: z
-    .number()
-    .min(1, "Số lượng phải lớn hơn 0")
-    .max(999999, "Số lượng quá lớn"),
+  quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
   unitPrice: z.number().min(0, "Giá đơn vị không được âm").optional(),
   totalValue: z.number().min(0, "Tổng giá trị không được âm").optional(),
   invoiceNumber: z
@@ -93,22 +78,13 @@ export const stockMovementSchema = z.object({
 
 export const supplyImportItemSchema = z.object({
   supplyId: z.string().min(1, "ID vật tư là bắt buộc"),
-  quantity: z
-    .number()
-    .min(1, "Số lượng phải lớn hơn 0")
-    .max(999999, "Số lượng quá lớn"),
-  unitPrice: z
-    .number()
-    .min(0, "Giá đơn vị không được âm")
-    .max(99999999, "Giá đơn vị quá lớn"),
+  quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
+  unitPrice: z.number().min(0, "Giá đơn vị không được âm"),
   vatRate: z
     .number()
     .min(0, "Thuế VAT không được âm")
     .max(100, "Thuế VAT không được quá 100%"),
-  totalPrice: z
-    .number()
-    .min(0, "Tổng giá không được âm")
-    .max(99999999, "Tổng giá quá lớn"),
+  totalPrice: z.number().min(0, "Tổng giá không được âm"),
 });
 
 export const createSupplyImportSchema = z.object({
