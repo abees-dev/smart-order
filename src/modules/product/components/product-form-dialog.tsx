@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Package, DollarSign, Box, Trash2, Plus } from "lucide-react";
@@ -46,7 +46,24 @@ export function ProductFormDialog({
   const [supplies, setSupplies] = useState<ProductSupply[]>(
     product?.supplies || []
   );
+  const [highlightedSupplies, setHighlightedSupplies] = useState<Set<string>>(
+    new Set()
+  );
+
   const isEditMode = mode === "edit" && product;
+
+  // Clear highlights when dialog closes or mode changes
+  useEffect(() => {
+    if (!open) {
+      setHighlightedSupplies(new Set());
+    }
+  }, [open]);
+
+  // Reset supplies when product changes
+  useEffect(() => {
+    setSupplies(product?.supplies || []);
+    setHighlightedSupplies(new Set());
+  }, [product]);
 
   const handleSuccess = () => {
     onSuccess?.();
@@ -92,8 +109,6 @@ export function ProductFormDialog({
     },
   });
 
-  console.log("Supplies in form:", form.formState.errors);
-
   const onSubmit = async (
     data: CreateProductFormData | UpdateProductFormData
   ) => {
@@ -134,7 +149,6 @@ export function ProductFormDialog({
       } else {
         // If supply doesn't exist, add it
         return [
-          ...prevSupplies,
           {
             supplyId: supply.id,
             supplyName: supply.name,
@@ -142,9 +156,15 @@ export function ProductFormDialog({
             unit: supply.unit,
             purchasePrice: supply.purchasePrice,
           },
+          ...prevSupplies,
         ];
       }
     });
+
+    // Add highlighting effect for newly added supply in edit mode
+    if (isEditMode) {
+      setHighlightedSupplies((prev) => new Set(prev).add(supply.id));
+    }
   };
 
   const handleUpdateSupplyQuantity = (supplyId: string, quantity: number) => {
@@ -274,10 +294,14 @@ export function ProductFormDialog({
         </div>
 
         {/* Supplies Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted">
-            <Box className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm text-primary">
+        <div className={`space-y-4 transition-all duration-500`}>
+          <div
+            className={`flex items-center gap-2 pb-2 border-b transition-colors duration-500`}
+          >
+            <Box className={`h-4 w-4 transition-colors duration-500`} />
+            <h3
+              className={`font-semibold text-sm transition-colors duration-500`}
+            >
               Vật tư sản xuất (tùy chọn)
             </h3>
           </div>
@@ -303,7 +327,11 @@ export function ProductFormDialog({
               {supplies.map((supply) => (
                 <div
                   key={supply.supplyId}
-                  className="flex items-center gap-3 p-3 border rounded-md bg-muted/50"
+                  className={`flex items-center gap-3 p-3 border rounded-md transition-all duration-500 ${
+                    isEditMode && highlightedSupplies.has(supply.supplyId)
+                      ? "bg-green-50 border-green-100 shadow-md ring-2 ring-green-100 ring-opacity-50"
+                      : "bg-muted/50"
+                  }`}
                 >
                   <div className="flex-1">
                     <p className="font-medium">{supply.supplyName}</p>
