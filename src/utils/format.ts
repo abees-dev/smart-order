@@ -37,7 +37,7 @@ export const formatCurrency = (amount: number): string => {
 
 // Format date for various input types
 export const formatDate = (
-  date: Timestamp | Date | string | number
+  date: Timestamp | Date | string | number | undefined
 ): string => {
   if (!date) return "";
 

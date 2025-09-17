@@ -1,7 +1,55 @@
 import { InvoiceService } from "../services/invoice.service";
 import type { InvoiceFilters, InputInvoice, OutputInvoice } from "../types";
 import type { ApiResponsePagination } from "@/types/response";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+
+// Hook for input invoice summary
+export function useInputInvoiceSummary(
+  filters: Omit<InvoiceFilters, "type"> = {}
+) {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["inputInvoiceSummary", { ...filters }],
+    queryFn: () => InvoiceService.getInputInvoiceSummary(filters),
+  });
+
+  return {
+    summary: data || {
+      totalCount: 0,
+      taxedCount: 0,
+      nonTaxedCount: 0,
+      totalSubtotal: 0,
+      totalVatAmount: 0,
+      totalAmount: 0,
+    },
+    loading: isLoading,
+    error: error?.message || null,
+    refetchSummary: refetch,
+  };
+}
+
+// Hook for output invoice summary
+export function useOutputInvoiceSummary(
+  filters: Omit<InvoiceFilters, "type"> = {}
+) {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["outputInvoiceSummary", { ...filters }],
+    queryFn: () => InvoiceService.getOutputInvoiceSummary(filters),
+  });
+
+  return {
+    summary: data || {
+      totalCount: 0,
+      taxedCount: 0,
+      nonTaxedCount: 0,
+      totalSubtotal: 0,
+      totalVatAmount: 0,
+      totalAmount: 0,
+    },
+    loading: isLoading,
+    error: error?.message || null,
+    refetchSummary: refetch,
+  };
+}
 
 // Hook for output invoices only
 export function useOutputInvoices(filters: Omit<InvoiceFilters, "type"> = {}) {

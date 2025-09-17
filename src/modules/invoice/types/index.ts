@@ -49,9 +49,9 @@ export interface OutputInvoice {
   status: "completed"; // chỉ lấy completed orders
   notes?: string;
   items: OutputInvoiceItem[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  exportedAt?: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
+  exportedAt?: Date;
 }
 
 export interface OutputInvoiceItem {
@@ -115,6 +115,25 @@ export interface InvoiceStats {
   nonTaxedOutputAmount: number;
   totalVatInput: number;
   totalVatOutput: number;
+}
+
+// Summary types for individual invoice types
+export interface InputInvoiceSummary {
+  totalCount: number;
+  taxedCount: number;
+  nonTaxedCount: number;
+  totalSubtotal: number;
+  totalVatAmount: number;
+  totalAmount: number;
+}
+
+export interface OutputInvoiceSummary {
+  totalCount: number;
+  taxedCount: number;
+  nonTaxedCount: number;
+  totalSubtotal: number;
+  totalVatAmount: number;
+  totalAmount: number;
 }
 
 // Tax summary by period

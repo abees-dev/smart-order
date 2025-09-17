@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useOutputInvoices } from "../hooks/use-invoice";
+import {
+  useOutputInvoices,
+  useOutputInvoiceSummary,
+} from "../hooks/use-invoice";
 import {
   EnhancedTable,
   type ResponsiveTableColumn,
@@ -9,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatDate } from "@/utils/format";
 import {
   TrendingUp,
@@ -17,7 +21,7 @@ import {
   User,
   RefreshCw,
   ShoppingCart,
-  Calendar,
+  Banknote,
 } from "lucide-react";
 import type { OutputInvoice } from "../types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -35,12 +39,20 @@ export function OutputInvoiceListPage() {
     fetchNextPage,
     hasNextPage,
     pagination,
-    summary,
     isFetching,
+    error,
   } = useOutputInvoices({
     page: page,
     limit: 10,
   });
+
+  // Get summary data from API
+  const {
+    summary,
+    loading: summaryLoading,
+    error: summaryError,
+    refetchSummary,
+  } = useOutputInvoiceSummary({});
 
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<OutputInvoice>();
@@ -101,7 +113,7 @@ export function OutputInvoiceListPage() {
       key: "invoiceDate",
       title: "Ngày bán",
       responsive: false,
-      render: (_, record: OutputInvoice) => formatDate(record.invoiceDate),
+      render: (_, record: OutputInvoice) => formatDate(record.exportedAt),
     }),
     createColumn({
       key: "status",
@@ -203,6 +215,25 @@ export function OutputInvoiceListPage() {
     </div>
   );
 
+  if (error || summaryError) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-red-600">
+          <p>{error || summaryError}</p>
+          <Button
+            onClick={() => {
+              refetchOutputInvoices();
+              refetchSummary();
+            }}
+            className="mt-2"
+          >
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -216,63 +247,116 @@ export function OutputInvoiceListPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
+            disabled={isFetching || summaryLoading}
             onClick={() => {
               refetchOutputInvoices();
+              refetchSummary();
             }}
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${
+                isFetching || summaryLoading ? "animate-spin" : ""
+              }`}
+            />
             Làm mới
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Total Invoices Card */}
+        <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium">Tổng hóa đơn</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+              <Receipt className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary.totalAmount}</div>
+            {summaryLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-20 animate-pulse" />
+                <Skeleton className="h-4 w-32 animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold transition-colors">
+                  {summary.totalCount.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted/50">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    Có thuế: {summary.taxedCount}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted/50">
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    Không thuế: {summary.nonTaxedCount}
+                  </span>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        {/* Total Revenue Card */}
+        <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium">
               Tổng doanh thu
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(summary.totalAmount)}
-            </div>
+            {summaryLoading ? (
+              <Skeleton className="h-8 w-32 animate-pulse" />
+            ) : (
+              <div className="text-2xl font-bold transition-colors">
+                {formatCurrency(summary.totalAmount)}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        {/* Subtotal Card */}
+        <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium">Tiền hàng</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(summary.totalAmount - summary.vatAmount)}
-            </div>
+            {summaryLoading ? (
+              <Skeleton className="h-8 w-32 animate-pulse" />
+            ) : (
+              <div className="text-2xl font-bold transition-colors">
+                {formatCurrency(summary.totalSubtotal)}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng VAT</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+        {/* VAT Card */}
+        <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Tổng VAT
+            </CardTitle>
+            <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+              <Banknote className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(summary.vatAmount)}
-            </div>
+            {summaryLoading ? (
+              <Skeleton className="h-8 w-32 animate-pulse" />
+            ) : (
+              <div className="text-2xl font-bold transition-colors">
+                {formatCurrency(summary.totalVatAmount)}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
