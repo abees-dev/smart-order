@@ -201,19 +201,26 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     <Table className={className}>
       {showHeader && (
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            {responsiveColumns.map((column) => (
+          <TableRow className="hover:bg-transparent !border-b !border-border/80">
+            {responsiveColumns.map((column, colIndex) => (
               <TableHead
                 key={column.key}
                 className={cn(
                   "text-xs uppercase font-bold tracking-wider",
                   column.align === "center" && "text-center",
                   column.align === "right" && "text-right",
-                  column.className
+                  column.className,
+                  {
+                    "sticky right-0 bg-muted/30 border-l-inner":
+                      column.key === "actions",
+                    "border-r":
+                      colIndex !== responsiveColumns.length - 2 &&
+                      column.key !== "actions",
+                  }
                 )}
                 style={{ width: column.width }}
               >
-                {column.title}
+                {column.key === "actions" ? "" : column.title}
               </TableHead>
             ))}
           </TableRow>
@@ -226,11 +233,14 @@ export function ResponsiveTable<T = Record<string, unknown>>({
             className={cn(
               "transition-all duration-200",
               onRowClick && "cursor-pointer active:bg-muted/60",
-              "group"
+              "group",
+              {
+                "border-b border-border/80": index !== dataSource.length - 1,
+              }
             )}
             onClick={() => onRowClick?.(record, index)}
           >
-            {responsiveColumns.map((column) => (
+            {responsiveColumns.map((column, colIndex) => (
               <TableCell
                 key={column.key}
                 className={cn(
@@ -240,7 +250,14 @@ export function ResponsiveTable<T = Record<string, unknown>>({
                   column.key !== "customer" && "whitespace-nowrap",
                   column.align === "center" && "text-center",
                   column.align === "right" && "text-right",
-                  column.className
+                  column.className,
+                  {
+                    "sticky right-0 bg-background border-l-inner":
+                      column.key === "actions",
+                    "border-r":
+                      colIndex !== responsiveColumns.length - 2 &&
+                      column.key !== "actions",
+                  }
                 )}
               >
                 {renderCellValue(column, record, index)}

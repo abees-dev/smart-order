@@ -166,3 +166,16 @@ input[type="number"] {
 input[type="number"]:focus {
   overscroll-behavior: contain;
 }
+
+.border-l-inner {
+  @apply shadow-[inset_1px_0_0_var(--border)];
+}
+.border-r-inner {
+  @apply shadow-[inset_-1px_0_0_var(--border)];
+}
+.border-t-inner {
+  @apply shadow-[inset_0_1px_0_var(--border)];
+}
+.border-b-inner {
+  @apply shadow-[inset_0_-1px_0_var(--border)];
+}
