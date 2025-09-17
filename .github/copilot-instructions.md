@@ -2,37 +2,41 @@
 
 ## Architecture Overview
 
-This is a React + TypeScript + Vite application built for both web and **Zalo Mini App (ZMP)** deployment. Features a modular architecture with Vietnamese-first i18n, **hybrid backend** (migrating from Firebase to REST API), and shadcn/ui component system.
+React 19 + TypeScript + Vite application with **dual deployment targets**: standard web app and **Zalo Mini App (ZMP)**. Features modular architecture with Vietnamese-first i18n, REST API backend, shadcn/ui "new-york" style, and Tailwind v4.
 
-### Current Modules
+### Tech Stack Essentials
 
-Active modules: `auth`, `customer`, `suppliers`, `supplies`, `product`, `order`, `invoice`, `reports` - each follows identical structure patterns.
+- **Frontend**: React 19, React Router v7, TanStack Query v5, React Hook Form + Zod
+- **UI**: shadcn/ui (new-york), Tailwind v4 with CSS variables, Radix UI, Lucide icons
+- **Backend**: REST API with Axios (Firebase migration in progress)
+- **Build**: Vite with SSL dev server (port 4000), package manager: Yarn v4
+- **i18n**: Vietnamese default, English fallback via react-i18next
 
-### Backend Architecture (HYBRID STATE)
+### Module Architecture Pattern
 
-**⚠️ CRITICAL: Mixed Backend Patterns**
+Each feature lives in `src/modules/[feature]/` with **strict structure**:
 
-- **New modules** (e.g., `customer`): Use REST API with Axios (`@/utils/axios`)
-- **Legacy modules** (e.g., `supplies`, `invoice`, `reports`): Still use Firebase/Firestore
-- Use the correct service pattern based on the module you're working with
+```
+components/     # UI with barrel exports via index.ts
+hooks/         # React hooks (use-[feature].ts pattern)
+services/      # Service classes (REST API)
+types/         # TypeScript interfaces from index.ts
+validation/    # Zod schemas with inferred types
+router.tsx     # Exports RouteObject[] array
+index.tsx      # Module's public API barrel export
+```
 
-### Key Patterns & Conventions
+Active modules: `auth`, `customer`, `suppliers`, `supplies`, `product`, `order`, `invoice`, `reports`
 
-**Module-Based Architecture:**
-Each feature lives in `src/modules/[feature]/` with this exact structure:
+### Backend Patterns (MIGRATION IN PROGRESS)
 
-- `components/` - UI components with barrel exports via `index.ts`
-- `hooks/` - React hooks for state/business logic (e.g., `use-customer.ts`)
-- `services/` - **Service classes** (REST API or Firebase - see Backend Architecture)
-- `types/` - TypeScript interfaces exported from `index.ts`
-- `validation/` - Zod schemas with form type inference
-- `router.tsx` - Exports `RouteObject[]` for React Router v7
-- `index.tsx` - Public API barrel export of all module components/hooks/services
+**NEW MODULES** (customer, suppliers): REST API via Axios
+**LEGACY MODULES** (supplies, invoice, reports): Firebase/Firestore v9+ → **API migration coming soon**
 
-**Critical Routing Setup:**
+### Routing & ZMP Integration
 
 ```typescript
-// src/router.tsx - Module routes registered under DashboardLayout
+// src/router.tsx - Module registration under DashboardLayout
 const router = createBrowserRouter(
   [
     ...authRouter,
@@ -40,13 +44,10 @@ const router = createBrowserRouter(
       path: "/dashboard",
       element: <DashboardLayout />,
       children: [
-        ...customerRouter,
-        ...suppliersRouter,
-        ...suppliesRouter,
-        ...productRouter,
-        ...orderRouter,
-        ...invoiceRouter,
-        reportsRouter, // Note: this one doesn't spread (single RouteObject)
+        ...customerRouter, // NEW: spreads RouteObject[]
+        ...suppliersRouter, // NEW: spreads RouteObject[]
+        ...suppliesRouter, // LEGACY: spreads RouteObject[] (API migration coming soon)
+        reportsRouter, // LEGACY: single RouteObject (API migration coming soon)
       ],
     },
   ],
@@ -57,151 +58,50 @@ const router = createBrowserRouter(
 );
 ```
 
-**ZMP (Zalo Mini App) Integration:**
+**ZMP (Zalo Mini App) Deployment:**
 
-- Build mode: `npm run build-miniapp` copies `app-config.json` to dist
-- Route basename changes for ZMP deployment (`/zapps/1309730958729066148`)
-- `zmp-sdk` package included for Zalo-specific features
-- SSL dev server (port 4000) with local certificates for ZMP testing
+- Build: `yarn build-miniapp` (copies `app-config.json` to dist/)
+- SSL dev server required: https://localhost:4000 (uses localhost.pem certificates)
+- Route basename switches for ZMP vs web deployment
 
-**REST API Service Pattern (New Modules):**
-
-```typescript
-// New pattern using Axios for REST API
-export class CustomerService {
-  static async getAllCustomers(
-    filters: CustomerFilters = {}
-  ): Promise<ApiResponsePagination<Customer[]>> {
-    return await axiosInstance.get("/customers", { params: filters });
-  }
-
-  static async createCustomer(data: CreateCustomerData): Promise<Customer> {
-    return await axiosInstance.post("/customers", data);
-  }
-  // Axios instance auto-handles response.data extraction
-}
-```
-
-**Firebase Service Pattern (Legacy Modules):**
-
-```typescript
-// Legacy pattern still used in supplies, invoice, reports
-export class CustomerService {
-  private static collectionRef = collection(db, "customers");
-
-  static async getAllCustomers(
-    filters: CustomerFilters = {},
-    pageSize = 10,
-    lastDoc?: DocumentSnapshot
-  ) {
-    // Firestore v9+ modular API with pagination
-    const constraints: QueryConstraint[] = [];
-    if (filters.search) {
-      constraints.push(where("name", ">=", filters.search));
-      constraints.push(where("name", "<=", filters.search + "\uf8ff"));
-    }
-    // Returns { customers, hasMore, lastDoc } for infinite scroll
-  }
-}
-```
-
-**Custom Hook Patterns:**
-
-```typescript
-// REST API pattern (new modules) - uses React Query infinite queries
-export function useCustomers(filters: CustomerFilters = {}) {
-  const { data, fetchNextPage, hasNextPage, isFetching, refetch, error } =
-    useInfiniteQuery({
-      queryKey: ["customers", { ...filters }],
-      queryFn: ({ pageParam = filters.page }) =>
-        CustomerService.getAllCustomers({ ...filters, page: pageParam }),
-      // Returns { customers: flatMapped data, pagination, fetchNextPage, ... }
-    });
-}
-
-// Firebase pattern (legacy modules) - manual state management
-export function useSupplies(filters: SupplyFilters = {}, pageSize = 10) {
-  const [state, setState] = useState<SupplyListState>({
-    supplies: [],
-    loading: true,
-    error: null,
-    total: 0,
-    page: 1,
-    pageSize,
-  });
-  // Returns { state, refreshSupplies, loadMore, hasMore }
-}
-```
-
-### Development Workflow
+### Key Development Workflows
 
 **Commands:**
 
 ```bash
-yarn dev                 # Vite dev server on https://localhost:4000 (SSL for ZMP)
-yarn build-miniapp       # ZMP build with app-config.json
-yarn build               # Standard web build
-yarn seed:customers      # Seed customer data via tsx script
+yarn dev              # HTTPS dev server on port 4000 (required for ZMP)
+yarn build-miniapp    # ZMP build with app-config.json
+yarn seed:customers   # Populate customer data via tsx script
 ```
 
-**Dev Console Utilities:**
+**Module Creation Steps:**
 
-- `seedCustomers()` function auto-loaded in dev mode console for quick data seeding
+1. Copy `src/modules/customer/` structure exactly
+2. Create service class using REST API pattern
+3. Export router as `RouteObject[]` from `router.tsx`
+4. Import and **spread** router in `src/router.tsx` under DashboardLayout
+5. Barrel export public APIs from module's `index.tsx`
 
-**i18n Setup (Vietnamese Default):**
+### Component & Form Patterns
 
-- Translations: `src/locales/vi/common.json` (default), `src/locales/en/common.json`
-- Initialized in `src/main.tsx` before React render
-- Detection order: localStorage → navigator → htmlTag
-- Form validation messages in Vietnamese
-
-**shadcn/ui Configuration:**
-
-- Style: "new-york", Tailwind v4 with CSS variables
-- Aliases: `@/components`, `@/lib/utils`, `@/components/ui`, `@/lib`, `@/hooks`
-- Use `cn()` utility from `@/lib/utils` for className merging
-
-**Component Libraries:**
-
-- **Table System**: `EnhancedTable` with built-in search, actions, pagination, mobile cards
-- **Form Controls**: `FormSelect` (searchable), `FormTextField`, `SupplierSelect` with specialized patterns
-- **UI Components**: Full shadcn/ui set with React 19 + Radix UI + Lucide icons
-
-### Critical Implementation Details
-
-**Module Registration (Required Steps):**
-
-1. Create module following `src/modules/customer/` pattern
-2. Export router from `router.tsx` as `RouteObject[]`
-3. Import and spread in `src/router.tsx` under DashboardLayout children
-4. Barrel export all public APIs from module's `index.tsx`
-
-**Firebase Integration:**
+**Enhanced Table (Standard Pattern):**
 
 ```typescript
-import { db } from "@/config/firebase"; // Pre-configured Firestore instance
-// Use Firebase v9+ modular SDK: collection(), doc(), getDocs(), etc.
-```
-
-**Table Component Patterns:**
-
-```typescript
-// Use EnhancedTable for feature-rich data tables
 <EnhancedTable
   data={customers}
   columns={columns}
   searchable
-  actions={[{ key: "edit", label: "Edit", onClick: handleEdit }]}
-  loading={state.loading}
-  onLoadMore={loadMore}
-  hasMore={hasMore}
+  actions={[{ key: "edit", label: "Sửa", onClick: handleEdit }]}
+  loading={loading}
+  onLoadMore={fetchNextPage}
+  hasMore={hasNextPage}
 />
 ```
 
-**Validation Pattern:**
+**Validation (Zod + React Hook Form):**
 
 ```typescript
-// validation/index.ts in each module
+// validation/index.ts
 export const createCustomerSchema = z.object({
   name: z.string().min(2, "Tên khách hàng phải có ít nhất 2 ký tự"),
   // Vietnamese error messages
@@ -209,10 +109,122 @@ export const createCustomerSchema = z.object({
 export type CreateCustomerFormData = z.infer<typeof createCustomerSchema>;
 ```
 
-**Layout Structure:**
+**Form Component Pattern:**
 
-- `DashboardLayout` wraps all authenticated routes with `SidebarProvider`
-- `AppSidebar` component provides navigation
-- All dashboard routes render inside `<Outlet />` with padding
+```typescript
+const form = useForm<CreateCustomerFormData>({
+  resolver: zodResolver(createCustomerSchema),
+});
+// Use FormField + FormSelect/FormTextField from @/components/forms
+```
 
-When creating new features, clone the `src/modules/customer/` structure and follow the established service class + custom hooks + Zod validation pattern.
+**FormTextField (Standard Input Pattern):**
+
+```typescript
+<FormTextField
+  control={form.control}
+  name="name"
+  label="Tên khách hàng"
+  placeholder="Nhập tên khách hàng"
+  required
+  helpText="Tên khách hàng phải có ít nhất 2 ký tự"
+/>
+// Supports: text, textarea, number types with Vietnamese labels
+```
+
+**FormSelect (Searchable Select Pattern):**
+
+```typescript
+<FormSelect
+  options={[
+    { value: "1", label: "Khách hàng A", description: "Mô tả khách hàng" },
+    { value: "2", label: "Khách hàng B", disabled: true },
+  ]}
+  value={selectedValue}
+  onValueChange={setSelectedValue}
+  label="Chọn khách hàng"
+  placeholder="Chọn tùy chọn..."
+  searchPlaceholder="Tìm kiếm..."
+  required
+  clearable
+  loading={isLoading}
+/>
+// Built-in search, Vietnamese placeholders, custom option rendering
+```
+
+**DialogResponsive (Mobile-First Modal Pattern):**
+
+```typescript
+<DialogResponsive
+  title="Thêm khách hàng mới"
+  description="Nhập thông tin khách hàng"
+  open={isOpen}
+  onOpenChange={setIsOpen}
+  formId="customer-form"
+  actions={{
+    submit: { label: "Lưu", loading: isSubmitting },
+    cancel: { label: "Hủy", onClick: () => setIsOpen(false) },
+  }}
+>
+  <form id="customer-form" onSubmit={handleSubmit}>
+    {/* Form content */}
+  </form>
+</DialogResponsive>
+// Auto switches between Dialog (desktop) and Drawer (mobile)
+```
+
+```typescript
+// REST API Service (Standard Pattern)
+export class CustomerService {
+  static async getAllCustomers(
+    filters: CustomerFilters = {}
+  ): Promise<ApiResponsePagination<Customer[]>> {
+    return await axiosInstance.get("/customers", { params: filters });
+  }
+  // Axios interceptor auto-extracts response.data
+}
+
+// TanStack Query Hook Pattern
+export function useCustomers(filters: CustomerFilters = {}) {
+  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["customers", { ...filters }],
+    queryFn: ({ pageParam = filters.page }) =>
+      CustomerService.getAllCustomers({ ...filters, page: pageParam }),
+    // Returns flat-mapped data with pagination
+  });
+}
+```
+
+### Configuration & Environment
+
+**shadcn/ui Setup:** "new-york" style, Tailwind v4 with CSS variables, Radix UI base
+
+- Use `cn()` from `@/lib/utils` for className merging
+- Import pattern: `@/components/ui/[component]`
+
+**Axios Configuration:**
+
+- Base URL: `import.meta.env.VITE_API_BASE_URL`
+- Response interceptor auto-extracts `.data`
+- Vietnamese error messages: `{ message: "Đã xảy ra lỗi" }`
+
+**i18n (Vietnamese Primary):**
+
+- Files: `src/locales/vi/common.json` (default), `src/locales/en/common.json`
+- Detection: localStorage → navigator → htmlTag
+- Fallback: Vietnamese (`vi`)
+- Initialized in `src/main.tsx` before React render
+
+### Critical Implementation Notes
+
+**Type Patterns:**
+
+- All modules export types from `types/index.ts`
+
+**Error Handling:**
+
+- Axios: Global interceptor with Vietnamese messages
+
+**Package Manager:** Yarn v4 (see `package.json` packageManager field)
+
+When extending this codebase, prioritize REST API patterns for new modules and maintain Firebase patterns only for existing legacy modules (supplies, invoice, reports). Always follow the Vietnamese-first approach for user-facing content.

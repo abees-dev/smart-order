@@ -100,6 +100,8 @@ export function SupplyFormDialog({
     }
   };
 
+  console.log(form.watch("currentStock"));
+
   const formContent = (
     <Form {...form}>
       <form

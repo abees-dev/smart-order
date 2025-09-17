@@ -57,7 +57,7 @@ const FormTextField = ({
                 step={step}
                 placeholder={placeholder}
                 {...field}
-                value={value as number}
+                value={(value as number) || field.value}
                 onChange={(e) => {
                   const value = e.target.value;
                   // Allow empty string to let user clear the field
