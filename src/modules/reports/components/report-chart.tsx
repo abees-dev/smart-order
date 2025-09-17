@@ -30,6 +30,7 @@ import {
   BarChartIcon,
   PieChartIcon,
   TrendingUpIcon,
+  ActivityIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -76,7 +77,10 @@ export function ReportChart({ data, loading }: ReportChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Biểu đồ báo cáo</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ActivityIcon className="h-5 w-5" />
+            Biểu đồ báo cáo
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="text-center py-12">
@@ -348,59 +352,122 @@ export function ReportChart({ data, loading }: ReportChartProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Biểu đồ báo cáo</CardTitle>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Select
-              value={dataType}
-              onValueChange={(value: DataType) => setDataType(value)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="revenue">Doanh thu</SelectItem>
-                <SelectItem value="profit">Lợi nhuận</SelectItem>
-                <SelectItem value="vat">VAT</SelectItem>
-              </SelectContent>
-            </Select>
+            <ActivityIcon className="h-5 w-5" />
+            <CardTitle>Biểu đồ báo cáo</CardTitle>
+          </div>
 
-            <div className="flex border rounded-md">
-              <Button
-                variant={chartType === "line" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setChartType("line")}
-                className="rounded-r-none"
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Data Type Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                Dữ liệu:
+              </span>
+              <Select
+                value={dataType}
+                onValueChange={(value: DataType) => setDataType(value)}
               >
-                <LineChartIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={chartType === "area" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setChartType("area")}
-                className="rounded-none"
-              >
-                <BarChartIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={chartType === "bar" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setChartType("bar")}
-                className="rounded-none"
-              >
-                <BarChartIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={chartType === "pie" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setChartType("pie")}
-                className="rounded-l-none"
-              >
-                <PieChartIcon className="h-4 w-4" />
-              </Button>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="revenue">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      Doanh thu
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="profit">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      Lợi nhuận
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="vat">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                      VAT
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Chart Type Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                Loại:
+              </span>
+              <div className="flex border rounded-lg overflow-hidden">
+                <Button
+                  variant={chartType === "line" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setChartType("line")}
+                  className="rounded-none"
+                >
+                  <LineChartIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={chartType === "area" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setChartType("area")}
+                  className="rounded-none"
+                >
+                  <ActivityIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={chartType === "bar" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setChartType("bar")}
+                  className="rounded-none"
+                >
+                  <BarChartIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={chartType === "pie" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setChartType("pie")}
+                  className="rounded-none"
+                >
+                  <PieChartIcon className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Data Summary */}
+        {latestData && (
+          <div className="flex flex-wrap gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground">
+                Tháng hiện tại
+              </div>
+              <div className="font-semibold">
+                {format(new Date(latestData.period + "-01"), "MM/yyyy", {
+                  locale: vi,
+                })}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground">Doanh thu</div>
+              <div className="font-semibold text-green-600">
+                {latestData.outputAmount.toLocaleString("vi-VN")}₫
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground">Lợi nhuận</div>
+              <div
+                className={`font-semibold ${
+                  latestData.netProfit >= 0 ? "text-blue-600" : "text-red-600"
+                }`}
+              >
+                {latestData.netProfit.toLocaleString("vi-VN")}₫
+              </div>
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="h-96">
@@ -410,18 +477,35 @@ export function ReportChart({ data, loading }: ReportChartProps) {
         </div>
 
         {chartType === "pie" && latestData && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">
-              Phân bổ chi phí tháng{" "}
-              {format(new Date(latestData.period + "-01"), "MM/yyyy")}:
-            </p>
-            <div className="text-sm">
-              <p>
-                Tổng doanh thu:{" "}
-                <span className="font-semibold">
-                  {latestData.outputAmount.toLocaleString("vi-VN")}₫
+          <div className="mt-6 p-4 bg-muted/30 rounded-lg border">
+            <h4 className="font-medium mb-3">Chi tiết phân bổ</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Chi phí đầu vào:</span>
+                <span className="font-medium text-red-600">
+                  {latestData.inputAmount.toLocaleString("vi-VN")}₫
                 </span>
-              </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  Chi phí phát sinh:
+                </span>
+                <span className="font-medium text-orange-600">
+                  {latestData.additionalCosts.toLocaleString("vi-VN")}₫
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Lợi nhuận ròng:</span>
+                <span
+                  className={`font-medium ${
+                    latestData.netProfit >= 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {Math.max(0, latestData.netProfit).toLocaleString("vi-VN")}₫
+                </span>
+              </div>
             </div>
           </div>
         )}

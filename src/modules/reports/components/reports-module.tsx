@@ -14,6 +14,8 @@ import {
   BarChart3Icon,
   AlertCircleIcon,
   RefreshCwIcon,
+  PieChartIcon,
+  TargetIcon,
 } from "lucide-react";
 import { ReportSummaryCard } from "./report-summary-card";
 import { ReportChart } from "./report-chart";
@@ -24,7 +26,7 @@ import { useReports, useComparisonReport } from "../hooks";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-// Quick stats card component for better reusability
+// Enhanced stats card component with improved content
 interface QuickStatCardProps {
   title: string;
   value: number;
@@ -35,6 +37,8 @@ interface QuickStatCardProps {
     value: number;
     isPositive: boolean;
   };
+  color?: "blue" | "green" | "red" | "purple" | "orange";
+  onClick?: () => void;
 }
 
 function QuickStatCard({
@@ -44,6 +48,7 @@ function QuickStatCard({
   icon,
   loading,
   trend,
+  onClick,
 }: QuickStatCardProps) {
   if (loading) {
     return (
@@ -63,7 +68,12 @@ function QuickStatCard({
   }
 
   return (
-    <Card className="transition-all duration-200 hover:shadow-md">
+    <Card
+      className={`transition-all duration-200 hover:shadow-md ${
+        onClick ? "cursor-pointer hover:-translate-y-0.5" : ""
+      }`}
+      onClick={onClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -81,6 +91,11 @@ function QuickStatCard({
                     variant={trend.isPositive ? "default" : "destructive"}
                     className="text-xs"
                   >
+                    {trend.isPositive ? (
+                      <TrendingUpIcon className="h-3 w-3 mr-1" />
+                    ) : (
+                      <TrendingDownIcon className="h-3 w-3 mr-1" />
+                    )}
                     {trend.isPositive ? "+" : ""}
                     {trend.value.toFixed(1)}%
                   </Badge>
@@ -133,9 +148,45 @@ export function ReportsModule() {
     }
   };
 
-  const handleExportReport = () => {
-    // TODO: Implement export functionality
-    console.log("Export report");
+  const handleExportReport = async () => {
+    try {
+      // Simulate export process
+      const exportData = {
+        period: currentPeriodText,
+        summary: summary,
+        comparison: comparison,
+        chartData: chartData,
+        filters: filters,
+        exportDate: new Date().toISOString(),
+      };
+
+      // Generate filename with current date/time
+      const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
+      const filename = `bao-cao-tai-chinh_${timestamp}`;
+
+      // Create JSON data for download (could be enhanced with PDF/Excel export)
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+
+      // Create download link
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${filename}.json`;
+      link.style.display = "none";
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
+
+      console.log("✅ Báo cáo đã được xuất thành công:", filename);
+    } catch (error) {
+      console.error("❌ Lỗi khi xuất báo cáo:", error);
+    }
   };
 
   const currentPeriodText = filters.month
@@ -198,14 +249,14 @@ export function ReportsModule() {
         <QuickStatCard
           title="Tổng thu (đầu ra)"
           value={summary?.totalOutputAmount || 0}
-          subtitle={`${summary?.outputInvoiceCount || 0} hóa đơn`}
+          subtitle={`${summary?.outputInvoiceCount || 0} hóa đơn bán hàng`}
           icon={<TrendingUpIcon className="h-8 w-8 text-green-500" />}
           loading={loading}
         />
         <QuickStatCard
           title="Tổng chi (đầu vào)"
           value={summary?.totalInputAmount || 0}
-          subtitle={`${summary?.inputInvoiceCount || 0} hóa đơn`}
+          subtitle={`${summary?.inputInvoiceCount || 0} hóa đơn mua hàng`}
           icon={<TrendingDownIcon className="h-8 w-8 text-red-500" />}
           loading={loading}
         />
@@ -222,7 +273,7 @@ export function ReportsModule() {
           subtitle={`Chi phí phát sinh: ${(
             summary?.additionalCosts || 0
           ).toLocaleString("vi-VN")}₫`}
-          icon={<FileTextIcon className="h-8 w-8 text-purple-500" />}
+          icon={<TargetIcon className="h-8 w-8 text-purple-500" />}
           loading={loading}
         />
       </div>
@@ -238,22 +289,28 @@ export function ReportsModule() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center sm:text-left">
-                <p className="text-sm text-muted-foreground">VAT đầu vào</p>
-                <p className="text-xl font-semibold text-red-600">
+              <div className="text-center sm:text-left p-4 rounded-lg bg-red-50 border border-red-100">
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  VAT đầu vào
+                </p>
+                <p className="text-2xl font-bold text-red-600">
                   {summary.totalInputVat.toLocaleString("vi-VN")}₫
                 </p>
               </div>
-              <div className="text-center sm:text-left">
-                <p className="text-sm text-muted-foreground">VAT đầu ra</p>
-                <p className="text-xl font-semibold text-green-600">
+              <div className="text-center sm:text-left p-4 rounded-lg bg-green-50 border border-green-100">
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  VAT đầu ra
+                </p>
+                <p className="text-2xl font-bold text-green-600">
                   {summary.totalOutputVat.toLocaleString("vi-VN")}₫
                 </p>
               </div>
-              <div className="text-center sm:text-left">
-                <p className="text-sm text-muted-foreground">VAT phải nộp</p>
+              <div className="text-center sm:text-left p-4 rounded-lg bg-orange-50 border border-orange-100">
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  VAT phải nộp
+                </p>
                 <p
-                  className={`text-xl font-semibold ${
+                  className={`text-2xl font-bold ${
                     summary.netVat >= 0 ? "text-orange-600" : "text-blue-600"
                   }`}
                 >
@@ -273,10 +330,22 @@ export function ReportsModule() {
       >
         <div className="overflow-x-auto">
           <TabsList className="grid w-full grid-cols-4 min-w-[500px]">
-            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-            <TabsTrigger value="chart">Biểu đồ</TabsTrigger>
-            <TabsTrigger value="details">Chi tiết tháng</TabsTrigger>
-            <TabsTrigger value="comparison">So sánh</TabsTrigger>
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <PieChartIcon className="h-4 w-4" />
+              <span>Tổng quan</span>
+            </TabsTrigger>
+            <TabsTrigger value="chart" className="flex items-center gap-2">
+              <BarChart3Icon className="h-4 w-4" />
+              <span>Biểu đồ</span>
+            </TabsTrigger>
+            <TabsTrigger value="details" className="flex items-center gap-2">
+              <FileTextIcon className="h-4 w-4" />
+              <span>Chi tiết</span>
+            </TabsTrigger>
+            <TabsTrigger value="comparison" className="flex items-center gap-2">
+              <TargetIcon className="h-4 w-4" />
+              <span>So sánh</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
