@@ -71,7 +71,7 @@ export function OrderFormDialog({
   // Options for form selects
   const itemTypeOptions = [
     { value: "product", label: "Sản phẩm" },
-    { value: "supply", label: "Vật tư" },
+    { value: "supply", label: "Linh kiện" },
   ];
 
   const vatRateOptions = [
@@ -399,7 +399,7 @@ export function OrderFormDialog({
                             fieldState={fieldState}
                             options={options}
                             label={
-                              itemType === "product" ? "Sản phẩm" : "Vật tư"
+                              itemType === "product" ? "Sản phẩm" : "Linh Kiện"
                             }
                             placeholder={
                               loadingItems
@@ -407,7 +407,7 @@ export function OrderFormDialog({
                                 : `Chọn ${
                                     itemType === "product"
                                       ? "sản phẩm"
-                                      : "vật tư"
+                                      : "linh kiện"
                                   } (${options.length} có sẵn)`
                             }
                             searchPlaceholder="Tìm kiếm..."
