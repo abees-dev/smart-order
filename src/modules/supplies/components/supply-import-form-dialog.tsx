@@ -20,7 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SupplierSelectField, SupplySelectField } from "@/components/forms";
+import {
+  SupplierSelectField,
+  SupplySelectField,
+  FormDatePicker,
+} from "@/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   createSupplyImportSchema,
@@ -57,6 +61,7 @@ export function SupplyImportFormDialog({
         onSuccess();
         form.reset({
           invoiceNumber: "",
+          importDate: new Date(),
           supplierId: "",
           notes: "",
           items: [
@@ -100,6 +105,7 @@ export function SupplyImportFormDialog({
       isEditing && editImport
         ? {
             invoiceNumber: editImport.invoiceNumber,
+            importDate: new Date(editImport.importDate),
             supplierId: editImport.supplierId,
             notes: editImport.notes || "",
             items: editImport.items.map((item) => ({
@@ -112,6 +118,7 @@ export function SupplyImportFormDialog({
           }
         : {
             invoiceNumber: "",
+            importDate: new Date(),
             supplierId: "",
             notes: "",
             items: [
@@ -251,6 +258,15 @@ export function SupplyImportFormDialog({
               required
               placeholder="Nhập số hóa đơn"
               control={form.control}
+            />
+
+            <FormDatePicker
+              name="importDate"
+              label="Ngày nhập"
+              required
+              placeholder="Chọn ngày nhập"
+              control={form.control}
+              helpText="Ngày thực hiện nhập kho"
             />
 
             <FormField

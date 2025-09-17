@@ -88,6 +88,9 @@ export const supplyImportItemSchema = z.object({
 });
 
 export const createSupplyImportSchema = z.object({
+  importDate: z.date({
+    message: "Ngày nhập là bắt buộc và phải hợp lệ",
+  }),
   invoiceNumber: z
     .string()
     .min(1, "Số hóa đơn là bắt buộc")

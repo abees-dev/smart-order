@@ -120,6 +120,7 @@ export interface SupplyImportItem {
 }
 
 export interface CreateSupplyImportData {
+  importDate: Date;
   invoiceNumber: string;
   supplierId: string;
   notes?: string;
