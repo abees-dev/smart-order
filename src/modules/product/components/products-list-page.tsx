@@ -367,3 +367,5 @@ export function ProductsListPage() {
     </div>
   );
 }
+
+export default ProductsListPage;

@@ -380,3 +380,5 @@ export function SuppliesListPage() {
     </div>
   );
 }
+
+export default SuppliesListPage;

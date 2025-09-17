@@ -324,3 +324,5 @@ export function SuppliersListPage() {
     </div>
   );
 }
+
+export default SuppliersListPage;

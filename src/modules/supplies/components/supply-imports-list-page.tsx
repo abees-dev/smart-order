@@ -560,3 +560,5 @@ export function SupplyImportsListPage() {
     </div>
   );
 }
+
+export default SupplyImportsListPage;

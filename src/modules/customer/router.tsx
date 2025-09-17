@@ -1,9 +1,18 @@
+import LazyLoadComponent from "@/components/lazyload";
+import React from "react";
 import { type RouteObject } from "react-router-dom";
-import { CustomersListPage } from "./components";
+
+const CustomersListPage = React.lazy(
+  () => import("./components/customers-list-page")
+);
 
 const customerRouter: RouteObject[] = [
   {
-    element: <CustomersListPage />,
+    element: (
+      <LazyLoadComponent>
+        <CustomersListPage />
+      </LazyLoadComponent>
+    ),
     path: "customers",
   },
 ];

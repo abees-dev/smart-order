@@ -327,3 +327,5 @@ export function CustomersListPage() {
     </div>
   );
 }
+
+export default CustomersListPage;

@@ -1,9 +1,19 @@
 import { type RouteObject } from "react-router-dom";
-import { SuppliersListPage } from "./components";
+
+import LazyLoadComponent from "@/components/lazyload";
+import React from "react";
+
+const SuppliersListPage = React.lazy(
+  () => import("./components/suppliers-list-page")
+);
 
 const suppliersRouter: RouteObject[] = [
   {
-    element: <SuppliersListPage />,
+    element: (
+      <LazyLoadComponent>
+        <SuppliersListPage />
+      </LazyLoadComponent>
+    ),
     path: "suppliers",
   },
 ];

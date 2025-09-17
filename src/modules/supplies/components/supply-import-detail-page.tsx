@@ -644,3 +644,5 @@ function SupplyImportDetailSkeleton() {
     </div>
   );
 }
+
+export default SupplyImportDetailPage;
