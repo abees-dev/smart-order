@@ -13,6 +13,11 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         className
       )}
       {...props}
+      step={undefined}
+      onWheel={(e) => {
+        e.preventDefault();
+        e.currentTarget.blur();
+      }}
     />
   );
 }
