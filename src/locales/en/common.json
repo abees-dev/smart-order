@@ -92,7 +92,8 @@
     "productDescription": "Description",
     "image": "Image",
     "searchPlaceholder": "Search products...",
-    "noProductsFound": "No products found"
+    "noProductsFound": "No products found",
+    "duplicate": "Duplicate"
   },
   "customers": {
     "title": "Customers",

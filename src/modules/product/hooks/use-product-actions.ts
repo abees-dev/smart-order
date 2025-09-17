@@ -88,3 +88,30 @@ export const useDeleteProduct = ({
     loading: isPending,
   };
 };
+
+export const useDuplicateProduct = ({
+  onSuccess,
+  onError,
+}: UseProductActionsProps) => {
+  const {
+    mutate: duplicateProduct,
+    isError,
+    error,
+    isPending,
+  } = useMutation({
+    mutationFn: (id: string) => ProductService.duplicateProduct(id),
+    onSuccess: () => {
+      if (onSuccess) onSuccess();
+    },
+    onError: (error) => {
+      if (onError) onError(error);
+    },
+  });
+
+  return {
+    duplicateProduct,
+    isError,
+    error: error?.message || null,
+    loading: isPending,
+  };
+};

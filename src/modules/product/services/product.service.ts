@@ -32,4 +32,8 @@ export class ProductService {
   static async deleteProduct(id: string): Promise<void> {
     return await axiosInstance.delete(`/products/${id}`);
   }
+
+  static async duplicateProduct(id: string): Promise<Product> {
+    return await axiosInstance.post(`/products/${id}/duplicate`);
+  }
 }

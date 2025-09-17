@@ -96,7 +96,8 @@
     "productDescription": "Mô tả",
     "image": "Hình ảnh",
     "searchPlaceholder": "Tìm kiếm sản phẩm...",
-    "noProductsFound": "Không tìm thấy sản phẩm nào"
+    "noProductsFound": "Không tìm thấy sản phẩm nào",
+    "duplicate": "Nhân bản"
   },
   "customers": {
     "title": "Khách hàng",

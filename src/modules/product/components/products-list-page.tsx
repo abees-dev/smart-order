@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Eye, Pencil, Trash2, CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import {
@@ -18,6 +18,8 @@ import type { Product, ProductFilters } from "../types";
 import ReactMarkdown from "react-markdown";
 import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDuplicateProduct } from "../hooks/use-product-actions";
+import { toast } from "sonner";
 
 export function ProductsListPage() {
   const { t } = useTranslation();
@@ -52,6 +54,16 @@ export function ProductsListPage() {
   } = useProducts({
     ...filters,
     page: page,
+  });
+
+  const { duplicateProduct } = useDuplicateProduct({
+    onSuccess: () => {
+      refetchProducts();
+      toast.success("Nhân bản sản phẩm thành công");
+    },
+    onError: (error) => {
+      toast.error("Lỗi khi nhân bản sản phẩm: " + error.message);
+    },
   });
 
   const { createColumn, createCurrencyColumn, createStatusColumn } =
@@ -162,7 +174,7 @@ export function ProductsListPage() {
   const tableActions: TableAction<Product>[] = [
     {
       key: "view",
-      label: t("common.view") || "Xem chi tiết",
+      label: t("common.view"),
       icon: Eye,
       onClick: (record) => {
         setSelectedProduct(record);
@@ -170,8 +182,16 @@ export function ProductsListPage() {
       },
     },
     {
+      key: "duplicate",
+      label: t("products.duplicate"),
+      icon: CopyPlus,
+      onClick: (record) => {
+        duplicateProduct(record.id);
+      },
+    },
+    {
       key: "edit",
-      label: t("common.edit") || "Chỉnh sửa",
+      label: t("common.edit"),
       icon: Pencil,
       onClick: (record) => {
         setSelectedProduct(record);
@@ -180,7 +200,7 @@ export function ProductsListPage() {
     },
     {
       key: "delete",
-      label: t("common.delete") || "Xóa",
+      label: t("common.delete"),
       icon: Trash2,
       variant: "destructive",
       onClick: (record) => {
