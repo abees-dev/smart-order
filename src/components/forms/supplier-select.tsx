@@ -62,6 +62,20 @@ export function SupplierSelect({
               value: supplier.id,
               label: supplier.name,
               disabled: !supplier.isActive,
+              renderOption: () => {
+                return (
+                  <div>
+                    <div
+                      className={cn(
+                        !supplier.isActive && "text-muted-foreground",
+                        "line-clamp-3 text-sm"
+                      )}
+                    >
+                      {supplier.name}
+                    </div>
+                  </div>
+                );
+              },
             }))}
             value={value}
             onValueChange={handleValueChange}

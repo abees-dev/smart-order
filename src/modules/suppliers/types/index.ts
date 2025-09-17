@@ -23,7 +23,7 @@ export interface CreateSupplierData {
   phone?: string;
   address: string;
   city?: string;
-  country: string;
+  country?: string;
   contactPerson?: string;
   taxNumber?: string;
   bankAccount?: string;

@@ -160,16 +160,16 @@ export function SupplierFormDialog({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 items-start">
           <FormTextField
             control={form.control}
-            name="city"
-            label={t("suppliers.city")}
-            placeholder={t("suppliers.enterCity")}
+            name="taxNumber"
+            label={t("suppliers.taxNumber")}
+            placeholder={t("suppliers.enterTaxNumber")}
           />
 
           <FormTextField
             control={form.control}
-            name="country"
-            label={t("suppliers.country")}
-            placeholder={t("suppliers.enterCountry")}
+            name="paymentTerms"
+            label={t("suppliers.paymentTerms")}
+            placeholder={t("suppliers.enterPaymentTerms")}
           />
         </div>
 
@@ -185,16 +185,16 @@ export function SupplierFormDialog({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 items-start">
           <FormTextField
             control={form.control}
-            name="taxNumber"
-            label={t("suppliers.taxNumber")}
-            placeholder={t("suppliers.enterTaxNumber")}
+            name="city"
+            label={t("suppliers.city")}
+            placeholder={t("suppliers.enterCity")}
           />
 
           <FormTextField
             control={form.control}
-            name="paymentTerms"
-            label={t("suppliers.paymentTerms")}
-            placeholder={t("suppliers.enterPaymentTerms")}
+            name="country"
+            label={t("suppliers.country")}
+            placeholder={t("suppliers.enterCountry")}
           />
         </div>
 
