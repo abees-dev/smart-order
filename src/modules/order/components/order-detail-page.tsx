@@ -266,7 +266,7 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
                   className={`${
                     isMobile
                       ? "grid grid-cols-2 gap-4"
-                      : "flex items-center space-x-6"
+                      : "flex items-center space-x-4"
                   }`}
                 >
                   <div className="text-center">
@@ -280,6 +280,24 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
                     <p className="text-sm text-gray-600">Đơn giá</p>
                     <p className="font-medium">
                       {formatCurrency(item.unitPrice)}
+                    </p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Tạm tính</p>
+                    <p className="font-medium">
+                      {formatCurrency(
+                        item.subtotal || item.quantity * item.unitPrice
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      VAT ({item.vatRate || 0}%)
+                    </p>
+                    <p className="font-medium text-orange-600">
+                      {formatCurrency(item.vatAmount || 0)}
                     </p>
                   </div>
 

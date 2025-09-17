@@ -35,35 +35,32 @@ export interface InputInvoiceItem {
 
 // Hoá đơn đầu ra - từ completed orders
 export interface OutputInvoice {
-  id: string; // order id
-  invoiceNumber: string; // orderNumber
-  orderNumber: string;
-  invoiceDate: Timestamp; // completedAt hoặc updatedAt
-  customerName?: string;
-  customerId?: string;
-  subtotal: number; // subtotal từ order
-  vatAmount: number; // vatAmount từ order
-  totalAmount: number; // totalAmount từ order
-  taxType: TaxType; // có thuế nếu vatRate > 0
-  vatRate: number; // vatRate từ order
-  status: "completed"; // chỉ lấy completed orders
+  id: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  customerName: string;
+  customerId: string;
+  subtotal: number;
+  vatAmount: number;
+  totalAmount: number;
+  taxType: string;
+  status: string;
   notes?: string;
   items: OutputInvoiceItem[];
-  createdAt: Date;
-  updatedAt: Date;
-  exportedAt?: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OutputInvoiceItem {
-  itemId: string; // productId hoặc supplyId
-  itemName: string;
-  itemCode: string; // productCode hoặc sku
-  itemType: "product" | "supply";
-  category: string;
+  itemId: string;
+  description: string | null;
   quantity: number;
   unitPrice: number;
+  vatRate: number;
+  vatAmount: number;
+  subtotal: number;
   totalPrice: number;
-  description?: string;
+  type: string;
 }
 
 // Unified invoice view for listing

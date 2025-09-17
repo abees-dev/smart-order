@@ -65,7 +65,7 @@ export function OutputInvoiceListPage() {
         <div className="space-y-1">
           <div className="font-semibold text-foreground">
             <span className="bg-muted px-2 py-1 rounded text-xs mr-2">
-              {record.orderNumber}
+              {record.invoiceNumber}
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export function OutputInvoiceListPage() {
       key: "invoiceDate",
       title: "Ngày bán",
       responsive: false,
-      render: (_, record: OutputInvoice) => formatDate(record.exportedAt),
+      render: (_, record: OutputInvoice) => formatDate(record.invoiceDate),
     }),
     createColumn({
       key: "status",
@@ -128,9 +128,9 @@ export function OutputInvoiceListPage() {
       render: (_, record: OutputInvoice) => (
         <Badge
           variant={"outline"}
-          color={record.vatRate > 0 ? "info" : "neutral"}
+          color={record.taxType === "taxed" ? "info" : "neutral"}
         >
-          {record.vatRate > 0 ? "Có thuế" : "Không thuế"}
+          {record.taxType === "taxed" ? "Có thuế" : "Không thuế"}
         </Badge>
       ),
     }),

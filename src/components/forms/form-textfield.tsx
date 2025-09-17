@@ -75,21 +75,24 @@ const FormTextField = ({
                 type="number"
                 min={min}
                 step={step}
-                placeholder={placeholder}
+                placeholder={placeholder || "0"}
                 {...field}
-                value={(value as number) || field.value}
+                value={(value as number) || field.value || ""}
                 onChange={(e) => {
                   const value = e.target.value;
-                  onChange?.(e);
                   // Allow empty string to let user clear the field
                   if (value === "") {
-                    field.onChange(0);
+                    onChange?.(e);
+                    field.onChange("");
                     return;
                   }
                   const parsedValue = parseFloat(value);
+
                   if (!isNaN(parsedValue)) {
                     field.onChange(parsedValue);
                   }
+
+                  onChange?.(e);
                 }}
               />
             );

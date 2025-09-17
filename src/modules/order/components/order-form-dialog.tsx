@@ -117,7 +117,6 @@ export function OrderFormDialog({
       orderNumber: "",
       customerId: "",
       customerName: "",
-      vatRate: 10,
       notes: "",
       items: [
         {
@@ -125,6 +124,9 @@ export function OrderFormDialog({
           itemId: "",
           quantity: 1,
           unitPrice: 0,
+          vatRate: 10,
+          vatAmount: 0,
+          subtotal: 0,
           totalPrice: 0,
           description: "",
         },
@@ -150,13 +152,15 @@ export function OrderFormDialog({
         orderNumber: editOrder.orderNumber,
         customerId: editOrder.customerId || "",
         customerName: editOrder.customerName || "",
-        vatRate: editOrder.vatRate,
         notes: editOrder.notes || "",
         items: editOrder.items.map((item) => ({
           type: item.type,
           itemId: item.itemId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
+          vatRate: item.vatRate || 10,
+          vatAmount: item.vatAmount || 0,
+          subtotal: item.subtotal || item.quantity * item.unitPrice,
           totalPrice: item.totalPrice,
           description: item.description || "",
         })),
@@ -170,6 +174,9 @@ export function OrderFormDialog({
       itemId: "",
       quantity: 1,
       unitPrice: 0,
+      vatRate: 10,
+      vatAmount: 0,
+      subtotal: 0,
       totalPrice: 0,
       description: "",
     });
@@ -183,14 +190,44 @@ export function OrderFormDialog({
 
   const calculateTotal = () => {
     const items = form.watch("items");
-    const subtotal = items.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice;
-    }, 0);
-    const vatRate = form.watch("vatRate") || 0;
-    const vatAmount = subtotal * (vatRate / 100);
+    let subtotal = 0;
+    let vatAmount = 0;
+
+    items.forEach((item) => {
+      const itemSubtotal = item.quantity * item.unitPrice;
+      const itemVatAmount = itemSubtotal * (item.vatRate / 100);
+      subtotal += itemSubtotal;
+      vatAmount += itemVatAmount;
+    });
+
     const totalAmount = subtotal + vatAmount;
 
     return { subtotal, vatAmount, totalAmount };
+  };
+
+  // Helper function to calculate individual item values
+  const calculateItemValues = (index: number) => {
+    const quantity = form.watch(`items.${index}.quantity`) || 0;
+    const unitPrice = form.watch(`items.${index}.unitPrice`) || 0;
+    const vatRate = form.watch(`items.${index}.vatRate`) || 0;
+
+    console.log("quantity, unitPrice, vatRate", quantity, unitPrice, vatRate);
+
+    const subtotal = quantity * unitPrice;
+    const vatAmount = subtotal * (vatRate / 100);
+    const totalPrice = subtotal + vatAmount;
+
+    console.log(
+      "subtotal, vatAmount, totalPrice",
+      subtotal,
+      vatAmount,
+      totalPrice
+    );
+
+    // Update the form values
+    form.setValue(`items.${index}.subtotal`, subtotal);
+    form.setValue(`items.${index}.vatAmount`, vatAmount);
+    form.setValue(`items.${index}.totalPrice`, totalPrice);
   };
 
   const onSubmit = async (data: CreateOrderFormData) => {
@@ -199,6 +236,8 @@ export function OrderFormDialog({
       return {
         ...item,
         category: undefined,
+        vatAmount: undefined,
+        subtotal: undefined,
       };
     });
 
@@ -221,7 +260,6 @@ export function OrderFormDialog({
         orderNumber: "",
         customerId: "",
         customerName: "",
-        vatRate: 10,
         notes: "",
         items: [
           {
@@ -229,6 +267,9 @@ export function OrderFormDialog({
             itemId: "",
             quantity: 1,
             unitPrice: 0,
+            vatRate: 10,
+            vatAmount: 0,
+            subtotal: 0,
             totalPrice: 0,
             description: "",
           },
@@ -237,7 +278,7 @@ export function OrderFormDialog({
     }
   };
 
-  const { subtotal, vatAmount, totalAmount } = calculateTotal();
+  const { totalAmount } = calculateTotal();
 
   const formContent = (
     <Form {...form}>
@@ -340,7 +381,7 @@ export function OrderFormDialog({
                               // Reset item selection when type changes
                               form.setValue(`items.${index}.itemId`, "");
                               form.setValue(`items.${index}.unitPrice`, 0);
-                              form.setValue(`items.${index}.totalPrice`, 0);
+                              calculateItemValues(index);
                             },
                           }}
                           fieldState={fieldState}
@@ -385,14 +426,8 @@ export function OrderFormDialog({
                                     unitPrice
                                   );
 
-                                  // Calculate total price
-                                  const quantity = form.watch(
-                                    `items.${index}.quantity`
-                                  );
-                                  form.setValue(
-                                    `items.${index}.totalPrice`,
-                                    quantity * unitPrice
-                                  );
+                                  // Calculate all item values
+                                  calculateItemValues(index);
                                 }
                               },
                             }}
@@ -422,22 +457,16 @@ export function OrderFormDialog({
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 items-start">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-start">
                     <FormTextField
                       control={form.control}
                       name={`items.${index}.quantity`}
                       type="number"
                       label="Số lượng"
-                      onChange={(e) => {
-                        const quantity = parseInt(e.target.value) || 1;
-                        // Auto-calculate total price
-                        const unitPrice = form.watch(
-                          `items.${index}.unitPrice`
-                        );
-                        form.setValue(
-                          `items.${index}.totalPrice`,
-                          quantity * unitPrice
-                        );
+                      value={form.watch(`items.${index}.quantity`)}
+                      onChange={() => {
+                        // Auto-calculate all item values
+                        calculateItemValues(index);
                       }}
                     />
 
@@ -446,15 +475,33 @@ export function OrderFormDialog({
                       control={form.control}
                       name={`items.${index}.unitPrice`}
                       type="number"
-                      onChange={(e) => {
-                        const unitPrice = parseFloat(e.target.value) || 0;
-                        // Auto-calculate total price
-                        const quantity = form.watch(`items.${index}.quantity`);
-                        form.setValue(
-                          `items.${index}.totalPrice`,
-                          quantity * unitPrice
-                        );
+                      onChange={() => {
+                        // Auto-calculate all item values
+                        calculateItemValues(index);
                       }}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.vatRate`}
+                      render={({ field, fieldState }) => (
+                        <FormSelectField
+                          field={{
+                            ...field,
+                            value: field.value?.toString() || "",
+                            onChange: (value: string) => {
+                              field.onChange(parseFloat(value));
+                              calculateItemValues(index);
+                            },
+                          }}
+                          fieldState={fieldState}
+                          options={vatRateOptions}
+                          label="VAT (%)"
+                          placeholder="Chọn VAT"
+                          required
+                          clearable={false}
+                        />
+                      )}
                     />
                   </div>
                 </div>
@@ -467,44 +514,33 @@ export function OrderFormDialog({
                   type="textarea"
                 />
 
-                <div className="text-right">
-                  <span className="font-medium">
+                <div className="text-right space-y-1">
+                  <div className="text-sm text-muted-foreground">
+                    Tạm tính:{" "}
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(form.watch(`items.${index}.subtotal`) || 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    VAT ({form.watch(`items.${index}.vatRate`) || 0}%):{" "}
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(form.watch(`items.${index}.vatAmount`) || 0)}
+                  </div>
+                  <div className="font-medium text-lg">
                     Thành tiền:{" "}
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
                     }).format(form.watch(`items.${index}.totalPrice`) || 0)}
-                  </span>
+                  </div>
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
-
-        {/* Additional Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="vatRate"
-            render={({ field, fieldState }) => (
-              <FormSelectField
-                field={{
-                  ...field,
-                  value: field.value?.toString() || "",
-                  onChange: (value: string) => {
-                    field.onChange(parseFloat(value));
-                  },
-                }}
-                fieldState={fieldState}
-                options={vatRateOptions}
-                label="Thuế VAT (%)"
-                placeholder="Chọn mức thuế VAT"
-                required
-                clearable={false}
-              />
-            )}
-          />
-        </div>
 
         <FormTextField
           control={form.control}
@@ -521,24 +557,6 @@ export function OrderFormDialog({
             <CardTitle>Tổng kết</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span>Tạm tính:</span>
-              <span>
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(subtotal)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>VAT ({form.watch("vatRate") || 0}%):</span>
-              <span>
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(vatAmount)}
-              </span>
-            </div>
             <div className="flex justify-between font-bold text-lg">
               <span>Tổng cộng:</span>
               <span className="text-green-600">

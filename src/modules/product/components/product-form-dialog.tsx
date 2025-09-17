@@ -112,6 +112,11 @@ export function ProductFormDialog({
   const onSubmit = async (
     data: CreateProductFormData | UpdateProductFormData
   ) => {
+    const filteredSupplies = supplies.filter((s) => s.quantity > 0);
+    if (filteredSupplies.length > 0) {
+      return toast.error("Số lượng vật tư phải lớn hơn 0");
+    }
+
     const productData = {
       ...data,
       supplies: supplies.map((supply) => ({
@@ -166,10 +171,6 @@ export function ProductFormDialog({
   };
 
   const handleUpdateSupplyQuantity = (supplyId: string, quantity: number) => {
-    if (quantity <= 0) {
-      handleRemoveSupply(supplyId);
-      return;
-    }
     setSupplies((prevSupplies) =>
       prevSupplies.map((s) =>
         s.supplyId === supplyId ? { ...s, quantity } : s
@@ -342,8 +343,7 @@ export function ProductFormDialog({
                     <Input
                       type="number"
                       step="1"
-                      min="0"
-                      value={supply.quantity}
+                      value={supply.quantity || ""}
                       onChange={(e) =>
                         handleUpdateSupplyQuantity(
                           supply.supplyId,

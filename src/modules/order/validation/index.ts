@@ -7,7 +7,12 @@ export const orderItemSchema = z.object({
   itemId: z.string().min(1, "Vui lòng chọn sản phẩm/vật tư"),
   quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
   unitPrice: z.number().min(0, "Đơn giá không được âm"),
-
+  vatRate: z
+    .number()
+    .min(0, "Thuế VAT không được âm")
+    .max(100, "Thuế VAT không được quá 100%"),
+  vatAmount: z.number().min(0, "Tiền VAT không được âm"),
+  subtotal: z.number().min(0, "Tạm tính không được âm"),
   totalPrice: z.number().min(0, "Tổng giá không được âm"),
   description: z
     .string()
@@ -35,10 +40,6 @@ export const createOrderSchema = z.object({
     .array(orderItemSchema)
     .min(1, "Phải có ít nhất 1 mặt hàng trong đơn hàng")
     .max(50, "Không được vượt quá 50 mặt hàng trong 1 đơn hàng"),
-  vatRate: z
-    .number()
-    .min(0, "Thuế VAT không được âm")
-    .max(100, "Thuế VAT không được quá 100%"),
   notes: z
     .string()
     .max(500, "Ghi chú không được vượt quá 500 ký tự")

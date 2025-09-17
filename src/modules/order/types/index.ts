@@ -14,7 +14,10 @@ export interface OrderItem {
   itemId: string; // productId hoặc supplyId
   quantity: number;
   unitPrice: number; // giá tự field hoặc nhập thủ công
-  totalPrice: number; // quantity * unitPrice
+  vatRate: number; // % VAT cho từng item
+  vatAmount?: number; // tiền VAT cho item = subtotal * (vatRate/100)
+  subtotal?: number; // quantity * unitPrice (chưa VAT)
+  totalPrice?: number; // subtotal + vatAmount
   description?: string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -82,16 +85,21 @@ export interface CreateOrderData {
   orderNumber: string;
   customerId?: string;
   customerName?: string;
-  items: Omit<OrderItem, "id" | "itemName" | "itemCode">[];
-  vatRate: number;
+  items: Omit<
+    OrderItem,
+    "id" | "orderId" | "createdAt" | "updatedAt" | "itemData"
+  >[];
   notes?: string;
 }
 
 export interface UpdateOrderData {
   customerId?: string;
   customerName?: string;
-  items?: Omit<OrderItem, "id" | "itemName" | "itemCode">[];
-  vatRate?: number;
+  items?: Omit<
+    OrderItem,
+    "id" | "orderId" | "createdAt" | "updatedAt" | "itemData"
+  >[];
+  vatRate?: number; // Default VAT rate for order
   notes?: string;
   status?: OrderStatus;
 }
