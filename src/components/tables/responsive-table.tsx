@@ -8,6 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  type TableProps,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,7 +26,7 @@ export interface ResponsiveTableColumn<T> {
   className?: string;
 }
 
-export interface ResponsiveTableProps<T> {
+export interface ResponsiveTableProps<T> extends TableProps {
   columns: ResponsiveTableColumn<T>[];
   dataSource: T[];
   loading?: boolean;
@@ -49,8 +50,11 @@ export function ResponsiveTable<T = Record<string, unknown>>({
   mobileCardRender,
   showHeader = true,
   loadingRows = 5,
+  ...other
 }: ResponsiveTableProps<T>) {
   const isMobile = useIsMobile();
+
+  console.log("Rendering table skeleton with", other, "rows");
 
   const getRowKey = React.useCallback(
     (record: T, index: number): string => {
@@ -113,7 +117,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     }
 
     return (
-      <Table className={className}>
+      <Table className={className} {...other}>
         {showHeader && (
           <TableHeader>
             <TableRow>
@@ -197,8 +201,11 @@ export function ResponsiveTable<T = Record<string, unknown>>({
   }
 
   // Desktop/Mobile Table View
+
+  const isHasActions = Boolean(actionsColumn);
+  const borderNumberLast = isHasActions ? 2 : 1;
   return (
-    <Table className={className}>
+    <Table className={className} {...other}>
       {showHeader && (
         <TableHeader>
           <TableRow className="hover:bg-transparent !border-b !border-border/80">
@@ -214,7 +221,8 @@ export function ResponsiveTable<T = Record<string, unknown>>({
                     "sticky right-0 bg-muted/30 border-l-inner":
                       column.key === "actions",
                     "border-r":
-                      colIndex !== responsiveColumns.length - 2 &&
+                      colIndex !==
+                        responsiveColumns.length - borderNumberLast &&
                       column.key !== "actions",
                   }
                 )}
@@ -255,7 +263,8 @@ export function ResponsiveTable<T = Record<string, unknown>>({
                     "sticky right-0 bg-background border-l-inner":
                       column.key === "actions",
                     "border-r":
-                      colIndex !== responsiveColumns.length - 2 &&
+                      colIndex !==
+                        responsiveColumns.length - borderNumberLast &&
                       column.key !== "actions",
                   }
                 )}

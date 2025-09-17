@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { Timestamp } from "firebase/firestore";
+import type { TableProps } from "../ui";
 
 export interface TableAction<T> {
   key: string;
@@ -33,7 +34,8 @@ export interface TableAction<T> {
 }
 
 export interface EnhancedTableProps<T>
-  extends Omit<ResponsiveTableProps<T>, "columns"> {
+  extends Omit<ResponsiveTableProps<T>, "columns">,
+    TableProps {
   columns: ResponsiveTableColumn<T>[];
   // Search functionality
   searchable?: boolean;

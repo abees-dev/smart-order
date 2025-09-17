@@ -11,10 +11,8 @@ import {
   FileText,
   Edit,
   Trash2,
-  InfoIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -44,6 +42,7 @@ import {
 } from "../hooks/use-supply-import-actions";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import SupplyStatusBadge from "./supply-status-badge";
 
 export function SupplyImportsListPage() {
   useDocumentTitle();
@@ -156,39 +155,6 @@ export function SupplyImportsListPage() {
     setSelectedImport(null);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return (
-          <Badge variant="outline" color="success">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Đã hoàn thành
-          </Badge>
-        );
-      case "cancelled":
-        return (
-          <Badge variant="outline" color="error">
-            <XCircle className="w-3 h-3 mr-1" />
-            Đã hủy
-          </Badge>
-        );
-      case "warehouse":
-        return (
-          <Badge variant="outline" color="info">
-            <InfoIcon className="w-3 h-3 mr-1" />
-            Đã nhập kho
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" color="warning">
-            <Clock className="w-3 h-3 mr-1 animate-pulse" />
-            Đang chờ
-          </Badge>
-        );
-    }
-  };
-
   // Define table columns
   const columns: ResponsiveTableColumn<SupplyImport>[] = [
     createColumn({
@@ -205,7 +171,7 @@ export function SupplyImportsListPage() {
             Nhà cung cấp: {record.supplier?.name || "-"}
           </div>
           <div className="flex items-center gap-2 sm:hidden">
-            {getStatusBadge(record.status)}
+            <SupplyStatusBadge status={record.status} />
           </div>
           <div className="text-sm font-semibold text-blue-600 sm:hidden">
             {new Intl.NumberFormat("vi-VN", {
@@ -225,7 +191,9 @@ export function SupplyImportsListPage() {
       title: "Trạng thái",
       responsive: false,
       align: "center",
-      render: (_, record: SupplyImport) => getStatusBadge(record.status),
+      render: (_, record: SupplyImport) => (
+        <SupplyStatusBadge status={record.status} />
+      ),
     }),
     createCurrencyColumn("totalAmount", "Tổng giá trị"),
     createColumn({
@@ -298,7 +266,7 @@ export function SupplyImportsListPage() {
             {record.invoiceNumber}
           </div>
           <div className="flex items-center gap-2">
-            {getStatusBadge(record.status)}
+            <SupplyStatusBadge status={record.status} />
           </div>
         </div>
       </div>
