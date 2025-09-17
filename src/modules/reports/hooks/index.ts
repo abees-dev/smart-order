@@ -1,390 +1,242 @@
-import { useState, useEffect, useCallback } from "react";
-import { ReportService, AdditionalCostService } from "../services";
-import type {
-  ReportState,
-  ReportFilters,
-  AdditionalCost,
-  CreateAdditionalCostData,
-  UpdateAdditionalCostData,
-  MonthlyReport,
-  ComparisonReport,
-} from "../types";
+import { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ReportService } from "../services";
+import type { ReportFilters, MonthlyReport, ComparisonReport } from "../types";
+
+// Query keys for better cache management
+const QUERY_KEYS = {
+  reports: {
+    summary: (filters: ReportFilters) => ["reports", "summary", filters],
+    chartData: (dateFrom: Date, dateTo: Date) => [
+      "reports",
+      "chart-data",
+      { dateFrom, dateTo },
+    ],
+    monthly: (month: string) => ["reports", "monthly", month],
+    comparison: (current: string, previous: string) => [
+      "reports",
+      "comparison",
+      { current, previous },
+    ],
+  },
+  additionalCosts: {
+    all: () => ["additional-costs"],
+    byPeriod: (
+      dateFrom: Date,
+      dateTo: Date,
+      orderId?: string,
+      costType?: string
+    ) => [
+      "additional-costs",
+      "by-period",
+      { dateFrom, dateTo, orderId, costType },
+    ],
+    byOrderId: (orderId: string) => ["additional-costs", "by-order", orderId],
+  },
+};
 
 export function useReports() {
-  const [state, setState] = useState<ReportState>({
-    summary: null,
-    chartData: [],
-    monthlyReports: [],
-    additionalCosts: [],
-    loading: false,
-    error: null,
-    filters: {
-      period: "monthly",
-      includeAdditionalCosts: true,
-    },
+  const [filters, setFilters] = useState<ReportFilters>({
+    period: "monthly",
+    includeAdditionalCosts: true,
   });
 
-  const setFilters = useCallback((filters: Partial<ReportFilters>) => {
-    setState((prev) => ({
-      ...prev,
-      filters: { ...prev.filters, ...filters },
-    }));
-  }, []);
+  // Calculate date range from filters with stable keys
+  const getDateRange = useCallback(() => {
+    if (filters.period === "custom" && filters.dateFrom && filters.dateTo) {
+      return {
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        dateFromKey: filters.dateFrom.toISOString().split("T")[0],
+        dateToKey: filters.dateTo.toISOString().split("T")[0],
+      };
+    } else if (filters.month) {
+      const [year, month] = filters.month.split("-");
+      const dateFrom = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const dateTo = new Date(parseInt(year), parseInt(month), 0);
+      return {
+        dateFrom,
+        dateTo,
+        dateFromKey: dateFrom.toISOString().split("T")[0],
+        dateToKey: dateTo.toISOString().split("T")[0],
+      };
+    } else {
+      // Default to current month - use stable date calculation
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const dateFrom = new Date(year, month, 1);
+      const dateTo = new Date(year, month + 1, 0);
+      return {
+        dateFrom,
+        dateTo,
+        dateFromKey: dateFrom.toISOString().split("T")[0],
+        dateToKey: dateTo.toISOString().split("T")[0],
+      };
+    }
+  }, [filters.period, filters.dateFrom, filters.dateTo, filters.month]);
 
-  const setError = useCallback((error: string | null) => {
-    setState((prev) => ({ ...prev, error }));
-  }, []);
+  const { dateFrom, dateTo, dateFromKey, dateToKey } = getDateRange();
 
-  const setLoading = useCallback((loading: boolean) => {
-    setState((prev) => ({ ...prev, loading }));
-  }, []);
-
-  // Tải báo cáo theo bộ lọc
-  const loadReports = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { filters } = state;
-      let dateFrom: Date;
-      let dateTo: Date;
-
-      // Xác định khoảng thời gian
-      if (filters.period === "custom" && filters.dateFrom && filters.dateTo) {
-        dateFrom = filters.dateFrom;
-        dateTo = filters.dateTo;
-      } else if (filters.month) {
-        const [year, month] = filters.month.split("-");
-        dateFrom = new Date(parseInt(year), parseInt(month) - 1, 1);
-        dateTo = new Date(parseInt(year), parseInt(month), 0);
-      } else {
-        // Mặc định là tháng hiện tại
-        const now = new Date();
-        dateFrom = new Date(now.getFullYear(), now.getMonth(), 1);
-        dateTo = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      }
-
-      const period =
-        filters.month ||
-        `${dateFrom.getFullYear()}-${String(dateFrom.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}`;
-
-      // Tải summary
-      const summary = await ReportService.generateSummary(
-        period,
+  // Summary query
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    error: summaryError,
+  } = useQuery({
+    queryKey: [
+      "reports",
+      "summary",
+      filters.period,
+      dateFromKey,
+      dateToKey,
+      filters.includeAdditionalCosts,
+    ],
+    queryFn: () =>
+      ReportService.generateSummary(
+        filters.period === "custom" ? "monthly" : filters.period,
         dateFrom,
         dateTo
-      );
+      ),
+    enabled: !!dateFrom && !!dateTo,
+  });
 
-      // Tải chart data cho 12 tháng gần nhất
-      const months: string[] = [];
-      const currentDate = new Date();
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() - i,
-          1
-        );
-        months.push(
-          `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-            2,
-            "0"
-          )}`
-        );
-      }
-      const chartData = await ReportService.generateChartData(months);
+  // Chart data query - get last 12 months with stable calculation
+  const chartDataRange = useCallback(() => {
+    // Use a fixed reference point to avoid constant recalculation
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
 
-      // Tải chi phí phát sinh nếu cần
-      let additionalCosts: AdditionalCost[] = [];
-      if (filters.includeAdditionalCosts) {
-        additionalCosts = await AdditionalCostService.getByPeriod(
-          dateFrom,
-          dateTo
-        );
-      }
+    const endDate = new Date(year, month + 1, 0); // Last day of current month
+    const startDate = new Date(year, month - 11, 1); // First day of 12 months ago
 
-      setState((prev) => ({
-        ...prev,
-        summary,
-        chartData,
-        additionalCosts,
-        loading: false,
-      }));
-    } catch (error) {
-      console.error("Error loading reports:", error);
-      setError(
-        error instanceof Error ? error.message : "Có lỗi xảy ra khi tải báo cáo"
-      );
-      setLoading(false);
-    }
-  }, [state.filters, setLoading, setError]);
+    return {
+      startDate,
+      endDate,
+      startDateKey: `${startDate.getFullYear()}-${String(
+        startDate.getMonth() + 1
+      ).padStart(2, "0")}-01`,
+      endDateKey: `${endDate.getFullYear()}-${String(
+        endDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`,
+    };
+  }, []); // Empty deps array since we want this to be stable
 
-  // Tải báo cáo tháng chi tiết
+  const { startDate, endDate, startDateKey, endDateKey } = chartDataRange();
+
+  const {
+    data: chartData = [],
+    isLoading: chartLoading,
+    error: chartError,
+  } = useQuery({
+    queryKey: ["reports", "chart-data", startDateKey, endDateKey],
+    queryFn: () =>
+      ReportService.generateChartData("monthly", startDate, endDate),
+  });
+
+  const loading = summaryLoading || chartLoading;
+  const error = summaryError?.message || chartError?.message || null;
+
+  // Load monthly report function
   const loadMonthlyReport = useCallback(
     async (month: string): Promise<MonthlyReport | null> => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const monthlyReport = await ReportService.generateMonthlyReport(month);
-        return monthlyReport;
+        return await ReportService.generateMonthlyReport(month);
       } catch (error) {
         console.error("Error loading monthly report:", error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Có lỗi xảy ra khi tải báo cáo tháng"
-        );
         return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, setError]
-  );
-
-  // Load khi filters thay đổi
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
-
-  return {
-    ...state,
-    setFilters,
-    loadReports,
-    loadMonthlyReport,
-    setError,
-  };
-}
-
-// Hook cho chi phí phát sinh
-export function useAdditionalCosts() {
-  const [costs, setCosts] = useState<AdditionalCost[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadCosts = useCallback(async (dateFrom?: Date, dateTo?: Date) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      let result: AdditionalCost[];
-      if (dateFrom && dateTo) {
-        result = await AdditionalCostService.getByPeriod(dateFrom, dateTo);
-      } else {
-        // Mặc định tải tháng hiện tại
-        const now = new Date();
-        const from = new Date(now.getFullYear(), now.getMonth(), 1);
-        const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        result = await AdditionalCostService.getByPeriod(from, to);
-      }
-
-      setCosts(result);
-    } catch (err) {
-      console.error("Error loading additional costs:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Có lỗi xảy ra khi tải chi phí phát sinh"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const createCost = useCallback(
-    async (data: CreateAdditionalCostData): Promise<boolean> => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const newCost = await AdditionalCostService.create(data);
-        setCosts((prev) => [newCost, ...prev]);
-
-        return true;
-      } catch (err) {
-        console.error("Error creating additional cost:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Có lỗi xảy ra khi tạo chi phí phát sinh"
-        );
-        return false;
-      } finally {
-        setLoading(false);
       }
     },
     []
   );
 
-  const updateCost = useCallback(
-    async (data: UpdateAdditionalCostData): Promise<boolean> => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        await AdditionalCostService.update(data);
-
-        // Reload costs to get fresh data
-        await loadCosts();
-
-        return true;
-      } catch (err) {
-        console.error("Error updating additional cost:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Có lỗi xảy ra khi cập nhật chi phí phát sinh"
-        );
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  const deleteCost = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      await AdditionalCostService.delete(id);
-      setCosts((prev) => prev.filter((cost) => cost.id !== id));
-
-      return true;
-    } catch (err) {
-      console.error("Error deleting additional cost:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Có lỗi xảy ra khi xóa chi phí phát sinh"
-      );
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadCostsByOrder = useCallback(async (orderId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const result = await AdditionalCostService.getByOrderId(orderId);
-      setCosts(result);
-    } catch (err) {
-      console.error("Error loading costs by order:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Có lỗi xảy ra khi tải chi phí theo đơn hàng"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   return {
-    costs,
+    summary,
+    chartData,
     loading,
     error,
-    loadCosts,
-    createCost,
-    updateCost,
-    deleteCost,
-    loadCostsByOrder,
-    setError,
+    filters,
+    setFilters,
+    loadMonthlyReport,
   };
 }
 
-// Hook cho so sánh báo cáo
 export function useComparisonReport() {
-  const [comparison, setComparison] = useState<ComparisonReport | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [comparisonData, setComparisonData] = useState<{
+    comparison: ComparisonReport | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    comparison: null,
+    loading: false,
+    error: null,
+  });
 
   const loadComparison = useCallback(
     async (currentPeriod: string, previousPeriod: string) => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const result = await ReportService.generateComparisonReport(
+        setComparisonData((prev) => ({ ...prev, loading: true, error: null }));
+        const comparison = await ReportService.generateComparisonReport(
           currentPeriod,
           previousPeriod
         );
-        setComparison(result);
-      } catch (err) {
-        console.error("Error loading comparison report:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Có lỗi xảy ra khi tải báo cáo so sánh"
-        );
-      } finally {
-        setLoading(false);
+        setComparisonData({ comparison, loading: false, error: null });
+      } catch (error) {
+        console.error("Error loading comparison report:", error);
+        setComparisonData({
+          comparison: null,
+          loading: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Có lỗi xảy ra khi tải báo cáo so sánh",
+        });
       }
     },
     []
   );
 
   return {
-    comparison,
-    loading,
-    error,
+    comparison: comparisonData.comparison,
+    loading: comparisonData.loading,
+    error: comparisonData.error,
     loadComparison,
-    setError,
   };
 }
 
-// Hook cho export báo cáo
-export function useReportExport() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// Hook for monthly report details
+export function useMonthlyReport(month: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.reports.monthly(month),
+    queryFn: () => ReportService.generateMonthlyReport(month),
+    enabled: !!month,
+  });
+}
 
-  const exportReport = useCallback(
-    async (
-      format: "excel" | "pdf" | "csv",
-      period: string,
-      includeCharts = true,
-      includeDetails = true
-    ) => {
-      try {
-        setLoading(true);
-        setError(null);
+// Hook for top suppliers
+export function useTopSuppliers(dateFrom: Date, dateTo: Date, limit = 10) {
+  return useQuery({
+    queryKey: ["reports", "top-suppliers", { dateFrom, dateTo, limit }],
+    queryFn: () => ReportService.getTopSuppliers(dateFrom, dateTo, limit),
+    enabled: !!dateFrom && !!dateTo,
+  });
+}
 
-        // TODO: Implement export functionality
-        console.log("Exporting report:", {
-          format,
-          period,
-          includeCharts,
-          includeDetails,
-        });
+// Hook for top customers
+export function useTopCustomers(dateFrom: Date, dateTo: Date, limit = 10) {
+  return useQuery({
+    queryKey: ["reports", "top-customers", { dateFrom, dateTo, limit }],
+    queryFn: () => ReportService.getTopCustomers(dateFrom, dateTo, limit),
+    enabled: !!dateFrom && !!dateTo,
+  });
+}
 
-        // Tạm thời chỉ log, sau này sẽ implement thực tế
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        return true;
-      } catch (err) {
-        console.error("Error exporting report:", err);
-        setError(
-          err instanceof Error ? err.message : "Có lỗi xảy ra khi xuất báo cáo"
-        );
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  return {
-    loading,
-    error,
-    exportReport,
-    setError,
-  };
+// Hook for top products
+export function useTopProducts(dateFrom: Date, dateTo: Date, limit = 10) {
+  return useQuery({
+    queryKey: ["reports", "top-products", { dateFrom, dateTo, limit }],
+    queryFn: () => ReportService.getTopProducts(dateFrom, dateTo, limit),
+    enabled: !!dateFrom && !!dateTo,
+  });
 }

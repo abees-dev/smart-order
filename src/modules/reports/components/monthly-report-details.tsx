@@ -289,11 +289,9 @@ export function MonthlyReportDetails({
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {format(
-                                supplier.lastInvoiceDate.toDate(),
-                                "dd/MM/yyyy",
-                                { locale: vi }
-                              )}
+                              {format(supplier.lastInvoiceDate, "dd/MM/yyyy", {
+                                locale: vi,
+                              })}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -358,11 +356,9 @@ export function MonthlyReportDetails({
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {format(
-                                customer.lastInvoiceDate.toDate(),
-                                "dd/MM/yyyy",
-                                { locale: vi }
-                              )}
+                              {format(customer.lastInvoiceDate, "dd/MM/yyyy", {
+                                locale: vi,
+                              })}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -491,7 +487,7 @@ export function MonthlyReportDetails({
                           {report.additionalCosts.map((cost) => (
                             <TableRow key={cost.id}>
                               <TableCell>
-                                {format(cost.date.toDate(), "dd/MM/yyyy", {
+                                {format(cost.incurredDate, "dd/MM/yyyy", {
                                   locale: vi,
                                 })}
                               </TableCell>

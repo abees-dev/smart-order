@@ -91,20 +91,6 @@ export function InputInvoiceListPage() {
       ),
     }),
     createColumn({
-      key: "supplierName",
-      title: "Nhà cung cấp",
-      responsive: false,
-      render: (_, record: InputInvoice) => (
-        <div>
-          <div className="font-medium">{record.supplierName}</div>
-          <div className="text-sm text-muted-foreground flex items-center gap-1">
-            <Building className="h-3 w-3" />
-            Nhà cung cấp
-          </div>
-        </div>
-      ),
-    }),
-    createColumn({
       key: "invoiceDate",
       title: "Ngày nhập",
       responsive: false,

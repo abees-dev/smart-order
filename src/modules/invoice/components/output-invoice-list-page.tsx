@@ -18,7 +18,6 @@ import {
   TrendingUp,
   Eye,
   Receipt,
-  User,
   RefreshCw,
   ShoppingCart,
   Banknote,
@@ -95,20 +94,7 @@ export function OutputInvoiceListPage() {
         </div>
       ),
     }),
-    createColumn({
-      key: "customerName",
-      title: "Khách hàng",
-      responsive: false,
-      render: (_, record: OutputInvoice) => (
-        <div>
-          <div className="font-medium">{record.customerName || "Khách lẻ"}</div>
-          <div className="text-sm text-muted-foreground flex items-center gap-1">
-            <User className="h-3 w-3" />
-            Khách hàng
-          </div>
-        </div>
-      ),
-    }),
+
     createColumn({
       key: "invoiceDate",
       title: "Ngày bán",

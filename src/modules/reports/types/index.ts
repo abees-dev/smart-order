@@ -1,11 +1,15 @@
-import type { Timestamp } from "firebase/firestore";
-
-export type ReportPeriod = "monthly" | "quarterly" | "yearly" | "custom";
+export type ReportPeriod =
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "quarterly"
+  | "yearly"
+  | "custom";
 export type InvoiceType = "input" | "output";
 
 // Báo cáo tổng quan
 export interface ReportSummary {
-  period: string; // YYYY-MM format
+  period: string; // YYYY-MM format or period_dateFrom_dateTo
   totalInputAmount: number; // Tổng tiền hóa đơn đầu vào
   totalOutputAmount: number; // Tổng tiền hóa đơn đầu ra
   totalInputVat: number; // Tổng VAT đầu vào
@@ -18,18 +22,22 @@ export interface ReportSummary {
   outputInvoiceCount: number; // Số lượng hóa đơn đầu ra
 }
 
-// Chi phí phát sinh
+// Chi phí phát sinh (Updated for API)
 export interface AdditionalCost {
   id: string;
   orderId?: string; // Liên kết với đơn hàng (nếu có)
-  orderNumber?: string;
-  costType: string; // Loại chi phí: "shipping", "packaging", "labor", "other"
+  costType: string; // Loại chi phí: "transport", "labor", "materials", "other"
   description: string; // Mô tả chi phí
   amount: number; // Số tiền
-  date: Timestamp; // Ngày phát sinh
+  quantity: number; // Số lượng
+  unitPrice: number; // Đơn giá
+  supplier?: string; // Nhà cung cấp
+  invoiceNumber?: string; // Số hóa đơn
+  incurredDate: string; // Ngày phát sinh (ISO string)
   notes?: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdBy?: string; // Người tạo
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
 }
 
 // Data cho biểu đồ
@@ -56,24 +64,24 @@ export interface MonthlyReport {
   invoiceBreakdown: InvoiceBreakdown;
 }
 
-// Tóm tắt nhà cung cấp
+// Tóm tắt nhà cung cấp (Updated for API)
 export interface SupplierSummary {
   supplierId: string;
   supplierName: string;
   totalAmount: number;
   totalVat: number;
   invoiceCount: number;
-  lastInvoiceDate: Timestamp;
+  lastInvoiceDate: string; // ISO string
 }
 
-// Tóm tắt khách hàng
+// Tóm tắt khách hàng (Updated for API)
 export interface CustomerSummary {
   customerId?: string;
   customerName?: string;
   totalAmount: number;
   totalVat: number;
   invoiceCount: number;
-  lastInvoiceDate: Timestamp;
+  lastInvoiceDate: string; // ISO string
 }
 
 // Tóm tắt sản phẩm
@@ -101,7 +109,7 @@ export interface InvoiceBreakdown {
   };
 }
 
-// Bộ lọc báo cáo
+// Bộ lọc báo cáo (Updated for API)
 export interface ReportFilters {
   period: ReportPeriod;
   dateFrom?: Date;
@@ -123,13 +131,17 @@ export interface ReportState {
   filters: ReportFilters;
 }
 
-// Form data cho chi phí phát sinh
+// Form data cho chi phí phát sinh (Updated for API)
 export interface CreateAdditionalCostData {
   orderId?: string;
   costType: string;
   description: string;
   amount: number;
-  date: Date;
+  quantity: number;
+  unitPrice: number;
+  supplier?: string;
+  invoiceNumber?: string;
+  incurredDate: Date; // Will be converted to ISO string
   notes?: string;
 }
 
@@ -156,4 +168,39 @@ export interface ExportOptions {
   period: string;
   includeCharts: boolean;
   includeDetails: boolean;
+}
+
+// Additional interfaces for API responses
+export interface InputInvoice {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  totalAmount: number;
+  vatAmount: number;
+  taxType: "taxed" | "non-taxed";
+  items: InvoiceItem[];
+  createdAt: string; // ISO string
+  status: string;
+}
+
+export interface OutputInvoice {
+  id: string;
+  customerId?: string;
+  customerName?: string;
+  totalAmount: number;
+  vatAmount: number;
+  taxType: "taxed" | "non-taxed";
+  items: InvoiceItem[];
+  createdAt: string; // ISO string
+  status: string;
+}
+
+export interface InvoiceItem {
+  itemId: string;
+  itemName: string;
+  itemType: "product" | "supply";
+  category: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
 }

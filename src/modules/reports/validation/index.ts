@@ -1,23 +1,5 @@
 import { z } from "zod";
 
-// Schema cho chi phí phát sinh
-export const createAdditionalCostSchema = z.object({
-  orderId: z.string().optional(),
-  costType: z.string().min(1, "Loại chi phí là bắt buộc"),
-  description: z.string().min(1, "Mô tả chi phí là bắt buộc"),
-  amount: z.number().min(0.01, "Số tiền phải lớn hơn 0"),
-  date: z.date({
-    message: "Ngày phát sinh là bắt buộc",
-  }),
-  notes: z.string().optional(),
-});
-
-export const updateAdditionalCostSchema = createAdditionalCostSchema
-  .partial()
-  .extend({
-    id: z.string().min(1, "ID là bắt buộc"),
-  });
-
 // Schema cho bộ lọc báo cáo
 export const reportFiltersSchema = z
   .object({
@@ -27,7 +9,6 @@ export const reportFiltersSchema = z
     month: z.string().optional(),
     year: z.string().optional(),
     invoiceType: z.enum(["input", "output"]).optional(),
-    includeAdditionalCosts: z.boolean().optional(),
   })
   .refine(
     (data) => {
@@ -51,13 +32,6 @@ export const exportOptionsSchema = z.object({
   includeDetails: z.boolean().default(true),
 });
 
-// Type inference
-export type CreateAdditionalCostFormData = z.infer<
-  typeof createAdditionalCostSchema
->;
-export type UpdateAdditionalCostFormData = z.infer<
-  typeof updateAdditionalCostSchema
->;
 export type ReportFiltersFormData = z.infer<typeof reportFiltersSchema>;
 export type ExportOptionsFormData = z.infer<typeof exportOptionsSchema>;
 
