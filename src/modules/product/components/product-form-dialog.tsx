@@ -162,9 +162,7 @@ export function ProductFormDialog({
     });
 
     // Add highlighting effect for newly added supply in edit mode
-    if (isEditMode) {
-      setHighlightedSupplies((prev) => new Set(prev).add(supply.id));
-    }
+    setHighlightedSupplies((prev) => new Set(prev).add(supply.id));
   };
 
   const handleUpdateSupplyQuantity = (supplyId: string, quantity: number) => {
@@ -328,7 +326,7 @@ export function ProductFormDialog({
                 <div
                   key={supply.supplyId}
                   className={`flex items-center gap-3 p-3 border rounded-md transition-all duration-500 ${
-                    isEditMode && highlightedSupplies.has(supply.supplyId)
+                    highlightedSupplies.has(supply.supplyId)
                       ? "bg-green-50 border-green-100 shadow-md ring-2 ring-green-100 ring-opacity-50"
                       : "bg-muted/50"
                   }`}
