@@ -1,10 +1,10 @@
 import * as React from "react";
 import { ChevronDownIcon, XIcon } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { cn } from "@/lib/utils";
 import { Input } from "./input";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { PopoverPortal } from "@radix-ui/react-popover";
 import { normalizeText } from "@/utils";
 
 // Utility function to normalize text for searching
@@ -14,6 +14,13 @@ export interface SelectSearchOption {
   label: string;
   disabled?: boolean;
   renderOption?: (option: SelectSearchOption) => React.ReactNode;
+}
+
+export interface SelectSearchVirtualConfig {
+  enabled?: boolean;
+  estimateSize?: number;
+  maxHeight?: number;
+  overscan?: number;
 }
 
 export interface SelectSearchProps {
@@ -29,6 +36,7 @@ export interface SelectSearchProps {
   size?: "sm" | "default";
   clearable?: boolean;
   loading?: boolean;
+  virtual?: SelectSearchVirtualConfig;
 }
 
 export function SelectSearch({
@@ -44,6 +52,7 @@ export function SelectSearch({
   size = "default",
   clearable = true,
   loading = false,
+  virtual = { enabled: false, estimateSize: 35, maxHeight: 200, overscan: 5 },
   ...props
 }: SelectSearchProps) {
   const [open, setOpen] = React.useState(false);
@@ -52,6 +61,33 @@ export function SelectSearch({
     value || defaultValue || ""
   );
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Virtual scrolling setup
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const filteredOptions = options.filter((option) => {
+    const normalizedLabel = normalizeText(option.label);
+    const normalizedSearch = normalizeText(searchValue);
+    return normalizedLabel.includes(normalizedSearch);
+  });
+
+  const virtualizer = useVirtualizer({
+    count: filteredOptions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => virtual.estimateSize || 35,
+    overscan: virtual.overscan || 5,
+  });
+
+  // Ensure virtualizer recalculates when dropdown opens and virtual is enabled
+  React.useEffect(() => {
+    if (virtual.enabled && open) {
+      // Small delay to ensure the DOM is ready
+      const timer = setTimeout(() => {
+        virtualizer.measure();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [open, virtual.enabled, virtualizer]);
 
   // Update internal state when external value changes
   React.useEffect(() => {
@@ -127,12 +163,6 @@ export function SelectSearch({
     }
     setOpen(newOpen);
   };
-
-  const filteredOptions = options.filter((option) => {
-    const normalizedLabel = normalizeText(option.label);
-    const normalizedSearch = normalizeText(searchValue);
-    return normalizedLabel.includes(normalizedSearch);
-  });
 
   const displayValue = open ? searchValue : selectedOption?.label || "";
   const displayPlaceholder = open ? searchPlaceholder : placeholder;
@@ -214,46 +244,102 @@ export function SelectSearch({
           )}
         </div>
       </div>
-      <PopoverPortal>
-        <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-1"
-          align="start"
-          side="bottom"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          style={{
-            maxHeight: "200px",
-            overflow: "auto",
-          }}
-        >
-          <div>
-            {filteredOptions.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                {emptyMessage}
-              </div>
-            ) : (
-              filteredOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer select-none rounded-sm outline-none transition-colors",
-                    "hover:bg-accent hover:text-accent-foreground",
-                    option.disabled && "pointer-events-none opacity-50",
-                    selectedValue === option.value &&
-                      "bg-accent text-accent-foreground"
-                  )}
-                  onClick={() => !option.disabled && handleSelect(option.value)}
-                >
-                  {option.renderOption ? (
-                    <div className="w-full">{option.renderOption(option)}</div>
-                  ) : (
-                    <div className="w-full">{defaultRenderOption(option)}</div>
-                  )}
-                </div>
-              ))
-            )}
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-1"
+        align="start"
+        side="bottom"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        style={{
+          maxHeight: virtual.maxHeight || 200,
+          overflow: virtual.enabled ? "hidden" : "auto",
+        }}
+      >
+        {filteredOptions.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            {emptyMessage}
           </div>
-        </PopoverContent>
-      </PopoverPortal>
+        ) : virtual.enabled ? (
+          // Virtual scrolling mode
+          <div
+            ref={parentRef}
+            style={{
+              height: `${
+                Math.min(virtualizer.getTotalSize(), virtual.maxHeight || 200) -
+                20
+              }px`,
+              overflow: "auto",
+            }}
+          >
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const option = filteredOptions[virtualItem.index];
+                return (
+                  <div
+                    key={option.value}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer select-none rounded-sm outline-none transition-colors",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      option.disabled && "pointer-events-none opacity-50",
+                      selectedValue === option.value &&
+                        "bg-accent text-accent-foreground"
+                    )}
+                    onClick={() =>
+                      !option.disabled && handleSelect(option.value)
+                    }
+                  >
+                    {option.renderOption ? (
+                      <div className="w-full">
+                        {option.renderOption(option)}
+                      </div>
+                    ) : (
+                      <div className="w-full">
+                        {defaultRenderOption(option)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          // Regular scrolling mode
+          <div>
+            {filteredOptions.map((option) => (
+              <div
+                key={option.value}
+                className={cn(
+                  "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer select-none rounded-sm outline-none transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  option.disabled && "pointer-events-none opacity-50",
+                  selectedValue === option.value &&
+                    "bg-accent text-accent-foreground"
+                )}
+                onClick={() => !option.disabled && handleSelect(option.value)}
+              >
+                {option.renderOption ? (
+                  <div className="w-full">{option.renderOption(option)}</div>
+                ) : (
+                  <div className="w-full">{defaultRenderOption(option)}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </PopoverContent>
     </Popover>
   );
 }

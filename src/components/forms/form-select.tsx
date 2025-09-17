@@ -7,7 +7,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import SelectSearch from "../ui/select-search";
+import SelectSearch, {
+  type SelectSearchVirtualConfig,
+} from "../ui/select-search";
 
 export interface SelectOption {
   value: string;
@@ -32,6 +34,7 @@ export interface FormSelectProps {
   error?: string;
   renderOption?: (option: SelectOption) => React.ReactNode;
   clearable?: boolean; // allow clearing the selection
+  virtual?: SelectSearchVirtualConfig; // virtual scrolling configuration
 }
 
 export function FormSelect({
@@ -49,6 +52,7 @@ export function FormSelect({
   error,
   clearable,
   renderOption,
+  virtual,
 }: FormSelectProps) {
   const { t } = useTranslation();
 
@@ -66,7 +70,7 @@ export function FormSelect({
           <div className="flex items-center gap-2 w-full">
             <span
               className={cn(
-                "font-medium",
+                "font-medium line-clamp-1",
                 option.disabled && "text-muted-foreground"
               )}
             >
@@ -74,7 +78,7 @@ export function FormSelect({
             </span>
           </div>
           {option.description && (
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground line-clamp-1">
               {option.description}
             </div>
           )}
@@ -110,6 +114,7 @@ export function FormSelect({
             disabled={disabled}
             className={cn("w-full", error && "border-destructive")}
             clearable={clearable}
+            virtual={virtual}
           />
         </div>
       </FormControl>

@@ -278,6 +278,12 @@ export function OrderFormDialog({
                 }}
                 fieldState={fieldState}
                 options={getCustomerOptions()}
+                virtual={{
+                  enabled: true,
+                  estimateSize: 52,
+                  maxHeight: 300,
+                  overscan: 5,
+                }}
                 label="Khách hàng"
                 placeholder="Chọn khách hàng..."
                 clearable={true}
