@@ -84,7 +84,7 @@ export function FormDatePicker<
                 selected={field.value}
                 onSelect={field.onChange}
                 disabled={disabled}
-                initialFocus
+                captionLayout="dropdown"
               />
             </PopoverContent>
           </Popover>
