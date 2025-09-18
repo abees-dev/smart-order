@@ -281,3 +281,50 @@ export interface OrderCostCalculation {
   costBreakdown: OrderCostBreakdown[];
   hasImportData: boolean;
 }
+
+// Stock Shortage Management Interfaces
+export interface ProductContext {
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantityPerProduct: number;
+}
+
+export interface SupplyShortage {
+  type: "supply";
+  supplyId: string;
+  supplyName: string;
+  sku: string;
+  orderItemQuantity: number;
+  available: number;
+  required: number;
+  shortage: number;
+  usedInProduct?: ProductContext | null;
+  error?: string;
+}
+
+// Check Stock Availability Response
+export interface CheckStockResponse {
+  orderId: string;
+  orderNumber: string;
+  canExport: boolean;
+  stockShortages: SupplyShortage[];
+  totalShortages: number;
+  message: string;
+  statusCode: number;
+}
+
+// Change Order Status - Insufficient Stock Response
+export interface InsufficientStockResponse {
+  message: string;
+  statusCode: number;
+  stockShortages: SupplyShortage[];
+  totalShortages: number;
+  orderNumber: string;
+}
+
+// Change Order Status - Success Response
+export interface ChangeStatusSuccessResponse {
+  message: string;
+  statusCode: number;
+}

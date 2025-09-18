@@ -62,7 +62,38 @@
     "loadMore": "Load More",
     "deleting": "Deleting...",
     "all": "All",
-    "status": "Status"
+    "status": "Status",
+    "units": "units"
+  },
+  "order": {
+    "title": "Orders",
+    "newOrder": "New Order",
+    "orderNumber": "Order Number",
+    "customer": "Customer",
+    "total": "Total",
+    "status": "Status",
+    "date": "Date",
+    "pending": "Pending",
+    "processing": "Processing",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "stockShortage": {
+      "title": "Stock Shortage Alert",
+      "description": "The following supplies have insufficient stock for this order:",
+      "totalItems": "Total items with shortage",
+      "totalShortage": "Total shortage",
+      "items": "items",
+      "required": "Required",
+      "available": "Available",
+      "orderQuantity": "Order Qty",
+      "shortage": "Shortage",
+      "stockAvailability": "Stock Availability",
+      "usedInProduct": "Used in Product",
+      "quantityPerProduct": "Qty per Product",
+      "continueAnyway": "Continue Anyway",
+      "availableText": "available",
+      "neededText": "needed"
+    }
   },
   "orders": {
     "title": "Orders",
@@ -76,6 +107,10 @@
     "processing": "Processing",
     "completed": "Completed",
     "cancelled": "Cancelled"
+  },
+  "product": {
+    "name": "Product Name",
+    "code": "Product Code"
   },
   "products": {
     "title": "Products",

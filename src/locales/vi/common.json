@@ -66,7 +66,38 @@
     "status": "Trạng thái",
     "metadata": "Dữ liệu phụ",
     "createdAt": "Ngày tạo",
-    "updatedAt": "Ngày cập nhật"
+    "updatedAt": "Ngày cập nhật",
+    "units": "đơn vị"
+  },
+  "order": {
+    "title": "Đơn hàng",
+    "newOrder": "Đơn hàng mới",
+    "orderNumber": "Số đơn hàng",
+    "customer": "Khách hàng",
+    "total": "Tổng cộng",
+    "status": "Trạng thái",
+    "date": "Ngày",
+    "pending": "Đang chờ",
+    "processing": "Đang xử lý",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy",
+    "stockShortage": {
+      "title": "Cảnh báo thiếu hụt kho",
+      "description": "Các vật tư sau không đủ tồn kho cho đơn hàng này:",
+      "totalItems": "Tổng số mặt hàng thiếu hụt",
+      "totalShortage": "Tổng số lượng thiếu hụt",
+      "items": "mặt hàng",
+      "required": "Cần thiết",
+      "available": "Có sẵn",
+      "orderQuantity": "SL đặt hàng",
+      "shortage": "Thiếu hụt",
+      "stockAvailability": "Tình trạng tồn kho",
+      "usedInProduct": "Sử dụng trong sản phẩm",
+      "quantityPerProduct": "SL trên sản phẩm",
+      "continueAnyway": "Tiếp tục dù sao",
+      "availableText": "có sẵn",
+      "neededText": "cần thiết"
+    }
   },
   "orders": {
     "title": "Đơn hàng",
@@ -80,6 +111,10 @@
     "processing": "Đang xử lý",
     "completed": "Hoàn thành",
     "cancelled": "Đã hủy"
+  },
+  "product": {
+    "name": "Tên sản phẩm",
+    "code": "Mã sản phẩm"
   },
   "products": {
     "title": "Sản phẩm",

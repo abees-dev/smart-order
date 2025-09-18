@@ -9,6 +9,9 @@ import type {
   UpdateCostIncurredData,
   CostIncurredFilters,
   OrderCostCalculation,
+  CheckStockResponse,
+  InsufficientStockResponse,
+  ChangeStatusSuccessResponse,
 } from "../types";
 import type { ApiResponsePagination } from "@/types/response";
 import axiosInstance from "@/utils/axios";
@@ -50,14 +53,21 @@ export class OrderService {
     return axiosInstance.patch(`/orders/${id}`, data);
   }
 
-  // Change invoice status
+  // Change order status
   static async changeOrderStatus(
     id: string,
     newStatus: OrderStatus
-  ): Promise<void> {
+  ): Promise<ChangeStatusSuccessResponse | InsufficientStockResponse> {
     return axiosInstance.post(`/orders/${id}/change-status`, {
       status: newStatus,
     });
+  }
+
+  // Check stock availability before order export
+  static async checkStockAvailability(
+    orderId: string
+  ): Promise<CheckStockResponse> {
+    return axiosInstance.get(`/orders/${orderId}/check-stock`);
   }
 
   // Delete invoice (only drafts)

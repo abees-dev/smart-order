@@ -35,6 +35,7 @@ import {
   type Order,
   type OrderFilters,
   type OrderStatus,
+  type SupplyShortage,
 } from "../types";
 import { useOrders } from "../hooks/use-order";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,6 +46,7 @@ import {
 import { CreateCostIncurredDialog } from "./create-cost-incurred-dialog";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants";
+import { StockShortageModal } from "./stock-shortage-modal";
 
 export function OrdersListPage() {
   const navigate = useNavigate();
@@ -53,7 +55,9 @@ export function OrdersListPage() {
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showCreateCostIncurredDialog, setShowCreateCostIncurredDialog] =
     useState(false);
-
+  const [showStockShortageModal, setShowStockShortageModal] = useState(false);
+  const [stockShortages, setStockShortages] = useState<SupplyShortage[]>([]);
+  const [orderNumber, setOrderNumber] = useState<string>("");
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const isMobile = useIsMobile(); // useIsMobile();
   const [page, setPage] = useState(1);
@@ -81,6 +85,7 @@ export function OrdersListPage() {
   const { changeOrderStatus } = useChangeOrderStatus({
     onSuccess: () => {
       refetchOrders();
+      setShowStockShortageModal(false);
     },
     onError: (error) => {
       toast.error(
@@ -88,6 +93,11 @@ export function OrdersListPage() {
           ? error.message
           : "Có lỗi xảy ra khi thay đổi trạng thái đơn hàng"
       );
+    },
+    onStockShortage: (shortages, orderNumber) => {
+      setShowStockShortageModal(true);
+      setStockShortages(shortages);
+      setOrderNumber(orderNumber);
     },
   });
 
@@ -452,6 +462,15 @@ export function OrdersListPage() {
             }
           }}
           orderId={selectedOrder.id}
+        />
+      )}
+
+      {showStockShortageModal && (
+        <StockShortageModal
+          isOpen={showStockShortageModal}
+          onClose={() => setShowStockShortageModal(false)}
+          shortages={stockShortages}
+          orderNumber={orderNumber}
         />
       )}
 

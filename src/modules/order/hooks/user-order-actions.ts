@@ -1,10 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import { OrderService } from "../services/order.service";
-import type { CreateOrderData, OrderStatus } from "../types";
+import type {
+  CreateOrderData,
+  OrderStatus,
+  SupplyShortage,
+  InsufficientStockResponse,
+} from "../types";
 
 interface UseOrderActionsProps {
   onSuccess?: (data?: unknown) => void;
   onError?: (error: Error) => void;
+}
+
+interface UseChangeOrderStatusProps extends UseOrderActionsProps {
+  onStockShortage?: (shortages: SupplyShortage[], orderNumber: string) => void;
 }
 export const useCreateOrder = ({
   onError,
@@ -36,7 +45,8 @@ export const useCreateOrder = ({
 export const useChangeOrderStatus = ({
   onError,
   onSuccess,
-}: UseOrderActionsProps) => {
+  onStockShortage,
+}: UseChangeOrderStatusProps) => {
   const {
     mutate: changeOrderStatus,
     isError,
@@ -50,11 +60,28 @@ export const useChangeOrderStatus = ({
       orderId: string;
       status: OrderStatus;
     }) => OrderService.changeOrderStatus(orderId, status),
-    onSuccess: (_, variables) => {
-      if (onSuccess) onSuccess(variables.status);
+    onSuccess: (response, variables) => {
+      if (response.statusCode === 200) {
+        // Success - status changed successfully
+        if (onSuccess) onSuccess(variables.status);
+      } else if (response.statusCode === 400) {
+        // Error due to insufficient stock - response body has stockShortages
+        const errorResponse = response as InsufficientStockResponse;
+        if (
+          errorResponse.stockShortages &&
+          errorResponse.stockShortages.length > 0 &&
+          onStockShortage
+        ) {
+          onStockShortage(
+            errorResponse.stockShortages,
+            errorResponse.orderNumber
+          );
+        }
+      }
     },
     onError: (error) => {
-      if (onError) onError(error);
+      // Handle network errors or other actual errors
+      if (onError) onError(error as Error);
     },
   });
 
@@ -122,5 +149,33 @@ export const useUpdateOrder = ({
     isError,
     error,
     isPending,
+  };
+};
+
+export const useCheckStockAvailability = ({
+  onError,
+  onSuccess,
+}: UseOrderActionsProps) => {
+  const {
+    mutate: checkStockAvailability,
+    isError,
+    error,
+    isPending,
+  } = useMutation({
+    mutationFn: (orderId: string) =>
+      OrderService.checkStockAvailability(orderId),
+    onSuccess: (response) => {
+      if (onSuccess) onSuccess(response);
+    },
+    onError: (error) => {
+      if (onError) onError(error);
+    },
+  });
+
+  return {
+    checkStockAvailability,
+    isError,
+    error: error?.message || null,
+    loading: isPending,
   };
 };
