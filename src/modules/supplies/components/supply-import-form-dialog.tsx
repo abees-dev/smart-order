@@ -23,6 +23,7 @@ import {
 import {
   SupplierSelectField,
   SupplySelectField,
+  OrderSelectField,
   FormDatePicker,
 } from "@/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +72,7 @@ export function SupplyImportFormDialog({
               unitPrice: 0,
               vatRate: 0,
               totalPrice: 0,
+              orderId: "",
             },
           ],
         });
@@ -114,6 +116,7 @@ export function SupplyImportFormDialog({
               unitPrice: item.unitPrice,
               vatRate: item.vatRate,
               totalPrice: item.totalPrice,
+              orderId: item.orderId || "",
             })),
           }
         : {
@@ -128,6 +131,7 @@ export function SupplyImportFormDialog({
                 unitPrice: 0,
                 vatRate: 0,
                 totalPrice: 0,
+                orderId: "",
               },
             ],
           },
@@ -172,6 +176,7 @@ export function SupplyImportFormDialog({
       unitPrice: 0,
       vatRate: 0,
       totalPrice: 0,
+      orderId: "",
     });
   };
 
@@ -339,6 +344,7 @@ export function SupplyImportFormDialog({
                           unitPrice: currentItem.unitPrice,
                           vatRate: currentItem.vatRate,
                           totalPrice: currentItem.totalPrice,
+                          orderId: currentItem.orderId || "",
                         });
                       }}
                       variant="ghost"
@@ -362,7 +368,7 @@ export function SupplyImportFormDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
                   <FormField
                     control={form.control}
                     name={`items.${index}.supplyId`}
@@ -381,6 +387,22 @@ export function SupplyImportFormDialog({
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.orderId`}
+                    render={({ field, fieldState }) => (
+                      <OrderSelectField
+                        field={field}
+                        fieldState={fieldState}
+                        label="Đơn hàng"
+                        placeholder="Chọn đơn hàng"
+                        className="md:col-span-2"
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
                   <FormField
                     control={form.control}
                     name={`items.${index}.quantity`}

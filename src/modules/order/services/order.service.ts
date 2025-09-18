@@ -23,12 +23,15 @@ export class OrderService {
     return axiosInstance.get("/orders", { params: filters });
   }
 
-  static async getOrdersSelection(): Promise<{
+  static async getOrdersSelection(fields: Array<string> = []): Promise<{
     customers: Customer[];
     products: Product[];
     supplies: Supply[];
+    orders: Order[];
   }> {
-    return axiosInstance.get("/orders/selection");
+    return axiosInstance.get("/orders/selection", {
+      params: { fields: fields.join(",") },
+    });
   }
 
   // Get order by ID

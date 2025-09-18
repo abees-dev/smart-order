@@ -27,6 +27,7 @@ import {
   useUpdateProduct,
 } from "../hooks/use-product-actions";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -49,6 +50,8 @@ export function ProductFormDialog({
   const [highlightedSupplies, setHighlightedSupplies] = useState<Set<string>>(
     new Set()
   );
+
+  const { t } = useTranslation();
 
   const isEditMode = mode === "edit" && product;
 
@@ -86,8 +89,15 @@ export function ProductFormDialog({
   });
   const { createProduct } = useCreateProduct({
     onSuccess: handleSuccess,
-    onError: (error) => {
-      console.error("Error creating product:", error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      if (error["error"]) {
+        form.setError("productCode", {
+          message: t("products.productCodeError"),
+          type: "manual",
+        });
+        return;
+      }
       toast.error("Tạo sản phẩm thất bại. Vui lòng thử lại.");
     },
   });
@@ -112,8 +122,9 @@ export function ProductFormDialog({
   const onSubmit = async (
     data: CreateProductFormData | UpdateProductFormData
   ) => {
-    const filteredSupplies = supplies.filter((s) => s.quantity > 0);
+    const filteredSupplies = supplies.filter((s) => s.quantity <= 0);
     if (filteredSupplies.length > 0) {
+      console.log(filteredSupplies);
       return toast.error("Số lượng vật tư phải lớn hơn 0");
     }
 

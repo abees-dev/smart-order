@@ -117,6 +117,7 @@ export interface SupplyImportItem {
   unitPrice: number;
   vatRate: number;
   totalPrice: number;
+  orderId?: string;
 }
 
 export interface CreateSupplyImportData {

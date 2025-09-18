@@ -237,7 +237,8 @@ export function SupplyImportsListPage() {
       label: "Chỉnh sửa",
       icon: Edit,
       onClick: (record) => handleEditImport(record),
-      show: (record) => record.status === "pending",
+      show: (record) =>
+        record.status === "pending" || record.status === "warehouse",
     },
     {
       key: "warehouse",

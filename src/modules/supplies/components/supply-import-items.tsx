@@ -108,6 +108,13 @@ function ItemCardMobile({
             </span>
           </div>
         </div>
+        {item.orderId && (
+          <div className="mt-2 pt-2 border-t">
+            <span className="text-xs text-muted-foreground">
+              Đơn hàng: <span className="font-medium">{item.orderId}</span>
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -189,6 +196,20 @@ export function ItemsTableDesktop({
           )}
         </span>
       ),
+    },
+    {
+      key: "orderId",
+      title: "Đơn hàng",
+      dataIndex: "orderId",
+      width: 120,
+      render: (value) =>
+        value ? (
+          <span className="text-sm text-muted-foreground">
+            {value as string}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">-</span>
+        ),
     },
   ];
 

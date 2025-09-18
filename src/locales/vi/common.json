@@ -97,7 +97,8 @@
     "image": "Hình ảnh",
     "searchPlaceholder": "Tìm kiếm sản phẩm...",
     "noProductsFound": "Không tìm thấy sản phẩm nào",
-    "duplicate": "Nhân bản"
+    "duplicate": "Nhân bản",
+    "productCodeError": "Mã sản phẩm đã tồn tại"
   },
   "customers": {
     "title": "Khách hàng",

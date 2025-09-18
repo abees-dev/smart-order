@@ -85,6 +85,7 @@ export const supplyImportItemSchema = z.object({
     .min(0, "Thuế VAT không được âm")
     .max(100, "Thuế VAT không được quá 100%"),
   totalPrice: z.number().min(0, "Tổng giá không được âm"),
+  orderId: z.string().optional().or(z.literal("")),
 });
 
 export const createSupplyImportSchema = z.object({

@@ -44,7 +44,7 @@ const FormTextField = ({
     <FormField
       control={control}
       name={name}
-      render={({ field }) => {
+      render={({ field, fieldState }) => {
         const renderInputType = () => {
           if (type === "text") {
             return (
@@ -108,7 +108,9 @@ const FormTextField = ({
             )}
             <FormControl>{renderInputType()}</FormControl>
             <FormMessage />
-            {helpText && <FormDescription>{helpText}</FormDescription>}
+            {helpText && !fieldState.error && (
+              <FormDescription>{helpText}</FormDescription>
+            )}
           </FormItem>
         );
       }}
