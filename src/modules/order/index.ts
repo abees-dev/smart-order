@@ -4,5 +4,6 @@ export * from "./validation";
 export * from "./services/order.service";
 export * from "./hooks/use-order";
 export * from "./hooks/use-cost-incurred";
+export * from "./hooks/use-order-cost-calculation";
 export * from "./components";
 export { orderRouter } from "./router";

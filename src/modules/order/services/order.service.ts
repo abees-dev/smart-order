@@ -8,6 +8,7 @@ import type {
   CreateCostIncurredData,
   UpdateCostIncurredData,
   CostIncurredFilters,
+  OrderCostCalculation,
 } from "../types";
 import type { ApiResponsePagination } from "@/types/response";
 import axiosInstance from "@/utils/axios";
@@ -99,5 +100,12 @@ export class OrderService {
 
   static async deleteCostIncurred(id: string): Promise<void> {
     return axiosInstance.delete(`/cost-incurred/${id}`);
+  }
+
+  // Order Cost Calculation
+  static async getOrderCostCalculation(
+    orderId: string
+  ): Promise<OrderCostCalculation> {
+    return axiosInstance.get(`/supplies/orders/${orderId}/cost-calculation`);
   }
 }

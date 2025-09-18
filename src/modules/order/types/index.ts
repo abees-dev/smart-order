@@ -244,3 +244,40 @@ export const COST_TYPE_COLORS: Record<
   transport: "violet",
   other: "neutral",
 };
+
+// Order Cost Calculation interfaces
+export interface SupplyBreakdown {
+  supplyId: string;
+  supplyName: string;
+  sku: string;
+  quantityPerProduct: number;
+  totalQuantityNeeded: number;
+  unitCost: number;
+  totalCost: number;
+  source: "import" | "purchase_price";
+}
+
+export interface OrderCostBreakdown {
+  type: "supply" | "product";
+  itemId: string;
+  itemName: string;
+  sku: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+  source: "import" | "manual";
+  supplies?: SupplyBreakdown[]; // Only present when type is "product"
+}
+
+export interface OrderCostCalculation {
+  orderId: string;
+  orderNumber: string;
+  materialCost: number;
+  additionalCosts: number;
+  totalCost: number;
+  totalRevenue: number;
+  profit: number;
+  profitMargin: string;
+  costBreakdown: OrderCostBreakdown[];
+  hasImportData: boolean;
+}

@@ -7,10 +7,13 @@ import {
   Wrench,
   Clock,
   Edit,
+  Calculator,
 } from "lucide-react";
 import { useEffect } from "react";
 import { Timestamp } from "firebase/firestore";
 import { useOrderById } from "../hooks/use-order";
+import { useOrderCostCalculation } from "../hooks/use-order-cost-calculation";
+import { OrderCostCalculationSection } from "./order-cost-calculation";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
@@ -43,6 +46,11 @@ export function OrderDetailPage() {
   const isMobile = useIsMobile();
 
   const { order, isLoading, error } = useOrderById(id!);
+  const {
+    costCalculation,
+    isLoading: costLoading,
+    error: costError,
+  } = useOrderCostCalculation(id!);
 
   // Set document title
   useEffect(() => {
@@ -115,10 +123,14 @@ export function OrderDetailPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="items" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="items" className="flex items-center">
             <Package className="w-4 h-4 mr-2" />
             {isMobile ? "Mặt hàng" : "Mặt hàng"}
+          </TabsTrigger>
+          <TabsTrigger value="cost-analysis" className="flex items-center">
+            <Calculator className="w-4 h-4 mr-2" />
+            {isMobile ? "Tính giá" : "Tính giá thành"}
           </TabsTrigger>
           <TabsTrigger value="costs" className="flex items-center">
             <DollarSign className="w-4 h-4 mr-2" />
@@ -136,6 +148,15 @@ export function OrderDetailPage() {
 
         <TabsContent value="items" className="space-y-4">
           <OrderItemsSection items={order.items || []} />
+        </TabsContent>
+
+        <TabsContent value="cost-analysis" className="space-y-4">
+          <OrderCostCalculationSection
+            orderId={id!}
+            costCalculation={costCalculation}
+            isLoading={costLoading}
+            error={costError}
+          />
         </TabsContent>
 
         <TabsContent value="costs" className="space-y-4">
