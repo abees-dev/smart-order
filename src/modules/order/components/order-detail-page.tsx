@@ -319,10 +319,12 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
                       VAT ({item.vatRate || 0}%)
                     </p>
                     <p className="font-medium text-orange-600">
-                      {calculateVatAmount({
-                        amount: item.quantity * item.unitPrice,
-                        vatRate: item.vatRate,
-                      })}
+                      {formatCurrency(
+                        calculateVatAmount({
+                          amount: item.quantity * item.unitPrice,
+                          vatRate: item.vatRate,
+                        })
+                      )}
                     </p>
                   </div>
 
