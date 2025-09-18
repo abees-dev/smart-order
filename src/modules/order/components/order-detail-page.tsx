@@ -39,7 +39,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { calculateCurrencyWithVat } from "@/utils/currency";
+import { calculateVatAmount } from "@/utils/currency";
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -319,10 +319,9 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
                       VAT ({item.vatRate || 0}%)
                     </p>
                     <p className="font-medium text-orange-600">
-                      {calculateCurrencyWithVat({
-                        amount: item.unitPrice,
+                      {calculateVatAmount({
+                        amount: item.quantity * item.unitPrice,
                         vatRate: item.vatRate,
-                        quantity: item.quantity,
                       })}
                     </p>
                   </div>

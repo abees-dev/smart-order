@@ -9,3 +9,13 @@ export const calculateCurrencyWithVat = ({
 }) => {
   return amount * quantity * (1 + vatRate / 100);
 };
+
+export const calculateVatAmount = ({
+  amount,
+  vatRate,
+}: {
+  amount: number;
+  vatRate: number;
+}) => {
+  return amount * (vatRate / 100);
+};
