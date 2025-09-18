@@ -34,7 +34,7 @@ export class OrderService {
     orders: Order[];
   }> {
     return axiosInstance.get("/orders/selection", {
-      params: { fields: fields.join(",") },
+      params: fields.length > 0 ? { fields: fields.join(",") } : {},
     });
   }
 
