@@ -44,6 +44,7 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import SupplyStatusBadge from "./supply-status-badge";
+import { PageHeader } from "@/components/PageHeader";
 
 export function SupplyImportsListPage() {
   useDocumentTitle();
@@ -422,21 +423,18 @@ export function SupplyImportsListPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-        <div>
-          <h1 className="text-lg font-semibold">Phiếu nhập vật tư</h1>
-          <p className="text-sm text-muted-foreground">
-            Quản lý phiếu nhập kho
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={handleCreateImport}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo phiếu nhập
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        shouldCreateAction={true}
+        onCreateAction={handleCreateImport}
+        createActionLabel="Tạo phiếu nhập"
+        title="Phiếu nhập vật tư"
+        description="Quản lý phiếu nhập kho"
+        filterActions={
+          <>
+            <Button>Bộ lọc</Button>
+          </>
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

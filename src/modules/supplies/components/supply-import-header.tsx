@@ -8,12 +8,14 @@ interface HeaderSectionProps {
   supplyImport: SupplyImport;
   isMobile: boolean;
   onBack: () => void;
+  actions?: React.ReactNode;
 }
 
 export function HeaderSection({
   supplyImport,
   isMobile,
   onBack,
+  actions,
 }: HeaderSectionProps) {
   return (
     <div className="flex flex-col space-y-4">
@@ -40,8 +42,9 @@ export function HeaderSection({
             {supplyImport.invoiceNumber}
           </p>
         </div>
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-2">
           <SupplyStatusBadge status={supplyImport.status} />
+          {actions}
         </div>
       </div>
     </div>
