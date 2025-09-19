@@ -3,13 +3,22 @@
   "private": true,
   "version": "0.0.2",
   "type": "module",
+  "main": "dist-electron/main.cjs",
+  "homepage": "./",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "build-miniapp": "vite build --mode miniapp && cp app-config.json dist",
-    "seed:customers": "tsx scripts/seed-customers.ts"
+    "seed:customers": "tsx scripts/seed-customers.ts",
+    "electron:dev": "concurrently \"npm run dev\" \"node scripts/electron-dev.js\"",
+    "electron:build": "npm run build && vite build --config vite.electron.config.ts && electron-builder",
+    "electron:build:win": "npm run build && vite build --config vite.electron.config.ts && electron-builder --win",
+    "electron:build:mac": "npm run build && vite build --config vite.electron.config.ts && electron-builder --mac",
+    "electron:build:linux": "npm run build && vite build --config vite.electron.config.ts && electron-builder --linux",
+    "electron:pack": "npm run build && vite build --config vite.electron.config.ts && electron-builder --dir",
+    "electron:dist": "npm run build && vite build --config vite.electron.config.ts && electron-builder --publish=onTagOrDraft"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -69,6 +78,11 @@
     "@types/react-dom": "^19.1.7",
     "@types/react-is": "^19",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.0.0",
+    "electron": "^38.1.2",
+    "electron-builder": "26.0.12",
+    "electron-updater": "6.6.2",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
@@ -78,7 +92,8 @@
     "tw-animate-css": "^1.3.8",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
-    "vite": "^7.1.2"
+    "vite": "^7.1.2",
+    "wait-on": "^9.0.0"
   },
   "packageManager": "yarn@4.9.4"
 }

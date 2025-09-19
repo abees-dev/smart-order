@@ -115,7 +115,7 @@ export function AppSidebar() {
     },
     {
       title: t("navigation.settings"),
-      url: ROUTES.DASHBOARD.COMING_SOON,
+      url: ROUTES.DASHBOARD.SETTINGS,
       icon: Settings,
       type: "simple" as const,
     },
