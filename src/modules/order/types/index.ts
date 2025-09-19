@@ -255,6 +255,7 @@ export interface SupplyBreakdown {
   unitCost: number;
   totalCost: number;
   source: "import" | "purchase_price";
+  currentStock?: number;
 }
 
 export interface OrderCostBreakdown {

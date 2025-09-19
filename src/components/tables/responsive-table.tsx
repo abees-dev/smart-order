@@ -11,8 +11,8 @@ import {
   type TableProps,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FileX } from "lucide-react";
+import Loading from "../ui/loading";
 
 export interface ResponsiveTableColumn<T> {
   key: string;
@@ -51,13 +51,10 @@ export function ResponsiveTable<T = Record<string, unknown>>({
   className,
   mobileCardRender,
   showHeader = true,
-  loadingRows = 5,
   onDoubleClick,
   ...other
 }: ResponsiveTableProps<T>) {
   const isMobile = useIsMobile();
-
-  console.log("Rendering table skeleton with", other, "rows");
 
   const getRowKey = React.useCallback(
     (record: T, index: number): string => {
@@ -96,58 +93,6 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     []
   );
 
-  // Loading Skeleton Component
-  const LoadingSkeleton = () => {
-    if (isMobile && mobileCardRender) {
-      return (
-        <div className={cn("space-y-3", className)}>
-          {Array.from({ length: loadingRows }).map((_, index) => (
-            <Card key={index} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                  <div className="flex items-center space-x-2">
-                    <Skeleton className="h-5 w-16" />
-                    <Skeleton className="h-5 w-20" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <Table className={className} {...other}>
-        {showHeader && (
-          <TableHeader>
-            <TableRow>
-              {responsiveColumns.map((column) => (
-                <TableHead key={column.key}>
-                  <Skeleton className="h-4 w-full" />
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-        )}
-        <TableBody>
-          {Array.from({ length: loadingRows }).map((_, index) => (
-            <TableRow key={index}>
-              {responsiveColumns.map((column) => (
-                <TableCell key={column.key}>
-                  <Skeleton className="h-4 w-full" />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
-  };
-
-  // Enhanced Empty State Component
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center p-12 text-center">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/30 mb-4">
@@ -166,11 +111,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
     </div>
   );
 
-  if (loading) {
-    return <LoadingSkeleton />;
-  }
-
-  if (dataSource.length === 0) {
+  if (dataSource.length === 0 && !loading) {
     return <EmptyState />;
   }
 
@@ -238,46 +179,56 @@ export function ResponsiveTable<T = Record<string, unknown>>({
         </TableHeader>
       )}
       <TableBody>
-        {dataSource.map((record, index) => (
-          <TableRow
-            key={getRowKey(record, index)}
-            onDoubleClick={() => onDoubleClick?.(record, index)}
-            className={cn(
-              "transition-all duration-200",
-              onRowClick && "cursor-pointer active:bg-muted/60",
-              "group",
-              {
-                "border-b border-border/80": index !== dataSource.length - 1,
-              }
-            )}
-            onClick={() => onRowClick?.(record, index)}
-          >
-            {responsiveColumns.map((column, colIndex) => (
-              <TableCell
-                key={column.key}
-                className={cn(
-                  "relative",
-                  column.key === "customer" &&
-                    "whitespace-normal min-w-[200px]",
-                  column.key !== "customer" && "whitespace-nowrap",
-                  column.align === "center" && "text-center",
-                  column.align === "right" && "text-right",
-                  column.className,
-                  {
-                    "sticky right-0 bg-background border-l-inner":
-                      column.key === "actions",
-                    "border-r":
-                      colIndex !==
-                        responsiveColumns.length - borderNumberLast &&
-                      column.key !== "actions",
-                  }
-                )}
-              >
-                {renderCellValue(column, record, index)}
-              </TableCell>
-            ))}
+        {loading && (
+          <TableRow>
+            <TableCell colSpan={responsiveColumns.length}>
+              <div className="flex justify-center items-center h-full min-h-[200px]">
+                <Loading width={80} thickness={12} />
+              </div>
+            </TableCell>
           </TableRow>
-        ))}
+        )}
+        {!loading &&
+          dataSource.map((record, index) => (
+            <TableRow
+              key={getRowKey(record, index)}
+              onDoubleClick={() => onDoubleClick?.(record, index)}
+              className={cn(
+                "transition-all duration-200",
+                onRowClick && "cursor-pointer active:bg-muted/60",
+                "group",
+                {
+                  "border-b border-border/80": index !== dataSource.length - 1,
+                }
+              )}
+              onClick={() => onRowClick?.(record, index)}
+            >
+              {responsiveColumns.map((column, colIndex) => (
+                <TableCell
+                  key={column.key}
+                  className={cn(
+                    "relative",
+                    column.key === "customer" &&
+                      "whitespace-normal min-w-[200px]",
+                    column.key !== "customer" && "whitespace-nowrap",
+                    column.align === "center" && "text-center",
+                    column.align === "right" && "text-right",
+                    column.className,
+                    {
+                      "sticky right-0 bg-background border-l-inner":
+                        column.key === "actions",
+                      "border-r":
+                        colIndex !==
+                          responsiveColumns.length - borderNumberLast &&
+                        column.key !== "actions",
+                    }
+                  )}
+                >
+                  {renderCellValue(column, record, index)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
       </TableBody>
     </Table>
   );

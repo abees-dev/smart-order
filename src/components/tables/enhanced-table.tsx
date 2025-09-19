@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import Loading from "../ui/loading";
 
 export interface TableAction<T> {
   key: string;
@@ -168,6 +169,8 @@ export function EnhancedTable<T = Record<string, unknown>>({
     return [...columns, actionColumn];
   }, [columns, actions]);
 
+  console.log("enhancedColumns render");
+
   return (
     <div className="space-y-4">
       {/* Header Section */}
@@ -212,7 +215,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
           {loadingMore && (
             <div className="flex items-center justify-center py-4">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <Loading width={16} thickness={2} />
                 <span className="text-sm">Đang tải thêm dữ liệu...</span>
               </div>
             </div>

@@ -6,24 +6,12 @@ import {
   XCircle,
   Clock,
   Package,
-  Plus,
-  Download,
   FileText,
   Edit,
   Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import {
   EnhancedTable,
@@ -32,7 +20,7 @@ import {
   type TableAction,
 } from "@/components/tables";
 import { SupplyImportFormDialog } from "./supply-import-form-dialog";
-import type { SupplyImport } from "../types";
+import type { SupplyImport, SupplyImportFilters } from "../types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSupplyImports, useSupplySummary } from "../hooks/use-supply-import";
 import {
@@ -45,6 +33,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import SupplyStatusBadge from "./supply-status-badge";
 import { PageHeader } from "@/components/PageHeader";
+import SupplyImportFilter from "./filters/SupplyImportFilter";
 
 export function SupplyImportsListPage() {
   useDocumentTitle();
@@ -57,6 +46,7 @@ export function SupplyImportsListPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<SupplyImportFilters>({});
   const changePage = (newPage: number) => {
     setPage(newPage);
   };
@@ -66,7 +56,6 @@ export function SupplyImportsListPage() {
 
   const {
     loading,
-    error,
     suppliesImports: imports,
     hasNextPage,
     fetchNextPage,
@@ -76,6 +65,7 @@ export function SupplyImportsListPage() {
   } = useSupplyImports({
     page: page,
     limit: 10,
+    ...filters,
   });
 
   const { addToWarehouseSupply } = useAddToWarehouseSupply({
@@ -315,111 +305,7 @@ export function SupplyImportsListPage() {
     </div>
   );
 
-  if (loading && imports.length === 0) {
-    return (
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-          <div>
-            <h1 className="text-lg font-semibold">Phiếu nhập vật tư</h1>
-            <p className="text-sm text-muted-foreground">
-              Quản lý phiếu nhập kho
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Xuất Excel
-            </Button>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Tạo phiếu nhập
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Search Skeleton */}
-        <div className="flex gap-4">
-          <Skeleton className="h-10 w-80" />
-          <Skeleton className="h-10 w-24" />
-        </div>
-
-        {/* Table Skeleton */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <div className="flex gap-4">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        {/* Breadcrumb */}
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Phiếu nhập vật tư</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-          <div>
-            <h1 className="text-lg font-semibold">Phiếu nhập vật tư</h1>
-            <p className="text-sm text-muted-foreground">
-              Quản lý phiếu nhập kho
-            </p>
-          </div>
-        </div>
-
-        {/* Error State */}
-        <Card className="border-destructive/50">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <XCircle className="h-12 w-12 text-destructive mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Có lỗi xảy ra</h3>
-            <p className="text-muted-foreground text-center mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Thử lại
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  console.log("Page Render");
 
   return (
     <div className="space-y-4">
@@ -430,9 +316,11 @@ export function SupplyImportsListPage() {
         title="Phiếu nhập vật tư"
         description="Quản lý phiếu nhập kho"
         filterActions={
-          <>
-            <Button>Bộ lọc</Button>
-          </>
+          <SupplyImportFilter
+            onFiltersChange={(filters) => {
+              setFilters(filters);
+            }}
+          />
         }
       />
 

@@ -499,16 +499,29 @@ function SupplyBreakdownItem({
   supply: SupplyBreakdown;
   isMobile: boolean;
 }) {
+  // Check if current stock is insufficient
+  const isStockInsufficient =
+    supply.currentStock !== undefined &&
+    supply.currentStock < supply.totalQuantityNeeded;
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-all duration-200">
+    <div
+      className={`bg-white rounded-lg p-4 hover:shadow-sm transition-all duration-200 ${
+        isStockInsufficient
+          ? "border-2 border-red-500 bg-red-50"
+          : "border border-gray-200"
+      }`}
+    >
       <div
         className={`${
           isMobile ? "space-y-3" : "flex items-center justify-between"
         }`}
       >
         <div className={`${isMobile ? "" : "flex-1"}`}>
-          <div className="flex items-center flex-wrap gap-2 mb-2">
-            <h6 className="font-semibold text-gray-800">{supply.supplyName}</h6>
+          <div className="flex items-center flex-wrap gap-2 mb-2 max-w-[300px]">
+            <h6 className="font-semibold text-gray-800  text-wrap">
+              {supply.supplyName}
+            </h6>
             <Badge
               variant="outline"
               className={`text-xs font-medium px-2 py-1 ${
@@ -536,7 +549,7 @@ function SupplyBreakdownItem({
           className={`${
             isMobile
               ? "grid grid-cols-2 gap-3 mt-3"
-              : "flex items-center space-x-4"
+              : "grid grid-cols-5 gap-4 mt-4"
           }`}
         >
           <div className="bg-gray-50 rounded-lg p-2 text-center border">
@@ -551,6 +564,45 @@ function SupplyBreakdownItem({
             <p className="font-bold text-gray-800 text-sm">
               {supply.totalQuantityNeeded}
             </p>
+          </div>
+
+          {/* Current Stock Display - Always show */}
+          <div
+            className={`rounded-lg p-2 text-center border ${
+              supply.currentStock !== undefined
+                ? isStockInsufficient
+                  ? "bg-red-100 border-red-300"
+                  : "bg-green-50 border-green-200"
+                : "bg-gray-50 border-gray-200"
+            }`}
+          >
+            <p
+              className={`text-xs font-medium mb-1 ${
+                supply.currentStock !== undefined
+                  ? isStockInsufficient
+                    ? "text-red-600"
+                    : "text-green-600"
+                  : "text-gray-500"
+              }`}
+            >
+              Tồn kho
+            </p>
+            <p
+              className={`font-bold text-sm ${
+                supply.currentStock !== undefined
+                  ? isStockInsufficient
+                    ? "text-red-800"
+                    : "text-green-800"
+                  : "text-gray-600"
+              }`}
+            >
+              {supply.currentStock !== undefined ? supply.currentStock : "---"}
+            </p>
+            {supply.currentStock !== undefined && isStockInsufficient && (
+              <p className="text-xs text-red-600 mt-1">
+                Thiếu: {supply.totalQuantityNeeded - supply.currentStock}
+              </p>
+            )}
           </div>
 
           <div className="bg-blue-50 rounded-lg p-2 text-center border border-blue-200">

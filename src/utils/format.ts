@@ -84,3 +84,24 @@ export const formatDateTime = (
 
   return format(dateObj, "dd/MM/yyyy HH:mm");
 };
+
+export const formatDateRange = (from: Date | null, to: Date | null) => {
+  let fromDate: Date | undefined;
+  let toDate: Date | undefined;
+
+  if (from) {
+    fromDate = new Date(from);
+    fromDate.setHours(0, 0, 0, 0);
+  }
+
+  if (to) {
+    toDate = new Date(to);
+    toDate.setHours(23, 59, 59, 999);
+  }
+
+  const result = {
+    dateFrom: fromDate?.toISOString(),
+    dateTo: toDate?.toISOString(),
+  };
+  return result;
+};
