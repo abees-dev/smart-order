@@ -80,7 +80,9 @@ export function SupplySelect({
     return (
       <div className="flex flex-col w-full flex-1">
         <div className="flex items-center justify-between">
-          <span className="font-medium line-clamp-1">{supply.name}</span>
+          <span title={supply.name} className="font-medium line-clamp-2">
+            {supply.name}
+          </span>
         </div>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
           <span>

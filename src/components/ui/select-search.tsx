@@ -178,6 +178,7 @@ export function SelectSearch({
                   "font-medium line-clamp-1 text-neutral-800 text-sm",
                   option.disabled && "text-muted-foreground"
                 )}
+                title={option.label}
               >
                 {option.label}
               </span>
@@ -199,6 +200,7 @@ export function SelectSearch({
           <Input
             ref={inputRef}
             value={displayValue}
+            title={displayValue}
             placeholder={displayPlaceholder}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
