@@ -280,7 +280,7 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
                     {item.itemData?.name || `Item ${item.itemId}`}
                   </h4>
                   <p className="text-sm text-gray-600">
-                    {item.itemData?.sku || item.itemData["productCode"]}
+                    {item.itemData?.sku || item?.itemData?.["productCode"]}
                   </p>
                 </div>
 
