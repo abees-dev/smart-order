@@ -241,7 +241,6 @@ export function OrdersListPage() {
       icon: Eye,
       onClick: (record) => {
         navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
-        toast.info("Chức năng xem chi tiết đang được phát triển");
       },
     },
     {
@@ -388,6 +387,9 @@ export function OrdersListPage() {
         isMobile={isMobile}
         loadingMore={isFetching}
         searchValue={filters.search || ""}
+        onDoubleClick={(record) => {
+          navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
+        }}
         pagination={
           !isMobile
             ? {
