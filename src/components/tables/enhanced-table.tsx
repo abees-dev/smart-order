@@ -21,8 +21,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { Timestamp } from "firebase/firestore";
-import type { TableProps } from "../ui";
 
 export interface TableAction<T> {
   key: string;
@@ -34,8 +32,7 @@ export interface TableAction<T> {
 }
 
 export interface EnhancedTableProps<T>
-  extends Omit<ResponsiveTableProps<T>, "columns">,
-    TableProps {
+  extends Omit<ResponsiveTableProps<T>, "columns" | "onDoubleClick"> {
   columns: ResponsiveTableColumn<T>[];
   // Search functionality
   searchable?: boolean;
@@ -68,6 +65,7 @@ export interface EnhancedTableProps<T>
 
   // Device detection
   isMobile?: boolean;
+  onDoubleClick?: (record: T, index: number) => void;
 }
 
 export function EnhancedTable<T = Record<string, unknown>>({
@@ -359,10 +357,6 @@ export function useEnhancedTableColumns<T>() {
       width: 120,
       render: (value) => {
         if (!value) return "-";
-        if (value instanceof Timestamp) {
-          const date = value.toDate();
-          return date.toLocaleDateString("vi-VN");
-        }
         const date = value instanceof Date ? value : new Date(String(value));
         return date.toLocaleDateString("vi-VN");
       },

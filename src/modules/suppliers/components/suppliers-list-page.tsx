@@ -250,6 +250,10 @@ export function SuppliersListPage() {
         hasMore={hasNextPage}
         onLoadMore={fetchNextPage}
         searchValue={filters.search || ""}
+        onDoubleClick={(record) => {
+          setSelectedSupplier(record);
+          setShowDetailDialog(true);
+        }}
         pagination={
           !isMobile
             ? {

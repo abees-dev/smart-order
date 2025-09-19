@@ -318,6 +318,10 @@ export function ProductsListPage() {
               }
             : undefined
         }
+        onDoubleClick={(record) => {
+          setSelectedProduct(record);
+          setShowDetailDialog(true);
+        }}
         searchable
         searchPlaceholder={
           t("products.searchPlaceholder") || "Tìm kiếm sản phẩm..."

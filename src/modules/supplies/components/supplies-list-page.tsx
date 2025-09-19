@@ -311,6 +311,10 @@ export function SuppliesListPage() {
         isMobile={isMobile}
         loadingMore={loadingMore}
         searchValue={filters.search || ""}
+        onDoubleClick={(record) => {
+          setSelectedSupply(record);
+          setShowDetailDialog(true);
+        }}
         pagination={
           !isMobile
             ? {

@@ -240,7 +240,6 @@ export function OrdersListPage() {
       label: "Xem chi tiết",
       icon: Eye,
       onClick: (record) => {
-        // TODO: Implement view detail dialog
         navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
         toast.info("Chức năng xem chi tiết đang được phát triển");
       },

@@ -26,7 +26,8 @@ export interface ResponsiveTableColumn<T> {
   className?: string;
 }
 
-export interface ResponsiveTableProps<T> extends TableProps {
+export interface ResponsiveTableProps<T>
+  extends Omit<TableProps, "onDoubleClick"> {
   columns: ResponsiveTableColumn<T>[];
   dataSource: T[];
   loading?: boolean;
@@ -37,6 +38,7 @@ export interface ResponsiveTableProps<T> extends TableProps {
   mobileCardRender?: (record: T, index: number) => React.ReactNode;
   showHeader?: boolean;
   loadingRows?: number;
+  onDoubleClick?: (record: T, index: number) => void;
 }
 
 export function ResponsiveTable<T = Record<string, unknown>>({
@@ -50,6 +52,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
   mobileCardRender,
   showHeader = true,
   loadingRows = 5,
+  onDoubleClick,
   ...other
 }: ResponsiveTableProps<T>) {
   const isMobile = useIsMobile();
@@ -238,6 +241,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
         {dataSource.map((record, index) => (
           <TableRow
             key={getRowKey(record, index)}
+            onDoubleClick={() => onDoubleClick?.(record, index)}
             className={cn(
               "transition-all duration-200",
               onRowClick && "cursor-pointer active:bg-muted/60",

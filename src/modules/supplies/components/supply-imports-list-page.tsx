@@ -513,6 +513,9 @@ export function SupplyImportsListPage() {
           hasMore={hasNextPage}
           onLoadMore={fetchNextPage}
           loadingMore={isFetching}
+          onDoubleClick={(record) => {
+            handleViewImport(record);
+          }}
           pagination={
             !isMobile
               ? {

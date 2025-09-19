@@ -260,6 +260,10 @@ export function CustomersListPage() {
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={loading}
+        onDoubleClick={(record) => {
+          setSelectedCustomer(record);
+          setShowDetailDialog(true);
+        }}
         searchValue={filters.search || ""}
         pagination={
           !isMobile
