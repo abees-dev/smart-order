@@ -296,14 +296,14 @@ function CostBreakdownSection({
           {/* Total */}
           <div className="border-t-2 border-orange-100 pt-4 mt-6">
             <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200">
-              <div className="flex justify-between items-center">
+              <div className="flex md:justify-between items-center flex-col md:flex-row">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="w-5 h-5 text-orange-600" />
                   <span className="font-bold text-lg text-gray-800">
                     Tổng chi phí linh kiện
                   </span>
                 </div>
-                <span className="text-2xl font-bold text-orange-700">
+                <span className="text-2xl font-bold text-orange-700 text-wrap text-center md:text-right">
                   {formatCurrency(
                     costBreakdown.reduce((sum, item) => sum + item.totalCost, 0)
                   )}
@@ -428,7 +428,7 @@ function CostBreakdownItem({
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
               Đơn giá
             </p>
-            <p className="font-bold text-gray-800">
+            <p className="font-bold text-gray-800 wrap-break-word">
               {formatCurrency(item.unitCost)}
             </p>
           </div>
@@ -437,7 +437,7 @@ function CostBreakdownItem({
             <p className="text-xs text-orange-600 font-medium uppercase tracking-wide mb-1">
               Thành tiền
             </p>
-            <p className="font-bold text-orange-700 text-lg">
+            <p className="font-bold text-orange-700 text-lg wrap-break-word">
               {formatCurrency(item.totalCost)}
             </p>
           </div>
@@ -467,14 +467,14 @@ function CostBreakdownItem({
             </div>
             <div className="mt-4 pt-4 border-t border-blue-200">
               <div className="bg-white rounded-lg p-3 border border-blue-300">
-                <div className="flex justify-between items-center">
+                <div className="flex md:justify-between md:items-center flex-col md:flex-row">
                   <div className="flex items-center space-x-2">
                     <DollarSign className="w-4 h-4 text-blue-600" />
                     <span className="font-semibold text-gray-800">
                       Tổng chi phí linh kiện
                     </span>
                   </div>
-                  <span className="text-lg font-bold text-orange-700">
+                  <span className="text-lg font-bold text-orange-700 wrap-break-word text-center md:text-right">
                     {formatCurrency(
                       item.supplies!.reduce(
                         (sum, supply) => sum + supply.totalCost,
@@ -607,7 +607,7 @@ function SupplyBreakdownItem({
 
           <div className="bg-blue-50 rounded-lg p-2 text-center border border-blue-200">
             <p className="text-xs text-blue-600 font-medium mb-1">Đơn giá</p>
-            <p className="font-bold text-blue-700 text-sm">
+            <p className="font-bold text-blue-700 text-sm wrap-break-word">
               {formatCurrency(supply.unitCost)}
             </p>
           </div>
@@ -616,7 +616,7 @@ function SupplyBreakdownItem({
             <p className="text-xs text-orange-600 font-medium mb-1">
               Thành tiền
             </p>
-            <p className="font-bold text-orange-700">
+            <p className="font-bold text-orange-700 wrap-break-word">
               {formatCurrency(supply.totalCost)}
             </p>
           </div>

@@ -162,7 +162,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
                   column.align === "right" && "text-right",
                   column.className,
                   {
-                    "sticky right-0 bg-muted/30 border-l-inner":
+                    "sticky right-0 bg-gray-200 border-l-inner":
                       column.key === "actions",
                     "border-r":
                       colIndex !==

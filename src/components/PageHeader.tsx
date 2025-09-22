@@ -1,13 +1,15 @@
+import type { ReactNode } from "react";
 import { Button } from "./ui";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 
 interface PageHeaderProps {
   shouldCreateAction: boolean;
   onCreateAction: () => void;
-  createActionLabel: string;
+  createActionLabel?: string;
   title: string;
-  description: string;
-  filterActions: React.ReactNode;
+  description?: ReactNode;
+  filterActions?: React.ReactNode;
+  isBackButton?: boolean;
 }
 export const PageHeader = ({
   shouldCreateAction,
@@ -16,15 +18,26 @@ export const PageHeader = ({
   title,
   description,
   filterActions,
+  isBackButton = false,
 }: PageHeaderProps) => {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-3">
+      {isBackButton && (
         <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Quay lại
+          </Button>
+        </div>
+      )}
+      <div className="flex flex-col md:flex-row justify-between items-start gap-3">
+        <div className="w-full">
           <h1 className="text-lg font-semibold">{title}</h1>
-          <p className="text-sm text-muted-foreground hidden md:block">
-            {description}
-          </p>
+          <div className="text-sm text-muted-foreground">{description}</div>
         </div>
         {shouldCreateAction && (
           <div className="flex gap-2">

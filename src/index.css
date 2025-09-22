@@ -1,10 +1,121 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-gray-100: #fcfbfb;
+  --color-gray-200: #f6f5f4;
+  --color-gray-300: #dfdcd9;
+  --color-gray-400: #a39e98;
+  --color-gray-500: #78736f;
+  --color-gray-600: #615d59;
+  --color-gray-700: #494744;
+  --color-gray-800: #31302e;
+  --color-gray-900: #191918;
+  --color-red-100: #fef3f1;
+  --color-red-200: #fdd3cd;
+  --color-red-300: #fbb0a6;
+  --color-red-400: #f77463;
+  --color-red-500: #f64932;
+  --color-red-600: #e32d14;
+  --color-red-700: #b01601;
+  --color-red-800: #6f0d00;
+  --color-red-900: #4f0900;
+  --color-orange-100: #fff5ed;
+  --color-orange-200: #ffdec4;
+  --color-orange-300: #ffc599;
+  --color-orange-400: #ff8a33;
+  --color-orange-500: #ff6d00;
+  --color-orange-600: #dd5b00;
+  --color-orange-700: #ab4a00;
+  --color-orange-800: #793400;
+  --color-orange-900: #532200;
+  --color-yellow-100: #fff5e0;
+  --color-yellow-200: #ffe4af;
+  --color-yellow-300: #ffd786;
+  --color-yellow-400: #ffc95e;
+  --color-yellow-500: #ffb110;
+  --color-yellow-600: #e89d01;
+  --color-yellow-700: #c78600;
+  --color-yellow-800: #a16c00;
+  --color-yellow-900: #704b00;
+  --color-teal-100: #f2fafa;
+  --color-teal-200: #bde6e4;
+  --color-teal-300: #83cbc9;
+  --color-teal-400: #2a9d99;
+  --color-teal-500: #27918d;
+  --color-teal-600: #0a7b77;
+  --color-teal-700: #126764;
+  --color-teal-800: #0a4d4b;
+  --color-teal-900: #042b29;
+  --color-blue-100: #f2f9ff;
+  --color-blue-200: #e6f3fe;
+  --color-blue-300: #a3d0f7;
+  --color-blue-400: #62aef0;
+  --color-blue-500: #097fe8;
+  --color-blue-600: #0075de;
+  --color-blue-700: #005bab;
+  --color-blue-800: #00396b;
+  --color-blue-900: #002a4f;
+  --color-purple-100: #f8f5fc;
+  --color-purple-200: #eadbfa;
+  --color-purple-300: #d6b6f6;
+  --color-purple-400: #ad6ded;
+  --color-purple-500: #9849e8;
+  --color-purple-600: #7237ae;
+  --color-purple-700: #562983;
+  --color-purple-800: #391c57;
+  --color-purple-900: #1c0e2c;
+  --color-green-100: #f0faf2;
+  --color-green-200: #d0f4d8;
+  --color-green-300: #abe5b8;
+  --color-green-400: #68ce7e;
+  --color-green-500: #1aae39;
+  --color-green-600: #14832b;
+  --color-green-700: #0f6220;
+  --color-green-800: #0a4216;
+  --color-green-900: #05210b;
+  --color-pink-100: #fff5fc;
+  --color-pink-200: #ffcdf1;
+  --color-pink-300: #ffb5eb;
+  --color-pink-400: #ff83dd;
+  --color-pink-500: #ff64c8;
+  --color-pink-600: #d13f9d;
+  --color-pink-700: #9d2472;
+  --color-pink-800: #6c1b4f;
+  --color-pink-900: #481034;
+  --color-brown-100: #fcf8f5;
+  --color-brown-200: #ebd5c5;
+  --color-brown-300: #d9b79f;
+  --color-brown-400: #b18164;
+  --color-brown-500: #9c7054;
+  --color-brown-600: #885d3d;
+  --color-brown-700: #744d2d;
+  --color-brown-800: #654124;
+  --color-brown-900: #523410;
+  --color-black: #000;
+  --color-white: #fff;
+  --color-alpha-black-100: #0000000d;
+  --color-alpha-black-200: #0000001a;
+  --color-alpha-black-300: #0003;
+  --color-alpha-black-400: #0000004d;
+  --color-alpha-black-500: #0000008a;
+  --color-alpha-black-600: #00000096;
+  --color-alpha-black-700: #000000bf;
+  --color-alpha-black-800: #000000e6;
+  --color-alpha-black-900: #000000f2;
+  --color-alpha-white-100: #ffffff0d;
+  --color-alpha-white-200: #ffffff1a;
+  --color-alpha-white-300: #fff3;
+  --color-alpha-white-400: #ffffff4d;
+  --color-alpha-white-500: #ffffff80;
+  --color-alpha-white-600: #ffffffa8;
+  --color-alpha-white-700: #ffffffbf;
+  --color-alpha-white-800: #ffffffd9;
+  --color-alpha-white-900: #fffffff2;
+  --color-transparent: #fff0;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -41,12 +152,13 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-be: "Be Vietnam Pro", sans-serif;
+  --font-inter: "Inter", sans-serif;
 }
 
 :root {
   --radius: 0.65rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(0.29 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -60,8 +172,8 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.95 0 0);
+  --input: oklch(0.95 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -69,12 +181,12 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
-  --sidebar: transparent;
-  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar: #f9f8f7;
+  --sidebar-foreground: rgb(95, 94, 91);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-accent: #f1f0ef; /*Background active*/
+  --sidebar-accent-foreground: #2c2c2b; /*Text active*/
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
@@ -118,7 +230,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-be;
+    @apply bg-background text-foreground font-inter;
   }
 
   :root {

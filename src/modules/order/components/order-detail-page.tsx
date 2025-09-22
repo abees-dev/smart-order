@@ -6,7 +6,6 @@ import {
   DollarSign,
   Wrench,
   Clock,
-  Edit,
   Calculator,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -40,6 +39,7 @@ import {
 } from "@/components/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateVatAmount } from "@/utils/currency";
+import { PageHeader } from "@/components/PageHeader";
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -91,7 +91,7 @@ export function OrderDetailPage() {
   return (
     <div className="container mx-auto p-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -117,7 +117,19 @@ export function OrderDetailPage() {
             {isMobile ? "" : "Chỉnh sửa"}
           </Button>
         </div>
-      </div>
+      </div> */}
+      <PageHeader
+        title={order.orderNumber}
+        description={
+          <div className="flex flex-1 flex-col md:flex-row-reverse md:justify-between md:items-center gap-1">
+            <StatusBadge status={order.status} />
+            <div>Ngày tạo: ${formatDateTime(order.createdAt)}</div>
+          </div>
+        }
+        onCreateAction={() => {}}
+        shouldCreateAction={false}
+        isBackButton={true}
+      />
 
       {/* Order Summary Card */}
       <OrderSummaryCard order={order} />
@@ -127,23 +139,23 @@ export function OrderDetailPage() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="items" className="flex items-center">
             <Package className="w-4 h-4 mr-2" />
-            {isMobile ? "Mặt hàng" : "Mặt hàng"}
+            {isMobile ? "" : "Mặt hàng"}
           </TabsTrigger>
           <TabsTrigger value="cost-analysis" className="flex items-center">
             <Calculator className="w-4 h-4 mr-2" />
-            {isMobile ? "Tính giá" : "Tính giá thành"}
+            {isMobile ? "" : "Tính giá thành"}
           </TabsTrigger>
           <TabsTrigger value="costs" className="flex items-center">
             <DollarSign className="w-4 h-4 mr-2" />
-            {isMobile ? "Chi phí" : "Chi phí phát sinh"}
+            {isMobile ? "" : "Chi phí phát sinh"}
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center">
             <Wrench className="w-4 h-4 mr-2" />
-            {isMobile ? "Bảo trì" : "Bảo trì"}
+            {isMobile ? "" : "Bảo trì"}
           </TabsTrigger>
           <TabsTrigger value="timeline" className="flex items-center">
             <Clock className="w-4 h-4 mr-2" />
-            {isMobile ? "Lịch sử" : "Lịch sử"}
+            {isMobile ? "" : "Lịch sử"}
           </TabsTrigger>
         </TabsList>
 
