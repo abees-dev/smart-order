@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build-miniapp": "vite build --mode miniapp && cp app-config.json dist",
+    "build-miniapp": "vite build --config vite.miniapp.config.ts --mode miniapp && cp app-config.json dist",
     "seed:customers": "tsx scripts/seed-customers.ts"
   },
   "dependencies": {

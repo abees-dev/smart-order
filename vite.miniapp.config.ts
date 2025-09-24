@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
 
+  base: "./", // only for miniapp build
   build: {
     rollupOptions: {
       output: {
