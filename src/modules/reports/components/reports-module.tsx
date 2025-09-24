@@ -380,3 +380,5 @@ export function ReportsModule() {
     </div>
   );
 }
+
+export default ReportsModule;

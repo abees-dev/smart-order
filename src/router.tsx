@@ -8,7 +8,6 @@ import { orderRouter } from "./modules/order";
 import { invoiceRouter } from "./modules/invoice";
 import { reportsRouter } from "./modules/reports/router";
 import DashboardLayout from "./layout/dashboard-layout";
-import { ComingSoonPage } from "./components/layout";
 import { ROUTES } from "./constants/routes";
 
 const router = createBrowserRouter(
@@ -34,10 +33,6 @@ const router = createBrowserRouter(
         ...orderRouter,
         ...invoiceRouter,
         reportsRouter,
-        {
-          path: "coming-soon",
-          element: <ComingSoonPage />,
-        },
       ],
       errorElement: <div>Error loading dashboard layout</div>,
     },

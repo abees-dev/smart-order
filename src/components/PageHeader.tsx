@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "./ui";
 import { ArrowLeft, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface PageHeaderProps {
   shouldCreateAction: boolean;
@@ -20,15 +21,12 @@ export const PageHeader = ({
   filterActions,
   isBackButton = false,
 }: PageHeaderProps) => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-4">
       {isBackButton && (
         <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => window.history.back()}
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Quay lại
           </Button>

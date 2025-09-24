@@ -1,7 +1,15 @@
+import React from "react";
 import type { RouteObject } from "react-router-dom";
 import { Navigate } from "react-router-dom";
-import { InputInvoiceListPage } from "./components/input-invoice-list-page";
-import { OutputInvoiceListPage } from "./components/output-invoice-list-page";
+// import { InputInvoiceListPage } from "./components/input-invoice-list-page";
+// import { OutputInvoiceListPage } from "./components/output-invoice-list-page";
+
+const InputInvoiceListPage = React.lazy(
+  () => import("./components/input-invoice-list-page")
+);
+const OutputInvoiceListPage = React.lazy(
+  () => import("./components/output-invoice-list-page")
+);
 
 export const invoiceRouter: RouteObject[] = [
   {

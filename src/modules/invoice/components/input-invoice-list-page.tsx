@@ -365,3 +365,5 @@ export function InputInvoiceListPage() {
     </div>
   );
 }
+
+export default InputInvoiceListPage;

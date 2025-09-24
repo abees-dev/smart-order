@@ -427,3 +427,5 @@ export function OutputInvoiceListPage() {
     </div>
   );
 }
+
+export default OutputInvoiceListPage;

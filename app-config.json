@@ -2,15 +2,15 @@
   "app": {
     "title": "SmartOrder",
     "headerTitle": "SmartOrder",
-    "headerColor": "#1843EF",
-    "textColor": "white",
+    "headerColor": "#111827",
+    "textColor": "black",
     "leftButton": "back",
     "statusBar": "normal",
-    "actionBarHidden": false,
-    "hideAndroidBottomNavigationBar": false,
-    "hideIOSSafeAreaBottom": false
+    "actionBarHidden": true,
+    "hideAndroidBottomNavigationBar": true,
+    "hideIOSSafeAreaBottom": true
   },
-  "listCSS": ["assets/index.css"],
-  "listSyncJS": ["assets/index.js"],
+  "listCSS": ["assets/index-DLwDQpVR.css"],
+  "listSyncJS": ["assets/index.DlgeHcF2.module.js"],
   "listAsyncJS": []
 }
