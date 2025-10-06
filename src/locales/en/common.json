@@ -7,6 +7,7 @@
     "login": "Login",
     "logout": "Logout",
     "register": "Register",
+    "username": "Username",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
@@ -15,10 +16,17 @@
     "signUp": "Sign Up",
     "welcomeBack": "Welcome back",
     "createAccount": "Create an account",
-    "loginDescription": "Choose your preferred sign-in method",
+    "loginDescription": "Enter your login credentials",
     "signInWithGoogle": "Continue with Google",
     "signInWithZalo": "Continue with Zalo",
-    "termsAgreement": "By continuing, you agree to our Terms of Service and Privacy Policy"
+    "termsAgreement": "By continuing, you agree to our Terms of Service and Privacy Policy",
+    "usernamePlaceholder": "Enter username",
+    "passwordPlaceholder": "Enter password",
+    "invalidCredentials": "Invalid username or password",
+    "usernameRequired": "Please enter username",
+    "passwordRequired": "Please enter password",
+    "usernameMinLength": "Username must be at least 3 characters",
+    "passwordMinLength": "Password must be at least 6 characters"
   },
   "navigation": {
     "dashboard": "Dashboard",

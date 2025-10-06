@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import {
   FormControl,
   FormDescription,
@@ -10,13 +10,14 @@ import {
   Textarea,
 } from "../ui";
 import type { Control } from "react-hook-form";
+
 interface FormTextFieldProps {
   name: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control?: Control<any, any, any> | undefined;
   label?: string;
   placeholder?: string;
-  type?: "text" | "textarea" | "number";
+  type?: "text" | "textarea" | "number" | "password" | "email";
   required?: boolean;
   helpText?: string;
   rows?: number;
@@ -24,6 +25,9 @@ interface FormTextFieldProps {
   step?: string; // for number type
   value?: string | number;
   onChange?: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  autoComplete?: string;
+  disabled?: boolean;
+  endAdornment?: ReactNode;
 }
 
 const FormTextField = ({
@@ -39,6 +43,9 @@ const FormTextField = ({
   step = "1",
   value,
   onChange,
+  autoComplete,
+  disabled = false,
+  endAdornment,
 }: FormTextFieldProps) => {
   return (
     <FormField
@@ -46,22 +53,13 @@ const FormTextField = ({
       name={name}
       render={({ field, fieldState }) => {
         const renderInputType = () => {
-          if (type === "text") {
-            return (
-              <Input
-                placeholder={placeholder}
-                {...field}
-                onChange={(e) => {
-                  field.onChange(e);
-                  onChange?.(e);
-                }}
-              />
-            );
-          } else if (type === "textarea") {
+          if (type === "textarea") {
             return (
               <Textarea
                 rows={rows}
                 placeholder={placeholder}
+                autoComplete={autoComplete}
+                disabled={disabled}
                 {...field}
                 onChange={(e) => {
                   field.onChange(e);
@@ -76,6 +74,8 @@ const FormTextField = ({
                 min={min}
                 step={step}
                 placeholder={placeholder || "0"}
+                autoComplete={autoComplete}
+                disabled={disabled}
                 {...field}
                 value={(value as number) || field.value || ""}
                 onChange={(e) => {
@@ -95,6 +95,24 @@ const FormTextField = ({
                   onChange?.(e);
                 }}
               />
+            );
+          } else {
+            // For text, password, email, etc.
+            return (
+              <div className="relative">
+                <Input
+                  type={type}
+                  placeholder={placeholder}
+                  autoComplete={autoComplete}
+                  disabled={disabled}
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    onChange?.(e);
+                  }}
+                />
+                {endAdornment}
+              </div>
             );
           }
         };

@@ -7,6 +7,7 @@
     "login": "Đăng nhập",
     "logout": "Đăng xuất",
     "register": "Đăng ký",
+    "username": "Tên đăng nhập",
     "email": "Email",
     "password": "Mật khẩu",
     "confirmPassword": "Xác nhận mật khẩu",
@@ -15,10 +16,17 @@
     "signUp": "Đăng ký",
     "welcomeBack": "Chào mừng trở lại",
     "createAccount": "Tạo tài khoản",
-    "loginDescription": "Chọn phương thức đăng nhập ưa thích của bạn",
+    "loginDescription": "Nhập thông tin đăng nhập của bạn",
     "signInWithGoogle": "Tiếp tục với Google",
     "signInWithZalo": "Tiếp tục với Zalo",
-    "termsAgreement": "Bằng cách tiếp tục, bạn đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật của chúng tôi"
+    "termsAgreement": "Bằng cách tiếp tục, bạn đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật của chúng tôi",
+    "usernamePlaceholder": "Nhập tên đăng nhập",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không đúng",
+    "usernameRequired": "Vui lòng nhập tên đăng nhập",
+    "passwordRequired": "Vui lòng nhập mật khẩu",
+    "usernameMinLength": "Tên đăng nhập phải có ít nhất 3 ký tự",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự"
   },
   "navigation": {
     "dashboard": "Bảng điều khiển",
