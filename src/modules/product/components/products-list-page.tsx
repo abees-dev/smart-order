@@ -20,6 +20,8 @@ import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDuplicateProduct } from "../hooks/use-product-actions";
 import { toast } from "sonner";
+import { PermissionGuard, usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function ProductsListPage() {
   const { t } = useTranslation();
@@ -37,6 +39,7 @@ export function ProductsListPage() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [page, setPage] = useState(1);
+  const { hasPermission } = usePermissions();
   const isMobile = useIsMobile();
   const changePage = (newPage: number) => {
     setPage(newPage);
@@ -180,6 +183,7 @@ export function ProductsListPage() {
         setSelectedProduct(record);
         setShowDetailDialog(true);
       },
+      show: () => hasPermission(Resources.PRODUCTS, Actions.DETAIL),
     },
     {
       key: "duplicate",
@@ -188,6 +192,7 @@ export function ProductsListPage() {
       onClick: (record) => {
         duplicateProduct(record.id);
       },
+      show: () => hasPermission(Resources.PRODUCTS, Actions.CREATE),
     },
     {
       key: "edit",
@@ -197,6 +202,7 @@ export function ProductsListPage() {
         setSelectedProduct(record);
         setShowEditDialog(true);
       },
+      show: () => hasPermission(Resources.PRODUCTS, Actions.CREATE),
     },
     {
       key: "delete",
@@ -207,6 +213,7 @@ export function ProductsListPage() {
         setSelectedProduct(record);
         setShowDeleteDialog(true);
       },
+      show: () => hasPermission(Resources.PRODUCTS, Actions.DELETE),
     },
   ];
 
@@ -330,10 +337,15 @@ export function ProductsListPage() {
         mobileCardRender={mobileCardRender}
         headerActions={
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("products.addProduct") || "Thêm sản phẩm"}
-            </Button>
+            <PermissionGuard
+              resource={Resources.PRODUCTS}
+              action={Actions.CREATE}
+            >
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("products.addProduct") || "Thêm sản phẩm"}
+              </Button>
+            </PermissionGuard>
           </div>
         }
       />

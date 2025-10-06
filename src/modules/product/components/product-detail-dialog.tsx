@@ -7,6 +7,9 @@ import remarkGfm from "remark-gfm";
 import DialogResponsive from "@/components/ui/dialog-responsive";
 import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
 import { formatDate } from "@/utils";
+import { PermissionGuard } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
+import { NoPermissionFallback } from "@/components/layout";
 
 interface ProductDetailDialogProps {
   open: boolean;
@@ -193,7 +196,13 @@ export function ProductDetailDialog({
       }}
       className="max-w-3xl"
     >
-      {content}
+      <PermissionGuard
+        resource={Resources.PRODUCTS}
+        action={Actions.DETAIL}
+        fallback={<NoPermissionFallback />}
+      >
+        {content}
+      </PermissionGuard>
     </DialogResponsive>
   );
 }

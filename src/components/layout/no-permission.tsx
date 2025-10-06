@@ -28,7 +28,7 @@ export default function NoPermission({
 
   return (
     <div
-      className={`min-h-screen flex items-center justify-center p-6 ${className}`}
+      className={`min-h-1/2 flex items-center justify-center p-6 pt-10 ${className}`}
     >
       <div className="text-center max-w-md mx-auto space-y-6">
         <div className="space-y-4">
