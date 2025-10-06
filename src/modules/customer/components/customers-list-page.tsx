@@ -18,10 +18,13 @@ import type { Customer, CustomerFilters } from "../types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { debounce } from "lodash";
+import { PermissionGuard, usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function CustomersListPage() {
   const { t } = useTranslation();
   useDocumentTitle();
+  const { hasPermission } = usePermissions();
 
   // Set document title manually for this page
   useEffect(() => {
@@ -139,6 +142,9 @@ export function CustomersListPage() {
         setSelectedCustomer(record);
         setShowDetailDialog(true);
       },
+      show: () => {
+        return hasPermission(Resources.CUSTOMERS, Actions.DETAIL);
+      },
     },
     {
       key: "edit",
@@ -147,6 +153,9 @@ export function CustomersListPage() {
       onClick: (record) => {
         setSelectedCustomer(record);
         setShowEditDialog(true);
+      },
+      show: () => {
+        return hasPermission(Resources.CUSTOMERS, Actions.UPDATE);
       },
     },
     {
@@ -157,6 +166,9 @@ export function CustomersListPage() {
       onClick: (record) => {
         setSelectedCustomer(record);
         setShowDeleteDialog(true);
+      },
+      show: () => {
+        return hasPermission(Resources.CUSTOMERS, Actions.DELETE);
       },
     },
   ];
@@ -261,6 +273,7 @@ export function CustomersListPage() {
         isMobile={isMobile}
         loadingMore={loading}
         onDoubleClick={(record) => {
+          if (!hasPermission(Resources.CUSTOMERS, Actions.DELETE)) return;
           setSelectedCustomer(record);
           setShowDetailDialog(true);
         }}
@@ -286,10 +299,15 @@ export function CustomersListPage() {
               onFiltersChange={handleFiltersChange}
               onClearFilters={handleClearFilters}
             />
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("customers.addCustomer")}
-            </Button>
+            <PermissionGuard
+              resource={Resources.CUSTOMERS}
+              action={Actions.CREATE}
+            >
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("customers.addCustomer")}
+              </Button>
+            </PermissionGuard>
           </div>
         }
       />

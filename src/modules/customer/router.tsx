@@ -1,4 +1,7 @@
+import { PermissionGuard } from "@/components/guards";
+import NoPermissionPage from "@/components/layout/no-permission-page";
 import LazyLoadComponent from "@/components/lazyload";
+import { Actions, Resources } from "@/constants";
 import React from "react";
 import { type RouteObject } from "react-router-dom";
 
@@ -10,7 +13,13 @@ const customerRouter: RouteObject[] = [
   {
     element: (
       <LazyLoadComponent>
-        <CustomersListPage />
+        <PermissionGuard
+          resource={Resources.CUSTOMERS}
+          action={Actions.READ}
+          fallback={<NoPermissionPage />}
+        >
+          <CustomersListPage />
+        </PermissionGuard>
       </LazyLoadComponent>
     ),
     path: "customers",

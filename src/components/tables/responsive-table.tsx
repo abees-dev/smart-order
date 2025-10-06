@@ -24,6 +24,7 @@ export interface ResponsiveTableColumn<T> {
   responsive?: boolean; // Hide on mobile if false
   sortable?: boolean;
   className?: string;
+  view?: boolean; // Permission based view
 }
 
 export interface ResponsiveTableProps<T>

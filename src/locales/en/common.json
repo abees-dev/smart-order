@@ -275,5 +275,13 @@
     "editSupply": "Edit Supply",
     "deleteSupply": "Delete Supply",
     "searchPlaceholder": "Search supplies..."
+  },
+  "noPermission": {
+    "title": "Access Denied",
+    "description": "You don't have permission to access this feature. Please contact your administrator to request access.",
+    "fallback": "Access denied",
+    "inline": "No permission",
+    "contactAdmin": "Contact Administrator",
+    "requestAccess": "Request Access"
   }
 }

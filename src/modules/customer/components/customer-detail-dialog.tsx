@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Customer } from "../types";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import { PermissionGuard } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
+import { NoPermissionFallback } from "@/components/layout";
 
 interface CustomerDetailDialogProps {
   open: boolean;
@@ -169,7 +172,13 @@ export function CustomerDetailDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      {detailsContent}
+      <PermissionGuard
+        resource={Resources.CUSTOMERS}
+        action={Actions.DELETE}
+        fallback={<NoPermissionFallback />}
+      >
+        {detailsContent}
+      </PermissionGuard>
     </DialogResponsive>
   );
 }

@@ -342,5 +342,13 @@
     "editSupply": "Chỉnh sửa vật tư",
     "deleteSupply": "Xóa vật tư",
     "searchPlaceholder": "Tìm kiếm vật tư..."
+  },
+  "noPermission": {
+    "title": "Không Có Quyền Truy Cập",
+    "description": "Bạn không có quyền truy cập vào tính năng này. Vui lòng liên hệ quản trị viên để được cấp quyền.",
+    "fallback": "Không có quyền truy cập",
+    "inline": "Không có quyền",
+    "contactAdmin": "Liên hệ quản trị viên",
+    "requestAccess": "Yêu cầu quyền truy cập"
   }
 }
