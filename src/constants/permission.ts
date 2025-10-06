@@ -6,6 +6,7 @@ export const Resources = {
   REPORTS: "REPORTS",
   SUPPLIES: "SUPPLIES",
   INVOICES: "INVOICES",
+  COST_INCURRED: "COST_INCURRED",
 } as const;
 
 export const Actions = {

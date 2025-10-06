@@ -45,8 +45,9 @@ import {
 } from "../hooks/user-order-actions";
 import { CreateCostIncurredDialog } from "./create-cost-incurred-dialog";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "@/constants";
+import { Actions, Resources, ROUTES } from "@/constants";
 import { StockShortageModal } from "./stock-shortage-modal";
+import { usePermissions } from "@/components/guards";
 
 export function OrdersListPage() {
   const navigate = useNavigate();
@@ -81,6 +82,8 @@ export function OrdersListPage() {
   const { deleteOrder } = useDeleteOrder({});
   const { createColumn, createCurrencyColumn, createDateColumn } =
     useEnhancedTableColumns<Order>();
+
+  const { hasPermission } = usePermissions();
 
   const { changeOrderStatus } = useChangeOrderStatus({
     onSuccess: () => {
@@ -239,6 +242,7 @@ export function OrdersListPage() {
       key: "view",
       label: "Xem chi tiết",
       icon: Eye,
+      show: () => hasPermission(Resources.ORDERS, Actions.DETAIL),
       onClick: (record) => {
         navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
       },
@@ -247,7 +251,9 @@ export function OrdersListPage() {
       key: "cost-incurred",
       label: "Chi phí phát sinh",
       icon: Receipt,
-      show: (record) => record.status !== "draft",
+      show: (record) =>
+        record.status !== "draft" &&
+        hasPermission(Resources.COST_INCURRED, Actions.CREATE),
       onClick: (record) => {
         setShowCreateCostIncurredDialog(true);
         setSelectedOrder(record);
@@ -261,28 +267,36 @@ export function OrdersListPage() {
         setSelectedOrder(record);
         setShowFormDialog(true);
       },
-      show: (record) => record.status === "draft",
+      show: (record) =>
+        record.status === "draft" &&
+        hasPermission(Resources.ORDERS, Actions.UPDATE),
     },
     {
       key: "confirm",
       label: "Xác nhận",
       icon: CheckCircle,
       onClick: (record) => handleStatusChange(record, "confirmed"),
-      show: (record) => record.status === "draft",
+      show: (record) =>
+        record.status === "draft" &&
+        hasPermission(Resources.ORDERS, Actions.UPDATE),
     },
     {
       key: "export",
       label: "Xuất kho",
       icon: Truck,
       onClick: (record) => handleStatusChange(record, "exported"),
-      show: (record) => record.status === "confirmed",
+      show: (record) =>
+        record.status === "confirmed" &&
+        hasPermission(Resources.ORDERS, Actions.UPDATE),
     },
     {
       key: "complete",
       label: "Hoàn thành",
       icon: Package,
       onClick: (record) => handleStatusChange(record, "completed"),
-      show: (record) => record.status === "exported",
+      show: (record) =>
+        record.status === "exported" &&
+        hasPermission(Resources.ORDERS, Actions.UPDATE),
     },
     {
       key: "cancel",
@@ -293,7 +307,8 @@ export function OrdersListPage() {
       show: (record) =>
         record.status === "draft" ||
         record.status === "confirmed" ||
-        record.status === "exported",
+        (record.status === "exported" &&
+          hasPermission(Resources.ORDERS, Actions.UPDATE)),
     },
     {
       key: "delete",
@@ -302,7 +317,8 @@ export function OrdersListPage() {
       variant: "destructive",
       onClick: (record) => handleDeleteOrder(record),
       show: (record) =>
-        record.status === "draft" || record.status === "cancelled",
+        (record.status === "draft" || record.status === "cancelled") &&
+        hasPermission(Resources.ORDERS, Actions.DELETE),
     },
   ];
 
@@ -388,6 +404,7 @@ export function OrdersListPage() {
         loadingMore={isFetching}
         searchValue={filters.search || ""}
         onDoubleClick={(record) => {
+          if (!hasPermission(Resources.ORDERS, Actions.DETAIL)) return;
           navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
         }}
         pagination={
