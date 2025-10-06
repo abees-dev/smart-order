@@ -1,6 +1,5 @@
 import {
   Calendar,
-  Settings,
   Users,
   Package,
   ShoppingCart,
@@ -26,7 +25,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -113,12 +112,6 @@ export function AppSidebar() {
       icon: Calendar,
       type: "simple" as const,
     },
-    {
-      title: t("navigation.settings"),
-      url: ROUTES.DASHBOARD.COMING_SOON,
-      icon: Settings,
-      type: "simple" as const,
-    },
   ];
 
   // Auto-open submenus if we're on related routes
@@ -134,9 +127,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center border-b p-4 flex-col">
+          <img
+            src="/icon.png"
+            alt="Logo"
+            className="h-10 w-10 rounded overflow-hidden"
+          />
+
+          <div className="text-lg font-bold p-4">{t("app.title")}</div>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{t("app.title")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {

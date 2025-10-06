@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "Đặt Hàng Thông Minh",
-    "description": "Hệ thống đặt hàng thông minh"
+    "title": "Quản lý kinh doanh",
+    "description": "Hệ thống quản lý kinh doanh"
   },
   "auth": {
     "login": "Đăng nhập",
