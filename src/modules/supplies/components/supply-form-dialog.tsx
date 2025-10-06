@@ -21,6 +21,8 @@ import FormTextField from "@/components/forms/form-textfield";
 import { useCreateSupply, useUpdateSupply } from "../hooks/use-supply-actions";
 import { useState } from "react";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import { usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 interface SupplyFormDialogProps {
   open: boolean;
@@ -38,6 +40,7 @@ export function SupplyFormDialog({
   mode = "create",
 }: SupplyFormDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const { hasPermission } = usePermissions();
   const { createSupply, loading: createSupplyLoading } = useCreateSupply({
     onSuccess: () => {
       onSuccess();
@@ -206,39 +209,42 @@ export function SupplyFormDialog({
         </div>
 
         {/* Pricing Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted">
-            <DollarSign className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm text-primary">
-              Thông tin giá cả
-            </h3>
-          </div>
+        {hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE) &&
+          isEditMode && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-muted">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-sm text-primary">
+                  Thông tin giá cả
+                </h3>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <FormTextField
-              control={form.control}
-              name="purchasePrice"
-              label="Giá mua"
-              placeholder="0"
-              type="number"
-              min="0"
-              required
-              helpText="Giá mua vào từ nhà cung cấp (VND)"
-            />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                <FormTextField
+                  control={form.control}
+                  name="purchasePrice"
+                  label="Giá mua"
+                  placeholder="0"
+                  type="number"
+                  min="0"
+                  required
+                  helpText="Giá mua vào từ nhà cung cấp (VND)"
+                />
 
-            <FormTextField
-              control={form.control}
-              name="salePrice"
-              label="Giá bán"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="0"
-              required
-              helpText="Giá bán ra cho khách hàng (VND)"
-            />
-          </div>
-        </div>
+                <FormTextField
+                  control={form.control}
+                  name="salePrice"
+                  label="Giá bán"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  required
+                  helpText="Giá bán ra cho khách hàng (VND)"
+                />
+              </div>
+            </div>
+          )}
 
         {/* Additional Information Section */}
         <div className="space-y-4">

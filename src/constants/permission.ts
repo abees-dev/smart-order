@@ -7,6 +7,7 @@ export const Resources = {
   SUPPLIES: "SUPPLIES",
   INVOICES: "INVOICES",
   COST_INCURRED: "COST_INCURRED",
+  SUPPLIES_IMPORT: "SUPPLIES_IMPORT",
 } as const;
 
 export const Actions = {
@@ -16,6 +17,7 @@ export const Actions = {
   UPDATE: "update",
   DELETE: "delete",
   COST: "cost",
+  VIEW_PRICE: "view_price",
 } as const;
 
 export type Resources = (typeof Resources)[keyof typeof Resources];

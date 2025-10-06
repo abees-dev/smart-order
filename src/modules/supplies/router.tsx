@@ -1,7 +1,10 @@
-import { Outlet, type RouteObject } from "react-router-dom";
+import { Navigate, Outlet, type RouteObject } from "react-router-dom";
 
 import React from "react";
 import LazyLoadComponent from "@/components/lazyload";
+import { Actions, Resources, ROUTES } from "@/constants";
+import { PermissionGuard } from "@/components/guards";
+import { NoPermissionPage } from "@/components/layout";
 
 const SuppliesListPage = React.lazy(
   () => import("./components/supplies-list-page")
@@ -20,18 +23,19 @@ const suppliesRouter: RouteObject[] = [
     children: [
       {
         index: true,
-        element: (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Vật tư</h1>
-            <p>Chọn một mục từ menu bên trái để bắt đầu.</p>
-          </div>
-        ),
+        element: <Navigate to={ROUTES.DASHBOARD.SUPPLIES.INVENTORY} replace />,
       },
       {
         path: "inventory",
         element: (
           <LazyLoadComponent>
-            <SuppliesListPage />
+            <PermissionGuard
+              resource={Resources.SUPPLIES}
+              action={Actions.READ}
+              fallback={<NoPermissionPage />}
+            >
+              <SuppliesListPage />
+            </PermissionGuard>
           </LazyLoadComponent>
         ),
       },
@@ -39,7 +43,13 @@ const suppliesRouter: RouteObject[] = [
         path: "imports",
         element: (
           <LazyLoadComponent>
-            <SupplyImportsListPage />
+            <PermissionGuard
+              resource={Resources.SUPPLIES_IMPORT}
+              action={Actions.READ}
+              fallback={<NoPermissionPage />}
+            >
+              <SupplyImportsListPage />
+            </PermissionGuard>
           </LazyLoadComponent>
         ),
       },
@@ -47,7 +57,13 @@ const suppliesRouter: RouteObject[] = [
         path: "imports/:id",
         element: (
           <LazyLoadComponent>
-            <SupplyImportDetailPage />
+            <PermissionGuard
+              resource={Resources.SUPPLIES_IMPORT}
+              action={Actions.DETAIL}
+              fallback={<NoPermissionPage />}
+            >
+              <SupplyImportDetailPage />
+            </PermissionGuard>
           </LazyLoadComponent>
         ),
       },

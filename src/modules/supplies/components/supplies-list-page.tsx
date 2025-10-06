@@ -17,6 +17,8 @@ import { DeleteSupplyDialog } from "./delete-supply-dialog";
 import type { Supply, SupplyFilters } from "../types";
 import { SUPPLY_CATEGORY_MAP } from "../utils/supply-categrory";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function SuppliesListPage() {
   const { t } = useTranslation();
@@ -34,6 +36,7 @@ export function SuppliesListPage() {
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
   const isMobile = useIsMobile();
   const [page, setPage] = useState(1);
+  const { hasPermission } = usePermissions();
   const changePage = (newPage: number) => {
     setPage(newPage);
   };
@@ -160,8 +163,16 @@ export function SuppliesListPage() {
         );
       },
     }),
-    createCurrencyColumn("purchasePrice", "Giá mua"),
-    createCurrencyColumn("salePrice", "Giá bán"),
+    createCurrencyColumn(
+      "purchasePrice",
+      "Giá mua",
+      hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE)
+    ),
+    createCurrencyColumn(
+      "salePrice",
+      "Giá bán",
+      hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE)
+    ),
     createColumn({
       key: "supplier",
       title: "Nhà cung cấp",
@@ -180,6 +191,7 @@ export function SuppliesListPage() {
       key: "view",
       label: "Xem chi tiết",
       icon: Eye,
+      show: () => hasPermission(Resources.SUPPLIES, Actions.DETAIL),
       onClick: (record) => {
         setSelectedSupply(record);
         setShowDetailDialog(true);
@@ -189,6 +201,7 @@ export function SuppliesListPage() {
       key: "edit",
       label: "Chỉnh sửa",
       icon: Pencil,
+      show: () => hasPermission(Resources.SUPPLIES, Actions.UPDATE),
       onClick: (record) => {
         setSelectedSupply(record);
         setShowFormDialog(true);
@@ -199,6 +212,7 @@ export function SuppliesListPage() {
       label: "Xóa",
       icon: Trash2,
       variant: "destructive",
+      show: () => hasPermission(Resources.SUPPLIES, Actions.DELETE),
       onClick: (record) => {
         setSelectedSupply(record);
         setShowDeleteDialog(true);
@@ -249,20 +263,22 @@ export function SuppliesListPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-muted-foreground">Giá mua:</span>
-            <p className="font-semibold text-blue-600">
-              {formatCurrency(record.purchasePrice)}
-            </p>
+        {hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE) && (
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="text-muted-foreground">Giá mua:</span>
+              <p className="font-semibold text-blue-600">
+                {formatCurrency(record.purchasePrice)}
+              </p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Giá bán:</span>
+              <p className="font-semibold text-green-600">
+                {formatCurrency(record.salePrice)}
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-muted-foreground">Giá bán:</span>
-            <p className="font-semibold text-green-600">
-              {formatCurrency(record.salePrice)}
-            </p>
-          </div>
-        </div>
+        )}
 
         {record.location && (
           <div className="text-sm">
@@ -312,6 +328,7 @@ export function SuppliesListPage() {
         loadingMore={loadingMore}
         searchValue={filters.search || ""}
         onDoubleClick={(record) => {
+          if (!hasPermission(Resources.SUPPLIES, Actions.DETAIL)) return;
           setSelectedSupply(record);
           setShowDetailDialog(true);
         }}

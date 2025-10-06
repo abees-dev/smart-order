@@ -34,6 +34,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import SupplyStatusBadge from "./supply-status-badge";
 import { PageHeader } from "@/components/PageHeader";
 import SupplyImportFilter from "./filters/SupplyImportFilter";
+import { usePermissions } from "@/components/guards/permission-guard";
+import { Actions, Resources } from "@/constants";
 
 export function SupplyImportsListPage() {
   useDocumentTitle();
@@ -51,6 +53,7 @@ export function SupplyImportsListPage() {
     setPage(newPage);
   };
   const isMobile = useIsMobile();
+  const { hasPermission } = usePermissions();
 
   const { summary } = useSupplySummary();
 
@@ -221,6 +224,7 @@ export function SupplyImportsListPage() {
       key: "view",
       label: "Xem chi tiết",
       icon: Eye,
+      show: () => hasPermission(Resources.SUPPLIES_IMPORT, Actions.DETAIL),
       onClick: (record) => handleViewImport(record),
     },
     {
@@ -229,7 +233,8 @@ export function SupplyImportsListPage() {
       icon: Edit,
       onClick: (record) => handleEditImport(record),
       show: (record) =>
-        record.status === "pending" || record.status === "warehouse",
+        (record.status === "pending" || record.status === "warehouse") &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "warehouse",
@@ -237,7 +242,9 @@ export function SupplyImportsListPage() {
       icon: CheckCircle,
       variant: "default",
       onClick: (record) => handleAddToWarehouse(record),
-      show: (record) => record.status === "pending",
+      show: (record) =>
+        record.status === "pending" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "complete",
@@ -245,7 +252,9 @@ export function SupplyImportsListPage() {
       icon: CheckCircle,
       variant: "default",
       onClick: (record) => handleCompleteImport(record),
-      show: (record) => record.status === "warehouse",
+      show: (record) =>
+        record.status === "warehouse" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "cancel",
@@ -253,7 +262,9 @@ export function SupplyImportsListPage() {
       icon: XCircle,
       variant: "destructive",
       onClick: (record) => handleCancelImport(record),
-      show: (record) => record.status === "pending",
+      show: (record) =>
+        record.status === "pending" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "delete",
@@ -261,7 +272,9 @@ export function SupplyImportsListPage() {
       icon: Trash2,
       variant: "destructive",
       onClick: (record) => handleDeleteImport(record),
-      show: (record) => record.status !== "completed",
+      show: (record) =>
+        record.status !== "completed" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.DELETE),
     },
   ];
 
@@ -400,6 +413,7 @@ export function SupplyImportsListPage() {
           onLoadMore={fetchNextPage}
           loadingMore={isFetching}
           onDoubleClick={(record) => {
+            if (!hasPermission(Resources.SUPPLIES, Actions.DETAIL)) return;
             handleViewImport(record);
           }}
           pagination={

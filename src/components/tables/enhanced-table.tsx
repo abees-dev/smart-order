@@ -97,7 +97,8 @@ export function EnhancedTable<T = Record<string, unknown>>({
 
   // Add actions column if actions are provided
   const enhancedColumns = React.useMemo(() => {
-    if (actions.length === 0) return columns;
+    if (actions.length === 0)
+      return columns.filter((col) => col.view !== false);
 
     const actionColumn: ResponsiveTableColumn<T> = {
       key: "actions",
@@ -166,10 +167,8 @@ export function EnhancedTable<T = Record<string, unknown>>({
       },
     };
 
-    return [...columns, actionColumn];
+    return [...columns.filter((col) => col.view !== false), actionColumn];
   }, [columns, actions]);
-
-  console.log("enhancedColumns render");
 
   return (
     <div className="space-y-4">
@@ -368,11 +367,16 @@ export function useEnhancedTableColumns<T>() {
   );
 
   const createCurrencyColumn = React.useCallback(
-    (key: keyof T, title: string): ResponsiveTableColumn<T> => ({
+    (
+      key: keyof T,
+      title: string,
+      view: boolean = true
+    ): ResponsiveTableColumn<T> => ({
       key: String(key),
       title,
       dataIndex: key,
       align: "right",
+      view: view,
       width: 120,
       render: (value) => {
         if (value === null || value === undefined) return "-";

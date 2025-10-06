@@ -29,6 +29,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Supply } from "../types";
+import { usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 interface SupplyDetailDialogProps {
   supply: Supply | null;
@@ -43,6 +45,7 @@ export function SupplyDetailDialog({
   onOpenChange,
 }: SupplyDetailDialogProps) {
   const isMobile = useIsMobile();
+  const { hasPermission } = usePermissions();
 
   const getStockStatus = () => {
     if (!supply) return null;
@@ -144,56 +147,59 @@ export function SupplyDetailDialog({
       <Separator />
 
       {/* Pricing Information */}
-      <div className="space-y-3">
-        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-          Thông tin giá cả
-        </h4>
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <div className="text-sm">
-              <span className="text-muted-foreground">Giá mua:</span>
-              <span className="ml-2 font-semibold">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(supply.purchasePrice)}
-              </span>
+      {hasPermission(Resources.SUPPLIES, Actions.COST) && (
+        <div className="space-y-3">
+          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+            Thông tin giá cả
+          </h4>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <div className="text-sm">
+                <span className="text-muted-foreground">Giá mua:</span>
+                <span className="ml-2 font-semibold">
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(supply.purchasePrice)}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <div className="text-sm">
-              <span className="text-muted-foreground">Giá bán:</span>
-              <span className="ml-2 font-semibold">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(supply.salePrice)}
-              </span>
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <div className="text-sm">
+                <span className="text-muted-foreground">Giá bán:</span>
+                <span className="ml-2 font-semibold">
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  }).format(supply.salePrice)}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            <div className="text-sm">
-              <span className="text-muted-foreground">Lợi nhuận:</span>
-              <span className="ml-2 font-semibold">
-                {Math.round(
-                  ((supply.salePrice - supply.purchasePrice) /
-                    supply.purchasePrice) *
-                    100
-                )}
-                %
-              </span>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <div className="text-sm">
+                <span className="text-muted-foreground">Lợi nhuận:</span>
+                <span className="ml-2 font-semibold">
+                  {Math.round(
+                    ((supply.salePrice - supply.purchasePrice) /
+                      supply.purchasePrice) *
+                      100
+                  )}
+                  %
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <Separator />
+      {hasPermission(Resources.SUPPLIES, Actions.COST) && <Separator />}
 
       {/* General Information */}
       <div className="space-y-3">

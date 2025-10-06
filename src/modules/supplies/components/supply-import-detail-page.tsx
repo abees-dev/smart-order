@@ -34,12 +34,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function SupplyImportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
 
   useDocumentTitle();
 
@@ -131,7 +134,9 @@ export function SupplyImportDetailPage() {
       icon: CheckCircle,
       variant: "default",
       onClick: (record) => handleAddToWarehouse(record),
-      show: (record) => record.status === "pending",
+      show: (record) =>
+        record.status === "pending" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "complete",
@@ -139,7 +144,9 @@ export function SupplyImportDetailPage() {
       icon: CheckCircle,
       variant: "default",
       onClick: (record) => handleCompleteImport(record),
-      show: (record) => record.status === "warehouse",
+      show: (record) =>
+        record.status === "warehouse" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "cancel",
@@ -147,7 +154,9 @@ export function SupplyImportDetailPage() {
       icon: XCircle,
       variant: "destructive",
       onClick: (record) => handleCancelImport(record),
-      show: (record) => record.status === "pending",
+      show: (record) =>
+        record.status === "pending" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {
       key: "delete",
@@ -155,7 +164,9 @@ export function SupplyImportDetailPage() {
       icon: Trash2,
       variant: "destructive",
       onClick: (record) => handleDeleteImport(record),
-      show: (record) => record.status !== "completed",
+      show: (record) =>
+        record.status !== "completed" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.DELETE),
     },
   ];
 
@@ -249,23 +260,25 @@ export function SupplyImportDetailPage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[160px]">
-          {visibleActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <DropdownMenuItem
-                key={action.key}
-                onClick={() => action.onClick(record)}
-                className={cn(
-                  "flex items-center gap-2 cursor-pointer",
-                  action.variant === "destructive" &&
-                    "text-destructive focus:text-destructive"
-                )}
-              >
-                {Icon && <Icon className="h-4 w-4" />}
-                {action.label}
-              </DropdownMenuItem>
-            );
-          })}
+          {visibleActions
+            .filter((action) => (action.show ? action.show(record) : true))
+            .map((action) => {
+              const Icon = action.icon;
+              return (
+                <DropdownMenuItem
+                  key={action.key}
+                  onClick={() => action.onClick(record)}
+                  className={cn(
+                    "flex items-center gap-2 cursor-pointer",
+                    action.variant === "destructive" &&
+                      "text-destructive focus:text-destructive"
+                  )}
+                >
+                  {Icon && <Icon className="h-4 w-4" />}
+                  {action.label}
+                </DropdownMenuItem>
+              );
+            })}
         </DropdownMenuContent>
       </DropdownMenu>
     );
