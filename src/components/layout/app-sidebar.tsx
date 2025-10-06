@@ -37,6 +37,8 @@ import {
   SidebarMenuSubItem,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import { hasResource } from "@/utils/permission";
+import { Resources } from "@/constants";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -52,12 +54,14 @@ export function AppSidebar() {
       url: ROUTES.DASHBOARD.CUSTOMERS,
       icon: Users,
       type: "simple" as const,
+      view: hasResource(Resources.CUSTOMERS, user?.permissions || {}),
     },
     {
       title: t("navigation.suppliers"),
       url: ROUTES.DASHBOARD.SUPPLIERS,
       icon: Building2,
       type: "simple" as const,
+      view: hasResource(Resources.SUPPLIERS, user?.permissions || {}),
     },
     {
       title: t("navigation.supplies"),
@@ -78,17 +82,20 @@ export function AppSidebar() {
           icon: FileText,
         },
       ],
+      view: hasResource(Resources.SUPPLIES, user?.permissions || {}),
     },
     {
       title: t("navigation.products"),
       url: ROUTES.DASHBOARD.PRODUCTS,
       icon: Package,
       type: "simple" as const,
+      view: hasResource(Resources.PRODUCTS, user?.permissions || {}),
     },
     {
       title: t("navigation.orders"),
       url: ROUTES.DASHBOARD.ORDERS,
       icon: ShoppingCart,
+      view: hasResource(Resources.ORDERS, user?.permissions || {}),
       type: "simple" as const,
     },
     {
@@ -98,6 +105,7 @@ export function AppSidebar() {
       isOpen: invoicesOpen,
       setOpen: setInvoicesOpen,
       isActiveChecker: isInvoicesActive,
+      view: hasResource(Resources.INVOICES, user?.permissions || {}),
       subItems: [
         {
           title: "Hóa đơn đầu vào",
@@ -116,6 +124,7 @@ export function AppSidebar() {
       url: ROUTES.DASHBOARD.REPORTS,
       icon: Calendar,
       type: "simple" as const,
+      view: hasResource(Resources.REPORTS, user?.permissions || {}),
     },
   ];
 
@@ -147,61 +156,66 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
-                if (item.type === "simple") {
-                  const isActive = isActiveRoute(location.pathname, item.url!);
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={isActive}>
-                        <Link to={item.url!}>
+              {menuItems
+                .filter((item) => item.view)
+                .map((item) => {
+                  if (item.type === "simple") {
+                    const isActive = isActiveRoute(
+                      location.pathname,
+                      item.url!
+                    );
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.url!}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  } else if (item.type === "submenu") {
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          onClick={() => item.setOpen(!item.isOpen)}
+                        >
                           <item.icon />
                           <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                } else if (item.type === "submenu") {
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        onClick={() => item.setOpen(!item.isOpen)}
-                      >
-                        <item.icon />
-                        <span>{item.title}</span>
-                        <ChevronRight
-                          className={`ml-auto transition-transform ${
-                            item.isOpen ? "rotate-90" : ""
-                          }`}
-                        />
-                      </SidebarMenuButton>
-                      {item.isOpen && (
-                        <SidebarMenuSub>
-                          {item.subItems!.map((subItem) => {
-                            const isActive = isActiveRoute(
-                              location.pathname,
-                              subItem.url
-                            );
-                            return (
-                              <SidebarMenuSubItem key={subItem.title}>
-                                <SidebarMenuSubButton
-                                  asChild
-                                  isActive={isActive}
-                                >
-                                  <Link to={subItem.url}>
-                                    <subItem.icon />
-                                    <span>{subItem.title}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            );
-                          })}
-                        </SidebarMenuSub>
-                      )}
-                    </SidebarMenuItem>
-                  );
-                }
-                return null;
-              })}
+                          <ChevronRight
+                            className={`ml-auto transition-transform ${
+                              item.isOpen ? "rotate-90" : ""
+                            }`}
+                          />
+                        </SidebarMenuButton>
+                        {item.isOpen && (
+                          <SidebarMenuSub>
+                            {item.subItems!.map((subItem) => {
+                              const isActive = isActiveRoute(
+                                location.pathname,
+                                subItem.url
+                              );
+                              return (
+                                <SidebarMenuSubItem key={subItem.title}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={isActive}
+                                  >
+                                    <Link to={subItem.url}>
+                                      <subItem.icon />
+                                      <span>{subItem.title}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
+                          </SidebarMenuSub>
+                        )}
+                      </SidebarMenuItem>
+                    );
+                  }
+                  return null;
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -215,7 +229,7 @@ export function AppSidebar() {
                   <User className="h-4 w-4" />
                   <div className="flex-1 truncate">
                     <div className="font-medium truncate">
-                      {user?.displayName || user?.username || "User"}
+                      {user?.firstName} {user?.lastName}
                     </div>
                     {user?.email && (
                       <div className="text-xs text-muted-foreground truncate">

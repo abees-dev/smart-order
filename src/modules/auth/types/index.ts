@@ -1,27 +1,28 @@
-import type { Timestamp } from "firebase/firestore";
+import type { Resources } from "@/constants";
 
 export interface User {
-  uid: string;
+  id: string;
   username: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  providerId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  isActive: boolean;
+  lastLoginAt: string;
+  createdAt: string;
+  updatedAt: string;
+  permissions: Permission;
 }
 
-export interface UserDocument extends User {
-  createdAt: Timestamp | null;
-  updatedAt: Timestamp | null;
-  isActive: boolean;
-}
+export type Permission = {
+  [key in Resources]?: string[];
+};
 
 export interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
 }
-
-export type AuthProvider = "credentials" | "google" | "zalo";
 
 export interface LoginCredentials {
   username: string;
@@ -43,8 +44,6 @@ export interface AuthService {
   signInWithCredentials: (
     credentials: LoginCredentials
   ) => Promise<AuthResponse>;
-  signInWithGoogle: () => Promise<AuthResponse>;
-  signInWithZalo: () => Promise<AuthResponse>;
   signOut: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
   refreshToken: () => Promise<RefreshTokenResponse>;

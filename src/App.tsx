@@ -1,12 +1,11 @@
 import { RouterProvider } from "react-router-dom";
-import { Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import router from "./router";
 import { queryClient } from "./config/react-query";
 import { uptimeServer } from "./utils/uptime";
-import { AuthInitializer } from "./components/auth-initializer";
 // import { useDocumentTitle } from "./hooks/use-document-title";
 
 function App() {

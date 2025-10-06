@@ -41,8 +41,8 @@ class AuthServiceImpl implements AuthService {
       const token = localStorage.getItem("auth_token");
       if (!token) return null;
 
-      const response = await axiosInstance.get("/auth/me");
-      return response as unknown as User;
+      const response: unknown = await axiosInstance.get("/auth/me");
+      return (response as { user: unknown }).user as unknown as User;
     } catch {
       localStorage.removeItem("auth_token");
       return null;
