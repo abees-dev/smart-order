@@ -268,7 +268,7 @@ export function OrdersListPage() {
         setShowFormDialog(true);
       },
       show: (record) =>
-        record.status === "draft" &&
+        record.status !== "cancelled" &&
         hasPermission(Resources.ORDERS, Actions.UPDATE),
     },
     {
