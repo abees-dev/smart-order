@@ -9,6 +9,8 @@ import {
   FileText,
   ChevronRight,
   Receipt,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
@@ -19,6 +21,7 @@ import {
   isSuppliesActive,
   isInvoicesActive,
 } from "@/constants/routes";
+import { useAuthActions } from "@/modules/auth/hooks/use-auth-actions";
 
 import {
   Sidebar,
@@ -32,11 +35,13 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
+  const { handleLogout, user } = useAuthActions();
   const [suppliesOpen, setSuppliesOpen] = useState(false);
   const [invoicesOpen, setInvoicesOpen] = useState(false);
 
@@ -201,6 +206,38 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <div className="flex items-center gap-2 p-2 text-sm">
+                  <User className="h-4 w-4" />
+                  <div className="flex-1 truncate">
+                    <div className="font-medium truncate">
+                      {user?.displayName || user?.username || "User"}
+                    </div>
+                    {user?.email && (
+                      <div className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleLogout}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>{t("auth.signOut")}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarFooter>
     </Sidebar>
   );
 }

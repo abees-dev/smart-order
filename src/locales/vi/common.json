@@ -6,6 +6,7 @@
   "auth": {
     "login": "Đăng nhập",
     "logout": "Đăng xuất",
+    "signOut": "Đăng xuất",
     "register": "Đăng ký",
     "username": "Tên đăng nhập",
     "email": "Email",

@@ -44,10 +44,10 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
-        const user = await authService.signInWithCredentials(credentials);
-        setUser(user);
+        const response = await authService.signInWithCredentials(credentials);
+        setUser(response.user);
 
-        return user;
+        return response.user;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? t(error.message) : t("common.error");
@@ -64,10 +64,10 @@ export function useAuth() {
       setLoading(true);
       setError(null);
 
-      const user = await authService.signInWithGoogle();
-      setUser(user);
+      const response = await authService.signInWithGoogle();
+      setUser(response.user);
 
-      return user;
+      return response.user;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? t(error.message) : t("common.error");
@@ -82,10 +82,10 @@ export function useAuth() {
       setLoading(true);
       setError(null);
 
-      const user = await authService.signInWithZalo();
-      setUser(user);
+      const response = await authService.signInWithZalo();
+      setUser(response.user);
 
-      return user;
+      return response.user;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? t(error.message) : t("common.error");

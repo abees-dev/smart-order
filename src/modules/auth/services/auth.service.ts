@@ -1,11 +1,19 @@
 import axiosInstance from "@/utils/axios";
-import type { LoginCredentials, User, AuthService } from "../types";
+import type {
+  LoginCredentials,
+  User,
+  AuthService,
+  AuthResponse,
+  RefreshTokenResponse,
+} from "../types";
 
 class AuthServiceImpl implements AuthService {
-  async signInWithCredentials(credentials: LoginCredentials): Promise<User> {
+  async signInWithCredentials(
+    credentials: LoginCredentials
+  ): Promise<AuthResponse> {
     try {
       const response = await axiosInstance.post("/auth/login", credentials);
-      return response.data;
+      return response as unknown as AuthResponse;
     } catch (error: unknown) {
       if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as { response: { status: number } };
@@ -15,16 +23,6 @@ class AuthServiceImpl implements AuthService {
       }
       throw new Error("common.error");
     }
-  }
-
-  async signInWithGoogle(): Promise<User> {
-    // TODO: Implement Google sign-in
-    throw new Error("Google sign-in not implemented yet");
-  }
-
-  async signInWithZalo(): Promise<User> {
-    // TODO: Implement Zalo sign-in
-    throw new Error("Zalo sign-in not implemented yet");
   }
 
   async signOut(): Promise<void> {
@@ -44,22 +42,22 @@ class AuthServiceImpl implements AuthService {
       if (!token) return null;
 
       const response = await axiosInstance.get("/auth/me");
-      return response.data;
+      return response as unknown as User;
     } catch {
       localStorage.removeItem("auth_token");
       return null;
     }
   }
 
-  async refreshToken(): Promise<string | null> {
+  async refreshToken(): Promise<RefreshTokenResponse> {
     try {
       const response = await axiosInstance.post("/auth/refresh");
-      const newToken = response.data.token;
-      localStorage.setItem("auth_token", newToken);
-      return newToken;
+      const { accessToken, refreshToken } = response.data;
+      localStorage.setItem("auth_token", accessToken);
+      return { accessToken, refreshToken };
     } catch {
       localStorage.removeItem("auth_token");
-      return null;
+      throw new Error("Token refresh failed");
     }
   }
 }

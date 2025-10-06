@@ -3,6 +3,7 @@
 ## Architecture Overview
 
 React 19 + TypeScript + Vite application with **dual deployment targets**: standard web app and **Zalo Mini App (ZMP)**. Features modular architecture with Vietnamese-first i18n, REST API backend, shadcn/ui "new-york" style, and Tailwind v4.
+Skip install packages
 
 ### Tech Stack Essentials
 

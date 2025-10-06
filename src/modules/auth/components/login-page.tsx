@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,16 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form } from "@/components/ui/form";
 import { FormTextField } from "@/components/forms";
-import { useAuth } from "../hooks/use-auth";
+import { useAuthStore } from "@/stores/auth.store";
 import { loginSchema, type LoginFormData } from "../validation";
 import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { ROUTES } from "@/constants/routes";
 
 const LoginPage = () => {
   const { t } = useTranslation();
-  const { user, loading, error, signInWithCredentials, setError } = useAuth();
+  const location = useLocation();
+  const { isLoading, error, login, setError, isAuthenticated } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormData>({
@@ -32,11 +34,12 @@ const LoginPage = () => {
   });
 
   // Redirect if user is already authenticated
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) {
+    const from = location.state?.from?.pathname || ROUTES.DASHBOARD.ROOT;
+    return <Navigate to={from} replace />;
   }
 
-  if (loading && !form.formState.isSubmitting) {
+  if (isLoading && !form.formState.isSubmitting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-2">
@@ -50,9 +53,10 @@ const LoginPage = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setError(null);
-      await signInWithCredentials(data);
+      await login(data);
+      // Navigation will be handled by the auth guard automatically
     } catch (error) {
-      // Error is already handled in the hook
+      // Error is already handled in the store
       console.error("Login failed:", error);
     }
   };

@@ -28,10 +28,24 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken?: string;
+}
+
 export interface AuthService {
-  signInWithCredentials: (credentials: LoginCredentials) => Promise<User>;
-  signInWithGoogle: () => Promise<User>;
-  signInWithZalo: () => Promise<User>;
+  signInWithCredentials: (
+    credentials: LoginCredentials
+  ) => Promise<AuthResponse>;
+  signInWithGoogle: () => Promise<AuthResponse>;
+  signInWithZalo: () => Promise<AuthResponse>;
   signOut: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
+  refreshToken: () => Promise<RefreshTokenResponse>;
 }

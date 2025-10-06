@@ -8,6 +8,7 @@ import { orderRouter } from "./modules/order";
 import { invoiceRouter } from "./modules/invoice";
 import { reportsRouter } from "./modules/reports/router";
 import DashboardLayout from "./layout/dashboard-layout";
+import { AuthGuard } from "./components/guards";
 import { ROUTES } from "./constants/routes";
 
 const router = createBrowserRouter(
@@ -15,7 +16,11 @@ const router = createBrowserRouter(
     ...authRouter,
     {
       path: "/dashboard",
-      element: <DashboardLayout />,
+      element: (
+        <AuthGuard>
+          <DashboardLayout />
+        </AuthGuard>
+      ),
       children: [
         {
           index: true,

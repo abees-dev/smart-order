@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import router from "./router";
 import { queryClient } from "./config/react-query";
 import { uptimeServer } from "./utils/uptime";
+import { AuthInitializer } from "./components/auth-initializer";
 // import { useDocumentTitle } from "./hooks/use-document-title";
 
 function App() {
@@ -28,16 +29,8 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center h-screen">
-            Loading...
-          </div>
-        }
-      >
-        <RouterProvider router={router} />
-        <Toaster position="top-right" richColors closeButton={false} />
-      </Suspense>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" richColors closeButton={false} />
       {/* React Query Devtools - only shows in development */}
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
