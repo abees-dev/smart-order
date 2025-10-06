@@ -59,42 +59,6 @@ export function useAuth() {
     [t, setError, setLoading, setUser]
   );
 
-  const signInWithGoogle = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await authService.signInWithGoogle();
-      setUser(response.user);
-
-      return response.user;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? t(error.message) : t("common.error");
-      setError(errorMessage);
-      setLoading(false);
-      throw error;
-    }
-  }, [t, setError, setLoading, setUser]);
-
-  const signInWithZalo = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await authService.signInWithZalo();
-      setUser(response.user);
-
-      return response.user;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? t(error.message) : t("common.error");
-      setError(errorMessage);
-      setLoading(false);
-      throw error;
-    }
-  }, [t, setError, setLoading, setUser]);
-
   const signOut = useCallback(async () => {
     try {
       setLoading(true);
@@ -112,8 +76,6 @@ export function useAuth() {
     loading: state.loading,
     error: state.error,
     signInWithCredentials,
-    signInWithGoogle,
-    signInWithZalo,
     signOut,
     setError,
   };
