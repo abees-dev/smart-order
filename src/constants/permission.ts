@@ -15,6 +15,7 @@ export const Actions = {
   READ: "read",
   UPDATE: "update",
   DELETE: "delete",
+  COST: "cost",
 } as const;
 
 export type Resources = (typeof Resources)[keyof typeof Resources];

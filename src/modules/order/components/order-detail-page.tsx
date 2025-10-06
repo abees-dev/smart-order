@@ -40,6 +40,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateVatAmount } from "@/utils/currency";
 import { PageHeader } from "@/components/PageHeader";
+import { PermissionGuard } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -136,15 +138,17 @@ export function OrderDetailPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="items" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="w-full flex flex-nowrap overflow-x-auto">
           <TabsTrigger value="items" className="flex items-center">
             <Package className="w-4 h-4 mr-2" />
             {isMobile ? "" : "Mặt hàng"}
           </TabsTrigger>
-          <TabsTrigger value="cost-analysis" className="flex items-center">
-            <Calculator className="w-4 h-4 mr-2" />
-            {isMobile ? "" : "Tính giá thành"}
-          </TabsTrigger>
+          <PermissionGuard resource={Resources.ORDERS} action={Actions.COST}>
+            <TabsTrigger value="cost-analysis" className="flex items-center">
+              <Calculator className="w-4 h-4 mr-2" />
+              {isMobile ? "" : "Tính giá thành"}
+            </TabsTrigger>
+          </PermissionGuard>
           <TabsTrigger value="costs" className="flex items-center">
             <DollarSign className="w-4 h-4 mr-2" />
             {isMobile ? "" : "Chi phí phát sinh"}
