@@ -124,7 +124,7 @@ export function OrderFormDialog({
           itemId: "",
           quantity: 1,
           unitPrice: 0,
-          vatRate: 10,
+          vatRate: 0,
           vatAmount: 0,
           subtotal: 0,
           totalPrice: 0,
@@ -158,7 +158,7 @@ export function OrderFormDialog({
           itemId: item.itemId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          vatRate: item.vatRate || 10,
+          vatRate: isNaN(item.vatRate) ? 0 : item.vatRate,
           vatAmount: item.vatAmount || 0,
           subtotal: item.subtotal || item.quantity * item.unitPrice,
           totalPrice: item.totalPrice,
@@ -174,7 +174,7 @@ export function OrderFormDialog({
       itemId: "",
       quantity: 1,
       unitPrice: 0,
-      vatRate: 10,
+      vatRate: 0,
       vatAmount: 0,
       subtotal: 0,
       totalPrice: 0,
@@ -488,7 +488,7 @@ export function OrderFormDialog({
                         <FormSelectField
                           field={{
                             ...field,
-                            value: field.value?.toString() || "",
+                            value: field.value?.toString() || "0",
                             onChange: (value: string) => {
                               field.onChange(parseFloat(value));
                               calculateItemValues(index);

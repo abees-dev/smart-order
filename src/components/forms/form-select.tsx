@@ -148,6 +148,8 @@ export function FormSelectField({
     [field]
   );
 
+  console.log("FormSelectField value:", field.value);
+
   return (
     <FormSelect
       {...props}
