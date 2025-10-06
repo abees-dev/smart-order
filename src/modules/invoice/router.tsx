@@ -1,3 +1,6 @@
+import { PermissionGuard } from "@/components/guards";
+import { NoPermissionPage } from "@/components/layout";
+import { Actions, Resources } from "@/constants";
 import React from "react";
 import type { RouteObject } from "react-router-dom";
 import { Navigate } from "react-router-dom";
@@ -21,11 +24,27 @@ export const invoiceRouter: RouteObject[] = [
       },
       {
         path: "input",
-        element: <InputInvoiceListPage />,
+        element: (
+          <PermissionGuard
+            resource={Resources.INVOICES}
+            action={Actions.READ}
+            fallback={<NoPermissionPage />}
+          >
+            <InputInvoiceListPage />
+          </PermissionGuard>
+        ),
       },
       {
         path: "output",
-        element: <OutputInvoiceListPage />,
+        element: (
+          <PermissionGuard
+            resource={Resources.INVOICES}
+            action={Actions.READ}
+            fallback={<NoPermissionPage />}
+          >
+            <OutputInvoiceListPage />,
+          </PermissionGuard>
+        ),
       },
     ],
   },

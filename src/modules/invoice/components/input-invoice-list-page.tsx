@@ -21,6 +21,8 @@ import {
 import type { InputInvoice } from "../types";
 import { useInputInvoices, useInputInvoiceSummary } from "../hooks/use-invoice";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function InputInvoiceListPage() {
   const [page, setPage] = useState(1);
@@ -53,6 +55,7 @@ export function InputInvoiceListPage() {
 
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<InputInvoice>();
+  const { hasPermission } = usePermissions();
 
   // Define table columns for input invoices
   const columns: ResponsiveTableColumn<InputInvoice>[] = [
@@ -143,6 +146,7 @@ export function InputInvoiceListPage() {
       onClick: (record) => {
         console.log("View invoice:", record.id);
       },
+      show: () => hasPermission(Resources.INVOICES, Actions.DETAIL),
     },
   ];
 

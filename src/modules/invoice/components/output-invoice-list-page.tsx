@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import type { OutputInvoice } from "../types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function OutputInvoiceListPage() {
   const [page, setPage] = useState(1);
@@ -31,6 +33,7 @@ export function OutputInvoiceListPage() {
   const changePage = (newPage: number) => {
     setPage(newPage);
   };
+  const { hasPermission } = usePermissions();
 
   const {
     outputInvoices,
@@ -147,6 +150,7 @@ export function OutputInvoiceListPage() {
       onClick: (record) => {
         console.log("View invoice:", record.id);
       },
+      show: () => hasPermission(Resources.INVOICES, Actions.DETAIL),
     },
   ];
 
