@@ -6,6 +6,9 @@ import { Phone, MapPin, Building2, CreditCard, FileText } from "lucide-react";
 import type { Supplier } from "../types";
 import DialogResponsive from "@/components/ui/dialog-responsive";
 import { formatDate } from "@/utils";
+import { PermissionGuard } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
+import { NoPermissionFallback } from "@/components/layout";
 
 interface SupplierDetailDialogProps {
   open: boolean;
@@ -218,7 +221,13 @@ export function SupplierDetailDialog({
         },
       }}
     >
-      {detailContent}
+      <PermissionGuard
+        resource={Resources.SUPPLIERS}
+        action={Actions.DETAIL}
+        fallback={<NoPermissionFallback />}
+      >
+        {detailContent}
+      </PermissionGuard>
     </DialogResponsive>
   );
 }

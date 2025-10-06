@@ -17,6 +17,8 @@ import type { Supplier, SupplierFilters } from "../types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { debounce } from "lodash";
+import { PermissionGuard, usePermissions } from "@/components/guards";
+import { Actions, Resources } from "@/constants";
 
 export function SuppliersListPage() {
   const { t } = useTranslation();
@@ -39,6 +41,7 @@ export function SuppliersListPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const isMobile = useIsMobile();
+  const { hasPermission } = usePermissions();
   const changePage = (newPage: number) => {
     setPage(newPage);
   };
@@ -129,6 +132,7 @@ export function SuppliersListPage() {
         setSelectedSupplier(record);
         setShowDetailDialog(true);
       },
+      show: () => hasPermission(Resources.SUPPLIERS, Actions.DETAIL),
     },
     {
       key: "edit",
@@ -138,12 +142,14 @@ export function SuppliersListPage() {
         setSelectedSupplier(record);
         setShowEditDialog(true);
       },
+      show: () => hasPermission(Resources.SUPPLIERS, Actions.UPDATE),
     },
     {
       key: "delete",
       label: t("common.delete"),
       icon: Trash2,
       variant: "destructive",
+      show: () => hasPermission(Resources.SUPPLIERS, Actions.DELETE),
       onClick: (record) => {
         setSelectedSupplier(record);
         setShowDeleteDialog(true);
@@ -251,8 +257,10 @@ export function SuppliersListPage() {
         onLoadMore={fetchNextPage}
         searchValue={filters.search || ""}
         onDoubleClick={(record) => {
-          setSelectedSupplier(record);
-          setShowDetailDialog(true);
+          if (hasPermission(Resources.SUPPLIERS, Actions.DETAIL)) {
+            setSelectedSupplier(record);
+            setShowDetailDialog(true);
+          }
         }}
         pagination={
           !isMobile
@@ -270,10 +278,16 @@ export function SuppliersListPage() {
               <Filter className="mr-2 h-4 w-4" />
               {t("common.filter")}
             </Button> */}
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("suppliers.add")}
-            </Button>
+            <PermissionGuard
+              resource={Resources.SUPPLIERS}
+              action={Actions.CREATE}
+              fallback={null}
+            >
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("suppliers.add")}
+              </Button>
+            </PermissionGuard>
           </div>
         }
       />
