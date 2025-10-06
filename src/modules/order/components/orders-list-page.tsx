@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Plus,
   Eye,
   Edit,
   Trash2,
@@ -13,13 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   EnhancedTable,
   useEnhancedTableColumns,
@@ -48,6 +41,8 @@ import { useNavigate } from "react-router-dom";
 import { Actions, Resources, ROUTES } from "@/constants";
 import { StockShortageModal } from "./stock-shortage-modal";
 import { usePermissions } from "@/components/guards";
+import { PageHeader } from "@/components/PageHeader";
+import OrderFilter from "./filter/OrderFilter";
 
 export function OrdersListPage() {
   const navigate = useNavigate();
@@ -103,17 +98,6 @@ export function OrdersListPage() {
       setOrderNumber(orderNumber);
     },
   });
-
-  const handleSearch = (value: string) => {
-    setFilters((prev) => ({ ...prev, search: value || undefined }));
-  };
-
-  const handleStatusFilter = (status: OrderStatus | "all") => {
-    setFilters((prev) => ({
-      ...prev,
-      status: status === "all" ? undefined : status,
-    }));
-  };
 
   const handleDeleteOrder = async (order: Order) => {
     showConfirm({
@@ -389,9 +373,23 @@ export function OrdersListPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <EnhancedTable<Order>
+      <PageHeader
+        shouldCreateAction={true}
+        onCreateAction={() => {
+          setShowFormDialog(true);
+        }}
+        createActionLabel="Tạo đơn hàng"
         title="Đơn hàng"
-        description="Quản lý danh sách đơn hàng của cửa hàng"
+        description="Quản lý đơn hàng"
+        filterActions={
+          <OrderFilter
+            onFiltersChange={(filters) => {
+              setFilters(filters);
+            }}
+          />
+        }
+      />
+      <EnhancedTable<Order>
         columns={columns}
         dataSource={orders}
         rowKey="id"
@@ -402,7 +400,6 @@ export function OrdersListPage() {
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={isFetching}
-        searchValue={filters.search || ""}
         onDoubleClick={(record) => {
           if (!hasPermission(Resources.ORDERS, Actions.DETAIL)) return;
           navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
@@ -417,34 +414,7 @@ export function OrdersListPage() {
               }
             : undefined
         }
-        searchable
-        searchPlaceholder="Tìm kiếm đơn hàng..."
-        onSearchChange={handleSearch}
         mobileCardRender={mobileCardRender}
-        headerActions={
-          <div className="flex items-center gap-2">
-            <Select
-              value={filters.status || "all"}
-              onValueChange={handleStatusFilter}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Lọc theo trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="draft">Nháp</SelectItem>
-                <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                <SelectItem value="exported">Đã xuất kho</SelectItem>
-                <SelectItem value="completed">Hoàn thành</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={() => setShowFormDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Tạo đơn hàng
-            </Button>
-          </div>
-        }
       />
 
       {/* Dialogs */}
