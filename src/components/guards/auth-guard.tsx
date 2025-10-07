@@ -3,8 +3,6 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
 import Loading from "@/components/ui/loading";
 import { ROUTES } from "@/constants/routes";
-import { Button } from "../ui";
-import axiosInstance from "@/utils/axios";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -32,26 +30,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  return (
-    <>
-      {children}
-
-      <Button
-        onClick={() => {
-          axiosInstance
-            .get("/auth/debug")
-            .then((res) => {
-              console.log(res);
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        }}
-      >
-        Debug
-      </Button>
-    </>
-  );
+  return <>{children}</>;
 }
 
 interface PublicGuardProps {
