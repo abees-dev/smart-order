@@ -58,11 +58,9 @@ export function OrdersListPage() {
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const isMobile = useIsMobile(); // useIsMobile();
   const changePage = (newPage: number) => {
-    console.log("Changing to page:", newPage);
     updateFilter(FILTER_KEY, { ...filters[FILTER_KEY], page: newPage });
   };
 
-  console.log("Filters:", filters[FILTER_KEY]);
   const {
     orders,
     loading,
@@ -240,7 +238,8 @@ export function OrdersListPage() {
       icon: Receipt,
       show: (record) =>
         record.status !== "draft" &&
-        hasPermission(Resources.COST_INCURRED, Actions.CREATE),
+        hasPermission(Resources.COST_INCURRED, Actions.CREATE) &&
+        !record.parentOrderId,
       onClick: (record) => {
         setShowCreateCostIncurredDialog(true);
         setSelectedOrder(record);
@@ -256,7 +255,8 @@ export function OrdersListPage() {
       },
       show: (record) =>
         record.status !== "cancelled" &&
-        hasPermission(Resources.ORDERS, Actions.UPDATE),
+        hasPermission(Resources.ORDERS, Actions.UPDATE) &&
+        !record.parentOrderId,
     },
     {
       key: "confirm",
@@ -265,7 +265,8 @@ export function OrdersListPage() {
       onClick: (record) => handleStatusChange(record, "confirmed"),
       show: (record) =>
         record.status === "draft" &&
-        hasPermission(Resources.ORDERS, Actions.UPDATE),
+        hasPermission(Resources.ORDERS, Actions.UPDATE) &&
+        !record.parentOrderId,
     },
     {
       key: "export",
@@ -274,7 +275,8 @@ export function OrdersListPage() {
       onClick: (record) => handleStatusChange(record, "exported"),
       show: (record) =>
         record.status === "confirmed" &&
-        hasPermission(Resources.ORDERS, Actions.UPDATE),
+        hasPermission(Resources.ORDERS, Actions.UPDATE) &&
+        !record.parentOrderId,
     },
     {
       key: "complete",
@@ -283,7 +285,8 @@ export function OrdersListPage() {
       onClick: (record) => handleStatusChange(record, "completed"),
       show: (record) =>
         record.status === "exported" &&
-        hasPermission(Resources.ORDERS, Actions.UPDATE),
+        hasPermission(Resources.ORDERS, Actions.UPDATE) &&
+        !record.parentOrderId,
     },
     {
       key: "cancel",
@@ -292,10 +295,11 @@ export function OrdersListPage() {
       variant: "destructive",
       onClick: (record) => handleStatusChange(record, "cancelled"),
       show: (record) =>
-        record.status === "draft" ||
-        record.status === "confirmed" ||
-        (record.status === "exported" &&
-          hasPermission(Resources.ORDERS, Actions.UPDATE)),
+        (record.status === "draft" ||
+          record.status === "confirmed" ||
+          record.status === "exported") &&
+        hasPermission(Resources.ORDERS, Actions.UPDATE) &&
+        !record.parentOrderId,
     },
     {
       key: "delete",
@@ -305,7 +309,8 @@ export function OrdersListPage() {
       onClick: (record) => handleDeleteOrder(record),
       show: (record) =>
         (record.status === "draft" || record.status === "cancelled") &&
-        hasPermission(Resources.ORDERS, Actions.DELETE),
+        hasPermission(Resources.ORDERS, Actions.DELETE) &&
+        !record.parentOrderId,
     },
   ];
 

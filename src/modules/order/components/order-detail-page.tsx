@@ -19,9 +19,8 @@ import {
   type OrderStatus,
   type Order,
   type OrderItem,
-  type MaintenanceRecord,
 } from "../types";
-import { formatCurrency, formatDate, formatDateTime } from "@/utils/format";
+import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Card,
@@ -39,6 +38,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { PermissionGuard } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
 import CostsIncurredSection from "./costs-incurred-section";
+import { MaintenanceSection } from "./maintenance/maintenance-section";
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -118,18 +118,23 @@ export function OrderDetailPage() {
               {isMobile ? "" : "Tính giá thành"}
             </TabsTrigger>
           </PermissionGuard>
-          <TabsTrigger value="costs" className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-2" />
-            {isMobile ? "" : "Chi phí phát sinh"}
-          </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center">
-            <Wrench className="w-4 h-4 mr-2" />
-            {isMobile ? "" : "Bảo trì"}
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="flex items-center">
-            <Clock className="w-4 h-4 mr-2" />
-            {isMobile ? "" : "Lịch sử"}
-          </TabsTrigger>
+
+          {!order.parentOrderId && (
+            <>
+              <TabsTrigger value="costs" className="flex items-center">
+                <DollarSign className="w-4 h-4 mr-2" />
+                {isMobile ? "" : "Chi phí phát sinh"}
+              </TabsTrigger>
+              <TabsTrigger value="maintenance" className="flex items-center">
+                <Wrench className="w-4 h-4 mr-2" />
+                {isMobile ? "" : "Bảo trì"}
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="flex items-center">
+                <Clock className="w-4 h-4 mr-2" />
+                {isMobile ? "" : "Lịch sử"}
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="items" className="space-y-4">
@@ -262,7 +267,9 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
               >
                 <div className={`${isMobile ? "" : "flex-1"}`}>
                   <h4 className="font-medium">
-                    {item.itemData?.name || `Item ${item.itemId}`}
+                    {item.type === "service"
+                      ? `Chi phí bảo trì`
+                      : item.itemData?.name}
                   </h4>
                   <p className="text-sm text-gray-600">
                     {item.itemData?.sku || item?.itemData?.["productCode"]}
@@ -332,110 +339,6 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function MaintenanceSection({
-  maintenance,
-  summary,
-}: {
-  maintenance: MaintenanceRecord[];
-  summary?: Order["maintenanceSummary"];
-}) {
-  return (
-    <div className="space-y-4">
-      {/* Summary Card */}
-      {summary && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tổng quan bảo trì</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">Tổng chi phí bảo trì</p>
-                <p className="font-semibold text-lg">
-                  {formatCurrency(summary.totalMaintenanceCost)}
-                </p>
-              </div>
-
-              {summary.lastMaintenanceDate && (
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Bảo trì cuối</p>
-                  <p className="font-medium">
-                    {formatDate(summary.lastMaintenanceDate)}
-                  </p>
-                </div>
-              )}
-
-              {summary.upcomingMaintenance && (
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Bảo trì tiếp theo</p>
-                  <p className="font-medium">
-                    {formatDate(summary.upcomingMaintenance)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Maintenance List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lịch sử bảo trì ({maintenance?.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!maintenance || maintenance.length === 0 ? (
-            <div className="py-8 text-center">
-              <Wrench className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">Chưa có lịch sử bảo trì</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {maintenance.map((record, index) => (
-                <div key={record.id || index} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{record.description}</h4>
-                    <Badge variant="outline">{record.maintenanceType}</Badge>
-                  </div>
-
-                  <div className="grid gap-2 md:grid-cols-3">
-                    <div>
-                      <p className="text-sm text-gray-600">Ngày thực hiện</p>
-                      <p className="font-medium">
-                        {formatDate(record.performedDate)}
-                      </p>
-                    </div>
-
-                    {record.performedBy && (
-                      <div>
-                        <p className="text-sm text-gray-600">Người thực hiện</p>
-                        <p className="font-medium">{record.performedBy}</p>
-                      </div>
-                    )}
-
-                    <div>
-                      <p className="text-sm text-gray-600">Chi phí</p>
-                      <p className="font-medium">
-                        {formatCurrency(record.cost)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {record.notes && (
-                    <div className="pt-2 border-t mt-3">
-                      <p className="text-sm text-gray-600">{record.notes}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
   );
 }
 

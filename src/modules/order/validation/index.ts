@@ -135,3 +135,77 @@ export type UpdateCostIncurredFormData = z.infer<
 export type CostIncurredFiltersFormData = z.infer<
   typeof costIncurredFiltersSchema
 >;
+
+// Maintenance validation schemas
+export const maintenanceSupplySchema = z.object({
+  supplyId: z.string().min(1, "Vui lòng chọn vật tư"),
+  quantity: z.number().min(1, "Số lượng phải lớn hơn 0"),
+  unitPrice: z.number().min(0, "Đơn giá không được âm").optional(),
+  notes: z
+    .string()
+    .max(200, "Ghi chú không được vượt quá 200 ký tự")
+    .optional()
+    .or(z.literal("")),
+});
+
+export const createMaintenanceSchema = z
+  .object({
+    orderId: z.string().min(1, "ID đơn hàng là bắt buộc"),
+    maintenanceType: z.enum(["warranty", "paid"], {
+      message: "Loại bảo trì không hợp lệ",
+    }),
+    description: z
+      .string()
+      .min(1, "Mô tả là bắt buộc")
+      .max(200, "Mô tả không được vượt quá 200 ký tự"),
+    cost: z.number().min(0, "Chi phí không được âm"),
+    supplies: z
+      .array(maintenanceSupplySchema)
+      .max(20, "Không được vượt quá 20 vật tư")
+      .optional(),
+    performedBy: z
+      .string()
+      .max(100, "Người thực hiện không được vượt quá 100 ký tự")
+      .optional()
+      .or(z.literal("")),
+    performedDate: z.date({
+      message: "Ngày thực hiện là bắt buộc và phải hợp lệ",
+    }),
+    nextMaintenanceDate: z.date().optional(),
+    notes: z
+      .string()
+      .max(500, "Ghi chú không được vượt quá 500 ký tự")
+      .optional()
+      .or(z.literal("")),
+  })
+  .refine(
+    (data) => {
+      // If maintenance type is 'paid', cost must be greater than 0
+      if (data.maintenanceType === "paid" && data.cost <= 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Chi phí bảo trì trả phí phải lớn hơn 0",
+      path: ["cost"],
+    }
+  );
+
+export const updateMaintenanceSchema = createMaintenanceSchema.partial();
+
+export const maintenanceFiltersSchema = z.object({
+  orderId: z.string().optional(),
+  maintenanceType: z.enum(["warranty", "paid"]).optional(),
+  dateFrom: z.date().optional(),
+  dateTo: z.date().optional(),
+  search: z.string().optional(),
+});
+
+// Maintenance form data types
+export type MaintenanceSupplyFormData = z.infer<typeof maintenanceSupplySchema>;
+export type CreateMaintenanceFormData = z.infer<typeof createMaintenanceSchema>;
+export type UpdateMaintenanceFormData = z.infer<typeof updateMaintenanceSchema>;
+export type MaintenanceFiltersFormData = z.infer<
+  typeof maintenanceFiltersSchema
+>;

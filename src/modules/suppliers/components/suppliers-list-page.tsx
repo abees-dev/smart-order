@@ -69,7 +69,6 @@ export function SuppliersListPage() {
       updateFilter(FILTER_KEY, {
         ...filters[FILTER_KEY],
         search: term || undefined,
-        page: 1,
       });
     }, 300),
     []

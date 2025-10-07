@@ -4,6 +4,7 @@ export {
   SupplyCategorySelectField,
 } from "./supply-category-select";
 export { SupplySelect, SupplySelectField } from "./supply-select";
+export { default as SupplyImportSelect } from "./supply-import-select";
 export { OrderSelect, OrderSelectField } from "./order-select";
 export { FormSelect, FormSelectField, type SelectOption } from "./form-select";
 export { FormDatePicker } from "./form-date-picker";

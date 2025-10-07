@@ -87,4 +87,14 @@ export class SupplyService {
   static async deleteSupplyImport(importId: string): Promise<void> {
     return axiosInstance.delete(`/supplies/imports/${importId}`);
   }
+
+  static async getSupplyImportSelection(
+    supplyId?: string
+  ): Promise<SupplyImport[]> {
+    return await axiosInstance.get("/supplies/imports/selection", {
+      params: {
+        supplyId,
+      },
+    });
+  }
 }

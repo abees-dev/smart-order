@@ -79,6 +79,7 @@ export interface Order {
     lastMaintenanceDate: Date | string | null;
     upcomingMaintenance: Date | string | null;
   };
+  parentOrderId?: string | null;
 }
 
 export interface CreateOrderData {
@@ -184,12 +185,23 @@ export interface CostIncurred {
   updatedAt?: Date | string;
 }
 
+export type MaintenanceType = "warranty" | "paid";
+
+export interface MaintenanceSupply {
+  supplyId: string;
+  supplyImportId?: string;
+  quantity: number;
+  unitPrice?: number;
+  notes?: string;
+}
+
 export interface MaintenanceRecord {
   id?: string;
   orderId: string;
-  maintenanceType: string;
+  maintenanceType: MaintenanceType;
   description: string;
   cost: number;
+  supplies?: MaintenanceSupply[]; // multiple supplies selection
   performedBy?: string;
   performedDate: string;
   nextMaintenanceDate?: string;
@@ -197,6 +209,16 @@ export interface MaintenanceRecord {
   createdBy?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
+  // Extended fields from API response
+  suppliesData?: Array<{
+    id: string;
+    name: string;
+    sku?: string;
+    unit?: string;
+    quantity: number;
+    notes?: string;
+  }> | null;
+  status?: "scheduled" | "in_progress" | "completed" | "cancelled";
 }
 
 export interface CreateCostIncurredData {

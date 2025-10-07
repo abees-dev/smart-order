@@ -59,9 +59,9 @@ export function SuppliesListPage() {
     pagination,
     refetchSupplies,
   } = useSupplies({
-    ...filters[FILTER_KEY],
     page: filters[FILTER_KEY]?.page || 1,
     limit: 10,
+    ...filters[FILTER_KEY],
   });
 
   const { createColumn, createCurrencyColumn } =
@@ -70,12 +70,11 @@ export function SuppliesListPage() {
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       updateFilter(FILTER_KEY, {
-        search: value || undefined,
-        page: 1,
         ...filters[FILTER_KEY],
+        search: value || undefined,
       } as SupplyFilters);
     }, 300),
-    []
+    [filters, updateFilter]
   );
 
   const handleSearch = (value: string) => {

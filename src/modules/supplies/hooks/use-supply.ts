@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import type { ApiResponsePagination } from "@/types/response";
 
 export function useSupplies(filters: SupplyFilters = {}) {
+  console.log("Fetching supplies with filters:", filters);
   const {
     data,
     fetchNextPage,

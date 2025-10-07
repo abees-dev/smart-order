@@ -118,4 +118,25 @@ export class OrderService {
   ): Promise<OrderCostCalculation> {
     return axiosInstance.get(`/supplies/orders/${orderId}/cost-calculation`);
   }
+
+  // Maintenance methods
+  static async createMaintenance(data: {
+    orderId: string;
+    maintenanceType: "warranty" | "paid";
+    description: string;
+    cost: number;
+    supplies?: Array<{
+      supplyId: string;
+      supplyImportId?: string;
+      quantity: number;
+      unitPrice?: number;
+      notes?: string;
+    }>;
+    performedBy?: string;
+    performedDate: string;
+    nextMaintenanceDate?: string;
+    notes?: string;
+  }): Promise<string> {
+    return axiosInstance.post("/maintenance-history", data);
+  }
 }
