@@ -49,8 +49,10 @@ const statusOptions = [
 
 const SupplyImportFilter = ({
   onFiltersChange,
+  filterValues,
 }: {
   onFiltersChange: (filters: SupplyImportFilters) => void;
+  filterValues?: SupplyImportFilters;
 }) => {
   const debounceFiltersChange = useCallback(
     debounce((filters: SupplyImportFilters) => {
@@ -76,6 +78,23 @@ const SupplyImportFilter = ({
     queryKey: ["suppliers-selection"],
     queryFn: SupplierService.getAllSuppliersSelection,
   });
+
+  const convertFilterValues = (filter: SupplyImportFilters) => {
+    if (!filter) return {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newFilter: any = { ...filter };
+    const dateFrom = filter.dateFrom;
+    const dateTo = filter.dateTo;
+    if (dateFrom || dateTo) {
+      newFilter.dateRange = {
+        from: dateFrom ? new Date(dateFrom) : undefined,
+        to: dateTo ? new Date(dateTo) : undefined,
+      };
+      delete newFilter.dateFrom;
+      delete newFilter.dateTo;
+    }
+    return newFilter;
+  };
 
   return (
     <FilterAction
@@ -122,7 +141,7 @@ const SupplyImportFilter = ({
         compactMode: true,
         layout: "inline",
       }}
-      values={{}}
+      values={convertFilterValues(filterValues || {})}
       onFiltersChange={handleFilterChange}
     />
   );

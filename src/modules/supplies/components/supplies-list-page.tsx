@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ import { SUPPLY_CATEGORY_MAP } from "../utils/supply-categrory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
+import { useFilterStore } from "@/stores/filter.store";
+import { debounce } from "lodash";
 
+const FILTER_KEY = Resources.SUPPLIES + "_LIST_FILTERS";
 export function SuppliesListPage() {
   const { t } = useTranslation();
   useDocumentTitle();
@@ -29,16 +32,21 @@ export function SuppliesListPage() {
     document.title = `${t("supplies.title") || "Vật tư"} - ${t("app.title")}`;
   }, [t]);
 
-  const [filters, setFilters] = useState<SupplyFilters>({});
+  const { filters, updateFilter } = useFilterStore();
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
+  const [searchTerm, setSearchTerm] = useState(
+    filters[FILTER_KEY]?.search || ""
+  );
   const isMobile = useIsMobile();
-  const [page, setPage] = useState(1);
   const { hasPermission } = usePermissions();
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(FILTER_KEY, {
+      page: newPage,
+      ...(filters[FILTER_KEY] || {}),
+    } as SupplyFilters);
   };
 
   const {
@@ -51,16 +59,28 @@ export function SuppliesListPage() {
     pagination,
     refetchSupplies,
   } = useSupplies({
-    ...filters,
-    page: page,
+    ...filters[FILTER_KEY],
+    page: filters[FILTER_KEY]?.page || 1,
     limit: 10,
   });
 
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<Supply>();
 
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      updateFilter(FILTER_KEY, {
+        search: value || undefined,
+        page: 1,
+        ...filters[FILTER_KEY],
+      } as SupplyFilters);
+    }, 300),
+    []
+  );
+
   const handleSearch = (value: string) => {
-    setFilters((prev) => ({ ...prev, search: value || undefined }));
+    debouncedSearch(value);
+    setSearchTerm(value);
   };
 
   const handleFormSuccess = () => {
@@ -326,7 +346,7 @@ export function SuppliesListPage() {
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={loadingMore}
-        searchValue={filters.search || ""}
+        searchValue={searchTerm || ""}
         onDoubleClick={(record) => {
           if (!hasPermission(Resources.SUPPLIES, Actions.DETAIL)) return;
           setSelectedSupply(record);

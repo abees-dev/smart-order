@@ -20,7 +20,7 @@ import {
   type TableAction,
 } from "@/components/tables";
 import { SupplyImportFormDialog } from "./supply-import-form-dialog";
-import type { SupplyImport, SupplyImportFilters } from "../types";
+import type { SupplyImport } from "../types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSupplyImports, useSupplySummary } from "../hooks/use-supply-import";
 import {
@@ -36,7 +36,9 @@ import { PageHeader } from "@/components/PageHeader";
 import SupplyImportFilter from "./filters/SupplyImportFilter";
 import { usePermissions } from "@/components/guards/permission-guard";
 import { Actions, Resources } from "@/constants";
+import { useFilterStore } from "@/stores/filter.store";
 
+const FILTER_KEY = Resources.SUPPLIES_IMPORT + "_filters";
 export function SupplyImportsListPage() {
   useDocumentTitle();
   const navigate = useNavigate();
@@ -47,10 +49,9 @@ export function SupplyImportsListPage() {
   );
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<SupplyImportFilters>({});
+  const { filters, updateFilter } = useFilterStore();
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(FILTER_KEY, { ...filters[FILTER_KEY], page: newPage });
   };
   const isMobile = useIsMobile();
   const { hasPermission } = usePermissions();
@@ -66,9 +67,9 @@ export function SupplyImportsListPage() {
     isFetching,
     refetchSuppliesImports,
   } = useSupplyImports({
-    page: page,
+    ...filters[FILTER_KEY],
+    page: filters[FILTER_KEY]?.page || 1,
     limit: 10,
-    ...filters,
   });
 
   const { addToWarehouseSupply } = useAddToWarehouseSupply({
@@ -318,8 +319,6 @@ export function SupplyImportsListPage() {
     </div>
   );
 
-  console.log("Page Render");
-
   return (
     <div className="space-y-4">
       <PageHeader
@@ -330,8 +329,9 @@ export function SupplyImportsListPage() {
         description="Quản lý phiếu nhập kho"
         filterActions={
           <SupplyImportFilter
+            filterValues={filters[FILTER_KEY] || {}}
             onFiltersChange={(filters) => {
-              setFilters(filters);
+              updateFilter(FILTER_KEY, { ...filters, page: 1 });
             }}
           />
         }

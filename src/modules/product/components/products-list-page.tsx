@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Eye, Pencil, Trash2, CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { useProducts } from "../hooks/use-product";
 import { ProductFormDialog } from "./product-form-dialog";
 import { ProductDetailDialog } from "./product-detail-dialog";
 import { DeleteProductDialog } from "./delete-product-dialog";
-import type { Product, ProductFilters } from "../types";
+import type { Product } from "../types";
 import ReactMarkdown from "react-markdown";
 import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,7 +22,10 @@ import { useDuplicateProduct } from "../hooks/use-product-actions";
 import { toast } from "sonner";
 import { PermissionGuard, usePermissions } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
+import { useFilterStore } from "@/stores/filter.store";
+import { debounce } from "lodash";
 
+const FILTER_KEY = Resources.PRODUCTS + "_filters";
 export function ProductsListPage() {
   const { t } = useTranslation();
   useDocumentTitle();
@@ -32,19 +35,20 @@ export function ProductsListPage() {
     document.title = `${t("products.title")} - ${t("app.title")}`;
   }, [t]);
 
-  const [filters, setFilters] = useState<ProductFilters>({});
+  const { filters, updateFilter } = useFilterStore();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [page, setPage] = useState(1);
   const { hasPermission } = usePermissions();
+  const [searchTerm, setSearchTerm] = useState(
+    filters[FILTER_KEY]?.search || ""
+  );
   const isMobile = useIsMobile();
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(FILTER_KEY, { ...filters[FILTER_KEY], page: newPage });
   };
-
   const {
     products,
     loading,
@@ -55,8 +59,8 @@ export function ProductsListPage() {
     pagination,
     refetchProducts,
   } = useProducts({
-    ...filters,
-    page: page,
+    ...filters[FILTER_KEY],
+    page: filters[FILTER_KEY]?.page || 1,
   });
 
   const { duplicateProduct } = useDuplicateProduct({
@@ -72,8 +76,19 @@ export function ProductsListPage() {
   const { createColumn, createCurrencyColumn, createStatusColumn } =
     useEnhancedTableColumns<Product>();
 
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      updateFilter(FILTER_KEY, {
+        ...filters[FILTER_KEY],
+        search: value || undefined,
+      });
+    }, 300),
+    [filters, updateFilter]
+  );
+
   const handleSearch = (value: string) => {
-    setFilters((prev) => ({ ...prev, search: value || undefined }));
+    setSearchTerm(value);
+    debouncedSearch(value);
   };
 
   const formatCurrency = (amount: number) => {
@@ -314,7 +329,7 @@ export function ProductsListPage() {
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={isFetching}
-        searchValue={filters.search || ""}
+        searchValue={searchTerm || ""}
         pagination={
           !isMobile
             ? {

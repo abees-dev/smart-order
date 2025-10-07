@@ -136,8 +136,8 @@ export interface UpdateSupplyImportData
 export interface SupplyImportFilters {
   supplierId?: string;
   status?: "pending" | "completed" | "warehouse" | "cancelled";
-  dateFrom?: Timestamp;
-  dateTo?: Timestamp;
+  dateFrom?: Date;
+  dateTo?: Date;
   search?: string;
   page?: number;
   limit?: number;

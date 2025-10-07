@@ -12,13 +12,15 @@ import { useSuppliers } from "../hooks/use-supplier";
 import { SupplierFormDialog } from "./supplier-form-dialog";
 import { SupplierDetailDialog } from "./supplier-detail-dialog";
 import { DeleteSupplierDialog } from "./delete-supplier-dialog";
-import { SupplierFilterSheet } from "./supplier-filter-sheet";
-import type { Supplier, SupplierFilters } from "../types";
+import type { Supplier } from "../types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { debounce } from "lodash";
 import { PermissionGuard, usePermissions } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
+import { useFilterStore } from "@/stores/filter.store";
+
+const FILTER_KEY = Resources.SUPPLIERS + "_filters";
 
 export function SuppliersListPage() {
   const { t } = useTranslation();
@@ -29,7 +31,7 @@ export function SuppliersListPage() {
     document.title = `${t("suppliers.title")} - ${t("app.title")}`;
   }, [t]);
 
-  const [filters, setFilters] = useState<SupplierFilters>({});
+  const { filters, updateFilter } = useFilterStore();
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
@@ -37,13 +39,13 @@ export function SuppliersListPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showFilterSheet, setShowFilterSheet] = useState(false);
-  const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    filters[FILTER_KEY]?.search || ""
+  );
   const isMobile = useIsMobile();
   const { hasPermission } = usePermissions();
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(FILTER_KEY, { ...filters[FILTER_KEY], page: newPage });
   };
 
   const {
@@ -55,23 +57,26 @@ export function SuppliersListPage() {
     fetchNextPage,
     pagination,
   } = useSuppliers({
-    ...filters,
-    page: page,
+    ...filters[FILTER_KEY],
+    page: filters[FILTER_KEY]?.page || 1,
     limit: 10,
-    search: searchTerm || undefined,
   });
   const { createColumn, createStatusColumn } =
     useEnhancedTableColumns<Supplier>();
 
   const debouncedSearchTerm = useCallback(
     debounce((term: string) => {
-      setSearchTerm(term);
+      updateFilter(FILTER_KEY, {
+        ...filters[FILTER_KEY],
+        search: term || undefined,
+        page: 1,
+      });
     }, 300),
     []
   );
   const handleSearch = (value: string) => {
-    setFilters((prev) => ({ ...prev, search: value || undefined }));
     debouncedSearchTerm(value);
+    setSearchTerm(value);
   };
 
   // Define table columns
@@ -215,11 +220,6 @@ export function SuppliersListPage() {
     refetchSuppliers();
   };
 
-  const handleFiltersApply = (newFilters: SupplierFilters) => {
-    setFilters(newFilters);
-    setShowFilterSheet(false);
-  };
-
   if (error) {
     return (
       <div className="p-6">
@@ -255,7 +255,7 @@ export function SuppliersListPage() {
         mobileCardRender={mobileCardRender}
         hasMore={hasNextPage}
         onLoadMore={fetchNextPage}
-        searchValue={filters.search || ""}
+        searchValue={searchTerm || ""}
         onDoubleClick={(record) => {
           if (hasPermission(Resources.SUPPLIERS, Actions.DETAIL)) {
             setSelectedSupplier(record);
@@ -331,13 +331,6 @@ export function SuppliersListPage() {
         }}
         onSuccess={handleSupplierDeleted}
         supplier={selectedSupplier}
-      />
-
-      <SupplierFilterSheet
-        open={showFilterSheet}
-        onOpenChange={setShowFilterSheet}
-        onApply={handleFiltersApply}
-        initialFilters={filters}
       />
     </div>
   );
