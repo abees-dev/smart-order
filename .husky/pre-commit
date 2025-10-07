@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Auto-bump patch version on commit
+echo "🔄 Auto-bumping version..."
+yarn version patch
+
+git add package.json .yarn/install-state.gz
+git commit --amend --no-edit
+
+
+
+
+echo "🎉 Pre-commit checks completed!"

@@ -1,7 +1,7 @@
 {
   "name": "smart-order",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.30",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build-miniapp": "vite build --config vite.miniapp.config.ts --mode miniapp && cp app-config.json dist",
-    "seed:customers": "tsx scripts/seed-customers.ts"
+    "seed:customers": "tsx scripts/seed-customers.ts",
+    "version:patch": "node scripts/bump-version.js patch",
+    "version:minor": "node scripts/bump-version.js minor",
+    "version:major": "node scripts/bump-version.js major",
+    "test": "echo 'No tests specified' && exit 0",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -74,6 +79,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "shadcn": "^3.2.1",
     "tsx": "^4.20.5",
     "tw-animate-css": "^1.3.8",

@@ -239,14 +239,19 @@ export function AppSidebar() {
                   </div>
                 </div>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={handleLogout}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>{t("auth.signOut")}</span>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem className="text-center">
+                {`Version ${__APP_VERSION__}`}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
