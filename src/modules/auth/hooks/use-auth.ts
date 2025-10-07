@@ -20,7 +20,17 @@ export function useAuth() {
   }, []);
 
   const setUser = useCallback((user: User | null) => {
-    setState((prev) => ({ ...prev, user, loading: false, error: null }));
+    setState((prev) => ({
+      ...prev,
+      user: prev.user
+        ? {
+            ...prev.user,
+            ...user,
+          }
+        : user,
+      loading: false,
+      error: null,
+    }));
   }, []);
 
   // Initialize auth state

@@ -27,7 +27,19 @@
     "usernameRequired": "Vui lòng nhập tên đăng nhập",
     "passwordRequired": "Vui lòng nhập mật khẩu",
     "usernameMinLength": "Tên đăng nhập phải có ít nhất 3 ký tự",
-    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự"
+    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+    "changePassword": "Đổi mật khẩu",
+    "currentPassword": "Mật khẩu hiện tại",
+    "newPassword": "Mật khẩu mới",
+    "currentPasswordRequired": "Vui lòng nhập mật khẩu hiện tại",
+    "newPasswordRequired": "Vui lòng nhập mật khẩu mới",
+    "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+    "passwordComplexityRequired": "Mật khẩu phải chứa ít nhất một chữ cái thường, một chữ cái hoa và một số",
+    "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp",
+    "newPasswordMustBeDifferent": "Mật khẩu mới phải khác mật khẩu hiện tại",
+    "invalidCurrentPassword": "Mật khẩu hiện tại không đúng",
+    "passwordChangedSuccess": "Đổi mật khẩu thành công",
+    "changePasswordDescription": "Nhập mật khẩu hiện tại và mật khẩu mới để thay đổi"
   },
   "navigation": {
     "dashboard": "Bảng điều khiển",
@@ -44,6 +56,7 @@
   },
   "common": {
     "save": "Lưu",
+    "saving": "Đang lưu...",
     "cancel": "Hủy",
     "delete": "Xóa",
     "edit": "Chỉnh sửa",

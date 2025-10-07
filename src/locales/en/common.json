@@ -26,7 +26,19 @@
     "usernameRequired": "Please enter username",
     "passwordRequired": "Please enter password",
     "usernameMinLength": "Username must be at least 3 characters",
-    "passwordMinLength": "Password must be at least 6 characters"
+    "passwordMinLength": "Password must be at least 6 characters",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "currentPasswordRequired": "Please enter current password",
+    "newPasswordRequired": "Please enter new password",
+    "confirmPasswordRequired": "Please confirm password",
+    "passwordComplexityRequired": "Password must contain at least one lowercase letter, one uppercase letter, and one number",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "newPasswordMustBeDifferent": "New password must be different from current password",
+    "invalidCurrentPassword": "Current password is incorrect",
+    "passwordChangedSuccess": "Password changed successfully",
+    "changePasswordDescription": "Enter your current password and new password to change"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -42,6 +54,7 @@
   },
   "common": {
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",

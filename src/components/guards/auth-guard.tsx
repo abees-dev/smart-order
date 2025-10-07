@@ -9,7 +9,7 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children }: AuthGuardProps) {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, checkAuth, user } = useAuthStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -28,6 +28,20 @@ export function AuthGuard({ children }: AuthGuardProps) {
   if (!isAuthenticated) {
     // Redirect to login with return url
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  if (
+    isAuthenticated &&
+    user?.isChangePasswordRequired &&
+    location.pathname !== ROUTES.AUTH.CHANGE_PASSWORD
+  ) {
+    return (
+      <Navigate
+        to={ROUTES.AUTH.CHANGE_PASSWORD}
+        state={{ from: location }}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;

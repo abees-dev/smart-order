@@ -34,9 +34,17 @@ export const useAuthStore = create<AuthStore>()(
       error: null,
 
       setUser: (user) => {
+        const currentUser = get().user;
+        const newUser =
+          currentUser && user
+            ? ({
+                ...currentUser,
+                ...user,
+              } as User)
+            : user;
         set({
-          user,
-          isAuthenticated: !!user,
+          user: newUser,
+          isAuthenticated: !!newUser,
           error: null,
         });
       },

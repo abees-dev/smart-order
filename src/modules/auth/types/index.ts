@@ -12,6 +12,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   permissions: Permission;
+  isChangePasswordRequired?: boolean;
 }
 
 export type Permission = {
@@ -40,6 +41,11 @@ export interface RefreshTokenResponse {
   refreshToken?: string;
 }
 
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface AuthService {
   signInWithCredentials: (
     credentials: LoginCredentials
@@ -47,4 +53,5 @@ export interface AuthService {
   signOut: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
   refreshToken: () => Promise<RefreshTokenResponse>;
+  changePassword: (data: ChangePasswordData) => Promise<void>;
 }

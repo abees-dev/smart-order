@@ -5,6 +5,7 @@ import type {
   AuthService,
   AuthResponse,
   RefreshTokenResponse,
+  ChangePasswordData,
 } from "../types";
 
 class AuthServiceImpl implements AuthService {
@@ -58,6 +59,20 @@ class AuthServiceImpl implements AuthService {
     } catch {
       localStorage.removeItem("auth_token");
       throw new Error("Token refresh failed");
+    }
+  }
+
+  async changePassword(data: ChangePasswordData): Promise<void> {
+    try {
+      await axiosInstance.post("/auth/change-password", data);
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response: { status: number } };
+        if (axiosError.response?.status === 400) {
+          throw new Error("auth.invalidCurrentPassword");
+        }
+      }
+      throw new Error("common.error");
     }
   }
 }
