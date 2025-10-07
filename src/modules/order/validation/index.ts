@@ -95,15 +95,17 @@ export const createCostIncurredSchema = z.object({
     .string()
     .min(1, "Mô tả là bắt buộc")
     .max(200, "Mô tả không được vượt quá 200 ký tự"),
-  amount: z.number().min(0.01, "Số tiền phải lớn hơn 0"),
-  quantity: z.number().min(0.01, "Số lượng phải lớn hơn 0").optional(),
+  amount: z.number().min(0, "Số tiền phải lớn hơn 0"),
+  quantity: z.number().min(0, "Số lượng phải lớn hơn 0").optional(),
   unitPrice: z.number().min(0, "Đơn giá không được âm").optional(),
   invoiceNumber: z
     .string()
     .max(50, "Số hóa đơn không được vượt quá 50 ký tự")
     .optional()
     .or(z.literal("")),
-  incurredDate: z.string().min(1, "Ngày phát sinh là bắt buộc"),
+  incurredDate: z.date({
+    message: "Ngày phát sinh là bắt buộc và phải hợp lệ",
+  }),
   notes: z
     .string()
     .max(500, "Ghi chú không được vượt quá 500 ký tự")

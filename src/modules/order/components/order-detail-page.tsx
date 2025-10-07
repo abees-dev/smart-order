@@ -16,13 +16,9 @@ import { OrderCostCalculationSection } from "./order-cost-calculation";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
-  COST_TYPE_LABELS,
-  COST_TYPE_COLORS,
   type OrderStatus,
-  type CostType,
   type Order,
   type OrderItem,
-  type CostIncurred,
   type MaintenanceRecord,
 } from "../types";
 import { formatCurrency, formatDate, formatDateTime } from "@/utils/format";
@@ -42,6 +38,7 @@ import { calculateVatAmount } from "@/utils/currency";
 import { PageHeader } from "@/components/PageHeader";
 import { PermissionGuard } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
+import CostsIncurredSection from "./costs-incurred-section";
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -363,146 +360,6 @@ function OrderItemsSection({ items }: { items: OrderItem[] }) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function CostsIncurredSection({
-  costs,
-  summary,
-}: {
-  costs: CostIncurred[];
-  summary?: Order["costSummary"];
-}) {
-  const isMobile = useIsMobile();
-
-  return (
-    <div className="space-y-4">
-      {/* Summary Card */}
-      {summary && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tổng quan chi phí</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`grid gap-4 ${
-                isMobile ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-3"
-              }`}
-            >
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">Tổng chi phí phát sinh</p>
-                <p className="font-semibold text-lg text-red-600">
-                  {formatCurrency(summary.totalCostsIncurred)}
-                </p>
-              </div>
-
-              {summary.costsByType &&
-                Object.entries(summary.costsByType).map(([type, amount]) => (
-                  <div key={type} className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      {COST_TYPE_LABELS[type as CostType] || type}
-                    </p>
-                    <p className="font-medium">
-                      {formatCurrency(amount as number)}
-                    </p>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Costs List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Chi phí phát sinh ({costs?.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!costs || costs.length === 0 ? (
-            <div className="py-8 text-center">
-              <DollarSign className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">Chưa có chi phí phát sinh nào</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {costs.map((cost, index) => (
-                <div key={cost.id || index} className="border rounded-lg p-4">
-                  <div
-                    className={`${
-                      isMobile
-                        ? "space-y-3"
-                        : "flex items-center justify-between"
-                    }`}
-                  >
-                    <div className={`${isMobile ? "" : "flex-1"}`}>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge
-                          variant="outline"
-                          color={COST_TYPE_COLORS[cost.costType]}
-                        >
-                          {COST_TYPE_LABELS[cost.costType]}
-                        </Badge>
-                        {cost.invoiceNumber && (
-                          <span className="text-sm text-gray-600">
-                            Hóa đơn: {cost.invoiceNumber}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="font-medium">{cost.description}</h4>
-                      {cost.supplier && (
-                        <p className="text-sm text-gray-600">
-                          Nhà cung cấp: {cost.supplier}
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-600">
-                        Ngày phát sinh: {formatDate(cost.incurredDate)}
-                      </p>
-                    </div>
-
-                    <div
-                      className={`${
-                        isMobile
-                          ? "grid grid-cols-2 gap-4"
-                          : "flex items-center space-x-6"
-                      }`}
-                    >
-                      {cost.quantity && (
-                        <div className="text-center">
-                          <p className="text-sm text-gray-600">Số lượng</p>
-                          <p className="font-medium">{cost.quantity}</p>
-                        </div>
-                      )}
-
-                      {cost.unitPrice && (
-                        <div className="text-center">
-                          <p className="text-sm text-gray-600">Đơn giá</p>
-                          <p className="font-medium">
-                            {formatCurrency(cost.unitPrice)}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600">Tổng tiền</p>
-                        <p className="font-semibold text-red-600">
-                          {formatCurrency(cost.amount)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {cost.notes && (
-                    <div className="pt-2 border-t mt-3">
-                      <p className="text-sm text-gray-600">{cost.notes}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
   );
 }
 

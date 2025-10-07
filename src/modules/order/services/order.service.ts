@@ -105,11 +105,11 @@ export class OrderService {
     id: string,
     data: UpdateCostIncurredData
   ): Promise<void> {
-    return axiosInstance.patch(`/cost-incurred/${id}`, data);
+    return axiosInstance.patch(`/costs-incurred/${id}`, data);
   }
 
   static async deleteCostIncurred(id: string): Promise<void> {
-    return axiosInstance.delete(`/cost-incurred/${id}`);
+    return axiosInstance.delete(`/costs-incurred/${id}`);
   }
 
   // Order Cost Calculation

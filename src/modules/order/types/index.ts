@@ -208,7 +208,7 @@ export interface CreateCostIncurredData {
   unitPrice?: number;
   supplier?: string;
   invoiceNumber?: string;
-  incurredDate: string;
+  incurredDate: Date;
   notes?: string;
 }
 
