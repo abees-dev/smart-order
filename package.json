@@ -1,7 +1,7 @@
 {
   "name": "smart-order",
   "private": true,
-  "version": "0.0.31",
+  "version": "0.0.32",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,11 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build-miniapp": "vite build --config vite.miniapp.config.ts --mode miniapp && cp app-config.json dist",
-    "seed:customers": "tsx scripts/seed-customers.ts",
-    "version:patch": "node scripts/bump-version.js patch",
-    "version:minor": "node scripts/bump-version.js minor",
-    "version:major": "node scripts/bump-version.js major",
-    "test": "echo 'No tests specified' && exit 0",
     "prepare": "husky"
   },
   "dependencies": {
