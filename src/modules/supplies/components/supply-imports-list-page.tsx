@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -319,6 +319,13 @@ export function SupplyImportsListPage() {
     </div>
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleFilterChange = useCallback((filter: any) => {
+    updateFilter(FILTER_KEY, {
+      ...filter,
+    });
+  }, []);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -331,7 +338,7 @@ export function SupplyImportsListPage() {
           <SupplyImportFilter
             filterValues={filters[FILTER_KEY] || {}}
             onFiltersChange={(filters) => {
-              updateFilter(FILTER_KEY, { ...filters, page: 1 });
+              handleFilterChange(filters);
             }}
           />
         }

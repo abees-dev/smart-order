@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Eye,
   Edit,
@@ -58,8 +58,11 @@ export function OrdersListPage() {
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const isMobile = useIsMobile(); // useIsMobile();
   const changePage = (newPage: number) => {
+    console.log("Changing to page:", newPage);
     updateFilter(FILTER_KEY, { ...filters[FILTER_KEY], page: newPage });
   };
+
+  console.log("Filters:", filters[FILTER_KEY]);
   const {
     orders,
     loading,
@@ -371,6 +374,13 @@ export function OrdersListPage() {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleFilterChange = useCallback((filter: any) => {
+    updateFilter(FILTER_KEY, {
+      ...filter,
+    });
+  }, []);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -384,8 +394,8 @@ export function OrdersListPage() {
         filterActions={
           <OrderFilter
             filters={filters[FILTER_KEY] || {}}
-            onFiltersChange={(filters) => {
-              updateFilter(FILTER_KEY, { ...filters, page: 1 });
+            onFiltersChange={(filter) => {
+              handleFilterChange(filter);
             }}
           />
         }
