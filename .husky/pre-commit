@@ -6,7 +6,6 @@ echo "🔄 Auto-bumping version..."
 yarn version patch
 
 git add package.json .yarn/install-state.gz
-git commit --amend --no-edit
 
 
 
