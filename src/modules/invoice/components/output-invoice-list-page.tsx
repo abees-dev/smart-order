@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   useOutputInvoices,
   useOutputInvoiceSummary,
@@ -26,12 +25,13 @@ import type { OutputInvoice } from "../types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
-
+import { useFilterStore } from "@/stores/filter.store";
+const KEY = Resources.INVOICES + "_OUTPUT";
 export function OutputInvoiceListPage() {
-  const [page, setPage] = useState(1);
+  const { filters, updateFilter } = useFilterStore();
   const isMobile = useIsMobile();
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(KEY, { page: newPage });
   };
   const { hasPermission } = usePermissions();
 
@@ -44,7 +44,7 @@ export function OutputInvoiceListPage() {
     isFetching,
     error,
   } = useOutputInvoices({
-    page: page,
+    page: filters[KEY]?.page || 1,
     limit: 10,
   });
 

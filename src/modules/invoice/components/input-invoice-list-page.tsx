@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   EnhancedTable,
   type ResponsiveTableColumn,
@@ -23,11 +22,14 @@ import { useInputInvoices, useInputInvoiceSummary } from "../hooks/use-invoice";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
+import { useFilterStore } from "@/stores/filter.store";
+
+const KEY = Resources.INVOICES + "_INPUT";
 
 export function InputInvoiceListPage() {
-  const [page, setPage] = useState(1);
+  const { filters, updateFilter } = useFilterStore();
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(KEY, { page: newPage });
   };
 
   const isMobile = useIsMobile();
@@ -41,7 +43,7 @@ export function InputInvoiceListPage() {
     pagination,
     refetchInputInvoices,
   } = useInputInvoices({
-    page,
+    page: filters[KEY]?.page || 1,
     limit: 10,
   });
 

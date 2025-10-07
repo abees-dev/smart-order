@@ -20,6 +20,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { debounce } from "lodash";
 import { PermissionGuard, usePermissions } from "@/components/guards";
 import { Actions, Resources } from "@/constants";
+import { useFilterStore } from "@/stores/filter.store";
 
 export function CustomersListPage() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export function CustomersListPage() {
     document.title = `${t("customers.title")} - ${t("app.title")}`;
   }, [t]);
 
-  const [filters, setFilters] = useState<CustomerFilters>({});
+  // const [filters, setFilters] = useState<CustomerFilters>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
@@ -39,8 +40,8 @@ export function CustomersListPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { filters, updateFilter } = useFilterStore();
   const isMobile = useIsMobile();
-  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const {
     customers,
@@ -51,13 +52,16 @@ export function CustomersListPage() {
     error,
     pagination,
   } = useCustomers({
-    ...filters,
-    page: page,
+    ...(filters["CUSTOMERS"] as CustomerFilters),
+    page: (filters["CUSTOMERS"] as CustomerFilters)?.page || 1,
     limit: 10,
     search: searchTerm || undefined,
   });
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(Resources.CUSTOMERS, {
+      ...(filters["CUSTOMERS"] as CustomerFilters),
+      page: newPage,
+    });
   };
   const { createColumn, createStatusColumn } =
     useEnhancedTableColumns<Customer>();
@@ -71,7 +75,12 @@ export function CustomersListPage() {
 
   const handleSearch = (value: string) => {
     debouncedSearchTerm(value);
-    setFilters((prev) => ({ ...prev, search: value || undefined }));
+    const newFilters = {
+      ...(filters[Resources.CUSTOMERS] as CustomerFilters),
+      search: value || undefined,
+    };
+    updateFilter(Resources.CUSTOMERS, newFilters);
+    // setFilters((prev) => ({ ...prev, search: value || undefined }));
   };
 
   // Define table columns
@@ -232,11 +241,11 @@ export function CustomersListPage() {
   };
 
   const handleFiltersChange = (newFilters: CustomerFilters) => {
-    setFilters(newFilters);
+    updateFilter(Resources.CUSTOMERS, newFilters);
   };
 
   const handleClearFilters = () => {
-    setFilters({});
+    updateFilter(Resources.CUSTOMERS, {});
   };
 
   if (error) {
@@ -277,7 +286,7 @@ export function CustomersListPage() {
           setSelectedCustomer(record);
           setShowDetailDialog(true);
         }}
-        searchValue={filters.search || ""}
+        searchValue={(filters["CUSTOMERS"] as CustomerFilters)?.search || ""}
         pagination={
           !isMobile
             ? {
