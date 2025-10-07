@@ -284,21 +284,6 @@ export function SupplyImportDetailPage() {
     );
   };
 
-  // const actionsDropdown = (
-  //   <DropdownMenu>
-  //     <DropdownMenuTrigger asChild>
-  //       <Button variant="ghost" size="sm">
-  //         <MoreHorizontal className="h-4 w-4" />
-  //       </Button>
-  //     </DropdownMenuTrigger>
-  //     <DropdownMenuContent align="end">
-  //       {tableActions.map((action) => (
-  //         <DropdownMenuItem key={action.key}>{action.label}</DropdownMenuItem>
-  //       ))}
-  //     </DropdownMenuContent>
-  //   </DropdownMenu>
-  // );
-
   return (
     <div className="container mx-auto space-y-6 max-w-7xl">
       {/* Header */}
