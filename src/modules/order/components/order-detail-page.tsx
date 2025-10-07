@@ -88,35 +88,7 @@ export function OrderDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      {/* <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/dashboard/orders")}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {isMobile ? "" : "Quay lại"}
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {order.orderNumber}
-            </h1>
-            <p className="text-sm text-gray-600">
-              Ngày tạo: {formatDateTime(order.createdAt)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <StatusBadge status={order.status} />
-          <Button size="sm" variant="outline">
-            <Edit className="w-4 h-4 mr-2" />
-            {isMobile ? "" : "Chỉnh sửa"}
-          </Button>
-        </div>
-      </div> */}
+    <div className="container mx-auto space-y-6">
       <PageHeader
         title={order.orderNumber}
         description={
@@ -539,7 +511,7 @@ function TimelineSection({ order }: { order: Order }) {
 
 function OrderDetailSkeleton() {
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto space-y-6">
       {/* Header Skeleton */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

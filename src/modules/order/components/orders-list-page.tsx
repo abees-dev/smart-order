@@ -355,7 +355,7 @@ export function OrdersListPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="">
         <div className="text-center text-red-600">
           <p>{error}</p>
           <Button
@@ -371,10 +371,8 @@ export function OrdersListPage() {
     );
   }
 
-  console.log("Filters applied:", filters);
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         shouldCreateAction={true}
         onCreateAction={() => {

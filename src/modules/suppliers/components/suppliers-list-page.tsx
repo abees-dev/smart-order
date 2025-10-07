@@ -222,7 +222,7 @@ export function SuppliersListPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="">
         <div className="text-center text-red-600">
           <p>{error}</p>
           <Button
@@ -239,7 +239,7 @@ export function SuppliersListPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <EnhancedTable<Supplier>
         title={t("suppliers.title")}
         description={t("suppliers.description")}

@@ -207,7 +207,7 @@ export function OutputInvoiceListPage() {
 
   if (error || summaryError) {
     return (
-      <div className="p-6">
+      <div className="">
         <div className="text-center text-red-600">
           <p>{error || summaryError}</p>
           <Button

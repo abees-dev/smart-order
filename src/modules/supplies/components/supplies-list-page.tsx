@@ -316,7 +316,7 @@ export function SuppliesListPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {error && (
         <div className="text-center text-red-600">
           <p>{error}</p>

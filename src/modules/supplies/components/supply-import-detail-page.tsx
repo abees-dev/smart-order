@@ -300,7 +300,7 @@ export function SupplyImportDetailPage() {
   // );
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-7xl">
+    <div className="container mx-auto space-y-6 max-w-7xl">
       {/* Header */}
       <HeaderSection
         supplyImport={supplyImport}

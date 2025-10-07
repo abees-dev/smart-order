@@ -124,6 +124,42 @@ export function CostsIncurredSection({
     },
   ];
 
+  const mobileCardRender = (record: CostIncurred) => {
+    return (
+      <div className="space-y-2">
+        <div className="flex justify-between gap-1">
+          <div className="font-medium flex-1 text-nowrap">Mô tả:</div>
+          <span>{record.description}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Số lượng:</span>
+          <span>{record.quantity !== undefined ? record.quantity : "-"}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Đơn giá:</span>
+          <span>
+            {record.unitPrice !== undefined
+              ? formatCurrency(record.unitPrice)
+              : "-"}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium">Tổng tiền:</span>
+          <span>{formatCurrency(record.amount)}</span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="font-medium">Ngày phát sinh:</span>
+          <span>
+            {record.incurredDate
+              ? new Date(record.incurredDate).toLocaleDateString()
+              : "-"}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary Card */}
@@ -178,6 +214,7 @@ export function CostsIncurredSection({
         columns={columns}
         dataSource={costs}
         actions={tableActions}
+        mobileCardRender={mobileCardRender}
       />
       {isDialogOpen && (
         <CreateCostIncurredDialog

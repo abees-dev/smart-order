@@ -294,7 +294,7 @@ export function ProductsListPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="">
         <div className="text-center text-red-600">
           <p>{error}</p>
           <Button
@@ -311,7 +311,7 @@ export function ProductsListPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <EnhancedTable<Product>
         title={t("products.title") || "Sản phẩm"}
         description={

@@ -267,7 +267,7 @@ export function CustomersListPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <EnhancedTable<Customer>
         title={t("customers.title")}
         description={t("customers.description")}
