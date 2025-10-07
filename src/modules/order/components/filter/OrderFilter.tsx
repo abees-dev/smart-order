@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import FilterAction, { type FilterValues } from "@/components/FilterAction";
 import { Badge } from "@/components/ui";
 import { Search } from "lucide-react";
@@ -56,8 +57,10 @@ const statusOptions = [
 
 const OrderFilter = ({
   onFiltersChange,
+  filters,
 }: {
   onFiltersChange: (filters: OrderFilters) => void;
+  filters: OrderFilters;
 }) => {
   const debounceFiltersChange = useCallback(
     debounce((filters: OrderFilters) => {
@@ -80,6 +83,22 @@ const OrderFilter = ({
     debounceFiltersChange(newFilter);
   }, []);
 
+  const convertFilterValues = (filter: OrderFilters) => {
+    if (!filter) return {};
+    const newFilter: any = { ...filter };
+    const dateFrom = filter.dateFrom;
+    const dateTo = filter.dateTo;
+    if (dateFrom || dateTo) {
+      newFilter.dateRange = {
+        from: dateFrom ? new Date(dateFrom) : undefined,
+        to: dateTo ? new Date(dateTo) : undefined,
+      };
+      delete newFilter.dateFrom;
+      delete newFilter.dateTo;
+    }
+    return newFilter;
+  };
+
   return (
     <FilterAction
       config={{
@@ -90,6 +109,7 @@ const OrderFilter = ({
             placeholder: "Tìm kiếm đơn hàng",
             hideLabel: true,
             icon: <Search className="h-4 w-4" />,
+            defaultValue: filters.search || "",
           },
           {
             key: "status",
@@ -98,6 +118,7 @@ const OrderFilter = ({
             placeholder: "Chọn trạng thái",
             hideLabel: true,
             options: statusOptions,
+            defaultValue: filters.status || "",
           },
           {
             key: "dateRange",
@@ -105,12 +126,18 @@ const OrderFilter = ({
             label: "Khoảng thời gian",
             placeholder: "Chọn khoảng thời gian",
             hideLabel: true,
+            defaultValue: filters.dateFrom
+              ? {
+                  from: new Date(filters.dateFrom),
+                  to: filters.dateTo ? new Date(filters.dateTo) : undefined,
+                }
+              : undefined,
           },
         ],
         compactMode: true,
         layout: "inline",
       }}
-      values={{}}
+      values={convertFilterValues(filters) || {}}
       onFiltersChange={handleFilterChange}
     />
   );

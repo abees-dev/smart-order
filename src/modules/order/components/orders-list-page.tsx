@@ -26,7 +26,6 @@ import {
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
   type Order,
-  type OrderFilters,
   type OrderStatus,
   type SupplyShortage,
 } from "../types";
@@ -43,10 +42,12 @@ import { StockShortageModal } from "./stock-shortage-modal";
 import { usePermissions } from "@/components/guards";
 import { PageHeader } from "@/components/PageHeader";
 import OrderFilter from "./filter/OrderFilter";
+import { useFilterStore } from "@/stores/filter.store";
 
+const FILTER_KEY = Resources.ORDERS;
 export function OrdersListPage() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<OrderFilters>({});
+  const { updateFilter, filters } = useFilterStore();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showCreateCostIncurredDialog, setShowCreateCostIncurredDialog] =
@@ -56,9 +57,8 @@ export function OrdersListPage() {
   const [orderNumber, setOrderNumber] = useState<string>("");
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const isMobile = useIsMobile(); // useIsMobile();
-  const [page, setPage] = useState(1);
   const changePage = (newPage: number) => {
-    setPage(newPage);
+    updateFilter(FILTER_KEY, { ...filters[FILTER_KEY], page: newPage });
   };
   const {
     orders,
@@ -70,8 +70,8 @@ export function OrdersListPage() {
     pagination,
     refetchOrders,
   } = useOrders({
-    ...filters,
-    page: page,
+    ...filters[FILTER_KEY],
+    page: filters[FILTER_KEY]?.page || 1,
   });
 
   const { deleteOrder } = useDeleteOrder({});
@@ -371,6 +371,8 @@ export function OrdersListPage() {
     );
   }
 
+  console.log("Filters applied:", filters);
+
   return (
     <div className="p-6 space-y-6">
       <PageHeader
@@ -383,8 +385,9 @@ export function OrdersListPage() {
         description="Quản lý đơn hàng"
         filterActions={
           <OrderFilter
+            filters={filters[FILTER_KEY] || {}}
             onFiltersChange={(filters) => {
-              setFilters(filters);
+              updateFilter(FILTER_KEY, { ...filters, page: 1 });
             }}
           />
         }
