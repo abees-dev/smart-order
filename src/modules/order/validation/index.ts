@@ -159,6 +159,11 @@ export const createMaintenanceSchema = z
       .min(1, "Mô tả là bắt buộc")
       .max(200, "Mô tả không được vượt quá 200 ký tự"),
     cost: z.number().min(0, "Chi phí không được âm"),
+    vatRate: z
+      .number()
+      .min(0, "Thuế VAT không được âm")
+      .max(100, "Thuế VAT không được quá 100%")
+      .optional(),
     supplies: z
       .array(maintenanceSupplySchema)
       .max(20, "Không được vượt quá 20 vật tư")

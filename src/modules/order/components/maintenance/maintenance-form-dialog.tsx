@@ -2,7 +2,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Form, FormField } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import DialogResponsive from "@/components/ui/dialog-responsive";
 import FormTextField from "@/components/forms/form-textfield";
 import { FormSelectField } from "@/components/forms/form-select";
@@ -15,6 +22,14 @@ import {
 } from "../../validation";
 import { OrderService } from "../../services/order.service";
 import type { MaintenanceRecord } from "../../types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui";
+import { VAT_RATE_OPTIONS } from "@/constants/vat";
 
 interface MaintenanceFormDialogProps {
   open: boolean;
@@ -53,6 +68,7 @@ const MaintenanceFormDialog = ({
       maintenanceType: maintenanceRecord?.maintenanceType || "warranty",
       description: maintenanceRecord?.description || "",
       cost: maintenanceRecord?.cost || 0,
+      vatRate: maintenanceRecord?.vatRate || 0,
       supplies: maintenanceRecord?.suppliesData || [],
       performedBy: maintenanceRecord?.performedBy || "",
       performedDate: maintenanceRecord?.performedDate
@@ -67,6 +83,18 @@ const MaintenanceFormDialog = ({
 
   const isEditMode = Boolean(maintenanceRecord);
 
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({
+      predicate(query) {
+        return (
+          query.queryKey[0] === "orders" ||
+          query.queryKey[0] === "order" ||
+          query.queryKey[0] === "maintenance-records"
+        );
+      },
+    });
+  };
+
   const createMaintenanceMutation = useMutation({
     mutationFn: (data: {
       orderId: string;
@@ -80,8 +108,7 @@ const MaintenanceFormDialog = ({
     }) => OrderService.createMaintenance(data),
     onSuccess: () => {
       toast.success("Tạo bảo trì thành công");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      invalidateQueries();
       form.reset();
       onSuccess?.();
       onOpenChange(false);
@@ -104,11 +131,10 @@ const MaintenanceFormDialog = ({
     }) => OrderService.updateMaintenance(maintenanceRecord?.id as string, data),
     onSuccess: () => {
       toast.success("Cập nhật bảo trì thành công");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       form.reset();
       onSuccess?.();
       onOpenChange(false);
+      invalidateQueries();
     },
     onError: (error: Error) => {
       toast.error(error?.message || "Có lỗi xảy ra khi tạo bảo trì");
@@ -197,17 +223,52 @@ const MaintenanceFormDialog = ({
             className="space-y-4"
           />
           {isPaidMaintenance && (
-            <FormTextField
-              control={form.control}
-              name="cost"
-              label="Chi phí bảo trì"
-              placeholder="0"
-              type="number"
-              required
-              helpText="Chi phí bảo trì (VNĐ) - bắt buộc với bảo trì trả phí"
-              min="0"
-              step="1000"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <FormTextField
+                control={form.control}
+                name="cost"
+                label="Chi phí bảo trì"
+                placeholder="0"
+                type="number"
+                required
+                helpText="Chi phí bảo trì (VNĐ) - bắt buộc với bảo trì trả phí"
+                min="0"
+                step="1000"
+              />
+
+              <FormField
+                control={form.control}
+                name={`vatRate`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>VAT (%)</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(parseInt(value));
+                      }}
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            className="w-full"
+                            placeholder="Chọn VAT"
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {VAT_RATE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           )}
           <FormTextField
             control={form.control}
@@ -236,11 +297,48 @@ const MaintenanceFormDialog = ({
           {/* Cost Preview */}
           {isPaidMaintenance && (
             <div className="rounded-lg border bg-muted/50 p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Chi phí bảo trì:</span>
-                <span className="text-lg font-semibold text-primary">
-                  {formatCurrency(form.watch("cost") || 0)}
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Chi phí bảo trì:</span>
+                  <span className="text-lg font-semibold">
+                    {formatCurrency(form.watch("cost") || 0)}
+                  </span>
+                </div>
+                {(form.watch("vatRate") || 0) > 0 && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        VAT ({form.watch("vatRate") || 0}%):
+                      </span>
+                      <span className="text-muted-foreground">
+                        {formatCurrency(
+                          ((form.watch("cost") || 0) *
+                            (form.watch("vatRate") || 0)) /
+                            100
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="text-sm font-medium">Tổng cộng:</span>
+                      <span className="text-lg font-semibold text-primary">
+                        {formatCurrency(
+                          (form.watch("cost") || 0) +
+                            ((form.watch("cost") || 0) *
+                              (form.watch("vatRate") || 0)) /
+                              100
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {(form.watch("vatRate") || 0) === 0 && (
+                  <div className="flex items-center justify-between border-t pt-2">
+                    <span className="text-sm font-medium">Tổng cộng:</span>
+                    <span className="text-lg font-semibold text-primary">
+                      {formatCurrency(form.watch("cost") || 0)}
+                    </span>
+                  </div>
+                )}
               </div>
               {(form.watch("supplies")?.length ?? 0) > 0 && (
                 <div className="mt-2 text-xs text-muted-foreground">

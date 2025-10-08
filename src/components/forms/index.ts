@@ -9,3 +9,4 @@ export { OrderSelect, OrderSelectField } from "./order-select";
 export { FormSelect, FormSelectField, type SelectOption } from "./form-select";
 export { FormDatePicker } from "./form-date-picker";
 export { default as FormTextField } from "./form-textfield";
+export { VatSelectField, default as VatSelect } from "./vat-select";

@@ -3,6 +3,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VAT_RATE_OPTIONS } from "@/constants/vat";
 
 import {
   Form,
@@ -471,10 +472,14 @@ export function SupplyImportFormDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="0">0%</SelectItem>
-                            <SelectItem value="5">5%</SelectItem>
-                            <SelectItem value="8">8%</SelectItem>
-                            <SelectItem value="10">10%</SelectItem>
+                            {VAT_RATE_OPTIONS.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

@@ -200,6 +200,7 @@ export interface MaintenanceRecord {
   maintenanceType: MaintenanceType;
   description: string;
   cost: number;
+  vatRate?: number;
   supplies?: MaintenanceSupply[]; // multiple supplies selection
   performedBy?: string;
   performedDate: string;

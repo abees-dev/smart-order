@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VAT_RATES } from "@/constants/vat";
 
 export const createSupplySchema = z.object({
   name: z
@@ -82,8 +83,11 @@ export const supplyImportItemSchema = z.object({
   unitPrice: z.number().min(0, "Giá đơn vị không được âm"),
   vatRate: z
     .number()
-    .min(0, "Thuế VAT không được âm")
-    .max(100, "Thuế VAT không được quá 100%"),
+    .refine((val) => VAT_RATES.includes(val as (typeof VAT_RATES)[number]), {
+      message: `Thuế VAT phải là một trong các giá trị: ${VAT_RATES.join(
+        "%, "
+      )}%`,
+    }),
   totalPrice: z.number().min(0, "Tổng giá không được âm"),
   orderId: z.string().optional().or(z.literal("")),
 });

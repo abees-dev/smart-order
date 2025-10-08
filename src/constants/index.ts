@@ -6,3 +6,4 @@ export { ROUTES } from "./routes";
 export { COLLECTIONS } from "./collection";
 
 export * from "./permission";
+export * from "./vat";
