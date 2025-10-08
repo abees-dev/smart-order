@@ -30,6 +30,7 @@ interface MaintenanceSuppliesSelectProps {
 export function MaintenanceSuppliesSelect({
   control,
   getValues,
+  setValue,
   className,
 }: MaintenanceSuppliesSelectProps) {
   const [selectedSupplies, setSelectedSupplies] = useState<Map<number, Supply>>(
@@ -73,6 +74,7 @@ export function MaintenanceSuppliesSelect({
         }
         return newMap;
       });
+      setValue(`supplies.${index}.unitPrice`, supply?.purchasePrice || 0);
     },
     []
   );
@@ -183,8 +185,6 @@ export function MaintenanceSuppliesSelect({
                         <FormLabel>Đơn giá</FormLabel>
                         <Input
                           type="number"
-                          min="0"
-                          step="1000"
                           placeholder="0"
                           {...field}
                           onChange={(e) =>

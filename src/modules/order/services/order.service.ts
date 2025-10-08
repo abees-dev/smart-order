@@ -12,6 +12,7 @@ import type {
   CheckStockResponse,
   InsufficientStockResponse,
   ChangeStatusSuccessResponse,
+  MaintenanceRecord,
 } from "../types";
 import type { ApiResponsePagination } from "@/types/response";
 import axiosInstance from "@/utils/axios";
@@ -138,5 +139,43 @@ export class OrderService {
     notes?: string;
   }): Promise<string> {
     return axiosInstance.post("/maintenance-history", data);
+  }
+
+  static async updateMaintenance(
+    id: string,
+    data: {
+      orderId: string;
+      maintenanceType: "warranty" | "paid";
+      description: string;
+      cost: number;
+      supplies?: Array<{
+        supplyId: string;
+        supplyImportId?: string;
+        quantity: number;
+        unitPrice?: number;
+        notes?: string;
+      }>;
+      performedBy?: string;
+      performedDate: string;
+      nextMaintenanceDate?: string;
+      notes?: string;
+    }
+  ): Promise<string> {
+    return axiosInstance.patch(`/maintenance-history/${id}`, data);
+  }
+
+  static updateMaintenanceStatus(data: {
+    id: string;
+    status: string;
+  }): Promise<void> {
+    return axiosInstance.post(`/maintenance-history/${data.id}/status`, {
+      status: data.status,
+    });
+  }
+
+  static getMaintenanceByOrderId(
+    orderId: string
+  ): Promise<MaintenanceRecord[]> {
+    return axiosInstance.get(`/maintenance-history/order/${orderId}`);
   }
 }

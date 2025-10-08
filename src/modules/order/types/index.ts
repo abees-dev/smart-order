@@ -189,7 +189,6 @@ export type MaintenanceType = "warranty" | "paid";
 
 export interface MaintenanceSupply {
   supplyId: string;
-  supplyImportId?: string;
   quantity: number;
   unitPrice?: number;
   notes?: string;

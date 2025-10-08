@@ -14,12 +14,14 @@ import {
   type CreateMaintenanceFormData,
 } from "../../validation";
 import { OrderService } from "../../services/order.service";
+import type { MaintenanceRecord } from "../../types";
 
 interface MaintenanceFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
   onSuccess?: () => void;
+  maintenanceRecord?: MaintenanceRecord | null;
 }
 
 const maintenanceTypeOptions = [
@@ -40,6 +42,7 @@ const MaintenanceFormDialog = ({
   onOpenChange,
   orderId,
   onSuccess,
+  maintenanceRecord,
 }: MaintenanceFormDialogProps) => {
   const queryClient = useQueryClient();
 
@@ -47,18 +50,22 @@ const MaintenanceFormDialog = ({
     resolver: zodResolver(createMaintenanceSchema),
     defaultValues: {
       orderId,
-      maintenanceType: "warranty",
-      description: "",
-      cost: 0,
-      supplies: [],
-      performedBy: "",
-      performedDate: new Date(),
-      notes: "",
+      maintenanceType: maintenanceRecord?.maintenanceType || "warranty",
+      description: maintenanceRecord?.description || "",
+      cost: maintenanceRecord?.cost || 0,
+      supplies: maintenanceRecord?.suppliesData || [],
+      performedBy: maintenanceRecord?.performedBy || "",
+      performedDate: maintenanceRecord?.performedDate
+        ? new Date(maintenanceRecord?.performedDate)
+        : new Date(),
+      notes: maintenanceRecord?.notes || "",
     },
   });
 
   const maintenanceType = form.watch("maintenanceType");
   const isPaidMaintenance = maintenanceType === "paid";
+
+  const isEditMode = Boolean(maintenanceRecord);
 
   const createMaintenanceMutation = useMutation({
     mutationFn: (data: {
@@ -69,11 +76,34 @@ const MaintenanceFormDialog = ({
       supplyId?: string;
       performedBy?: string;
       performedDate: string;
-      nextMaintenanceDate?: string;
       notes?: string;
     }) => OrderService.createMaintenance(data),
     onSuccess: () => {
       toast.success("Tạo bảo trì thành công");
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      form.reset();
+      onSuccess?.();
+      onOpenChange(false);
+    },
+    onError: (error: Error) => {
+      toast.error(error?.message || "Có lỗi xảy ra khi tạo bảo trì");
+    },
+  });
+
+  const updateMaintenanceMutation = useMutation({
+    mutationFn: (data: {
+      orderId: string;
+      maintenanceType: "warranty" | "paid";
+      description: string;
+      cost: number;
+      supplyId?: string;
+      performedBy?: string;
+      performedDate: string;
+      notes?: string;
+    }) => OrderService.updateMaintenance(maintenanceRecord?.id as string, data),
+    onSuccess: () => {
+      toast.success("Cập nhật bảo trì thành công");
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
       form.reset();
@@ -95,11 +125,12 @@ const MaintenanceFormDialog = ({
     const formattedData = {
       ...data,
       performedDate: data.performedDate.toISOString().split("T")[0],
-      nextMaintenanceDate: data.nextMaintenanceDate
-        ? data.nextMaintenanceDate.toISOString().split("T")[0]
-        : undefined,
     };
 
+    if (isEditMode) {
+      updateMaintenanceMutation.mutate(formattedData);
+      return;
+    }
     createMaintenanceMutation.mutate(formattedData);
   };
 
@@ -110,14 +141,18 @@ const MaintenanceFormDialog = ({
 
   return (
     <DialogResponsive
-      title="Tạo bảo trì mới"
-      description="Nhập thông tin bảo trì cho đơn hàng"
+      title={isEditMode ? "Cập nhật bảo trì" : "Tạo bảo trì mới"}
+      description={
+        isEditMode
+          ? "Cập nhật thông tin bảo trì cho đơn hàng"
+          : "Nhập thông tin bảo trì cho đơn hàng"
+      }
       open={open}
       onOpenChange={onOpenChange}
       formId="maintenance-form"
       actions={{
         submit: {
-          label: "Tạo bảo trì",
+          label: isEditMode ? "Cập nhật" : "Tạo",
           loading: createMaintenanceMutation.isPending,
         },
         cancel: {
@@ -189,13 +224,7 @@ const MaintenanceFormDialog = ({
             required
             helpText="Ngày thực hiện công việc bảo trì"
           />
-          <FormDatePicker
-            control={form.control}
-            name="nextMaintenanceDate"
-            label="Ngày bảo trì tiếp theo"
-            placeholder="Chọn ngày bảo trì tiếp theo..."
-            helpText="Ngày dự kiến cho lần bảo trì tiếp theo (tùy chọn)"
-          />
+
           <FormTextField
             control={form.control}
             name="notes"

@@ -5,28 +5,45 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  useConfirmDialog,
 } from "@/components/ui";
-import { EnhancedTable, useEnhancedTableColumns } from "@/components/tables";
+import {
+  EnhancedTable,
+  useEnhancedTableColumns,
+  type TableAction,
+} from "@/components/tables";
 import type { ResponsiveTableColumn } from "@/components/tables/responsive-table";
 import type { MaintenanceRecord, Order } from "../../types";
 import { formatCurrency, formatDate } from "@/utils";
-import { Wrench, User } from "lucide-react";
+import { Wrench, User, Pencil, Trash2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useState, useMemo } from "react";
 import MaintenanceFormDialog from "./maintenance-form-dialog";
+import { useTranslation } from "react-i18next";
+import { useChangeStatusMaintenance } from "../../hooks/use-maintenance-action";
+import { useMaintenance } from "../../hooks/use-maintenance";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function MaintenanceSection({
-  maintenance,
   summary,
 }: {
-  maintenance: MaintenanceRecord[];
   summary?: Order["maintenanceSummary"];
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
+  const [selectedMaintenance, setSelectedMaintenance] =
+    useState<MaintenanceRecord | null>(null);
 
+  const { maintenanceRecords } = useMaintenance(id!);
+
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
+
+  const queryClient = useQueryClient();
   const { createCurrencyColumn, createDateColumn } =
     useEnhancedTableColumns<MaintenanceRecord>();
+
+  const { mutateAsync: changeMaintenanceStatusMutation } =
+    useChangeStatusMaintenance();
 
   const getMaintenanceStatus = (status: MaintenanceRecord["status"]) => {
     const statusMap = {
@@ -106,6 +123,74 @@ export function MaintenanceSection({
     ],
     []
   );
+  const { t } = useTranslation();
+
+  const tableActions: TableAction<MaintenanceRecord>[] = [
+    {
+      key: "edit",
+      label: t("common.edit"),
+      icon: Pencil,
+      onClick: (record) => {
+        setSelectedMaintenance(record);
+        setIsDialogOpen(true);
+      },
+      show: (record) => record.status === "scheduled",
+    },
+
+    {
+      key: "completed",
+      label: "Hoàn thành",
+      icon: Wrench,
+      onClick: async (record) => {
+        showConfirm({
+          title: "Xác nhận!",
+          description: (
+            <div>
+              Vui lòng kiểm tra lại thông tin trước khi hoàn thành bảo trì này.
+              <br />
+              Nếu hoàn thành bảo trì, bạn sẽ không thể chỉnh sửa hoặc hủy nó
+              nữa.!
+            </div>
+          ),
+          onConfirm: async () => {
+            await changeMaintenanceStatusMutation({
+              id: record.id!,
+              status: "completed",
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["maintenance-records", id],
+            });
+          },
+        });
+      },
+      show: (record) => record.status === "scheduled",
+    },
+
+    {
+      key: "cancel",
+      label: "Hủy",
+      icon: Trash2,
+      variant: "destructive",
+      onClick: (record) => {
+        showConfirm({
+          title: "Bạn có chắc chắn muốn hủy bảo trì này không?",
+          description:
+            "Hành động này không thể hoàn tác. Vui lòng xác nhận nếu bạn muốn tiếp tục.",
+          onConfirm: async () => {
+            await changeMaintenanceStatusMutation({
+              id: record.id!,
+              status: "cancelled",
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["maintenance-records", id],
+            });
+          },
+        });
+      },
+      show: (record) =>
+        record.status !== "completed" && record.status !== "cancelled",
+    },
+  ];
 
   const handleRowClick = (record: MaintenanceRecord) => {
     // Future: Open maintenance detail modal
@@ -154,7 +239,9 @@ export function MaintenanceSection({
       {/* Maintenance List */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle>Lịch sử bảo trì ({maintenance?.length || 0})</CardTitle>
+          <CardTitle>
+            Lịch sử bảo trì ({maintenanceRecords?.length || 0})
+          </CardTitle>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Wrench className="w-4 h-4 mr-2" />
             Tạo bảo trì mới
@@ -162,10 +249,9 @@ export function MaintenanceSection({
         </CardHeader>
         <CardContent>
           <EnhancedTable
-            dataSource={maintenance || []}
+            dataSource={maintenanceRecords || []}
             columns={columns}
-            searchable
-            searchPlaceholder="Tìm kiếm theo mô tả, ghi chú..."
+            actions={tableActions}
             onRowClick={handleRowClick}
             emptyText={
               <div className="py-8 text-center">
@@ -182,12 +268,21 @@ export function MaintenanceSection({
         </CardContent>
       </Card>
 
-      <MaintenanceFormDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        orderId={id!}
-        onSuccess={() => {}}
-      />
+      {isDialogOpen && (
+        <MaintenanceFormDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          orderId={id!}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ["maintenance-records", id!],
+            });
+          }}
+          maintenanceRecord={selectedMaintenance || undefined}
+        />
+      )}
+
+      {ConfirmDialog}
     </div>
   );
 }

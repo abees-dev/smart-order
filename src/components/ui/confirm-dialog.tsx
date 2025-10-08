@@ -23,7 +23,7 @@ interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   variant?: ConfirmDialogVariant;
@@ -119,7 +119,7 @@ export function useConfirmDialog() {
   const [dialogState, setDialogState] = React.useState<{
     open: boolean;
     title: string;
-    description?: string;
+    description?: React.ReactNode;
     confirmText?: string;
     cancelText?: string;
     variant?: ConfirmDialogVariant;
@@ -134,7 +134,7 @@ export function useConfirmDialog() {
   const showConfirm = React.useCallback(
     (config: {
       title: string;
-      description?: string;
+      description?: React.ReactNode;
       confirmText?: string;
       cancelText?: string;
       variant?: ConfirmDialogVariant;
