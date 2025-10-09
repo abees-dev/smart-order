@@ -164,7 +164,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
         setExpandedRows((prev) => new Set(prev).add(rowKey));
 
         // Load sub data if not cached
-        if (!subDataCache.has(rowKey) && subTable.getSubData) {
+        if (subTable.getSubData) {
           try {
             const subData = await subTable.getSubData(record);
             setSubDataCache((prev) => new Map(prev).set(rowKey, subData));
@@ -331,6 +331,12 @@ export function EnhancedTable<T = Record<string, unknown>>({
     },
     [subTable, expandedRows, subDataCache, getRowKey]
   );
+
+  React.useEffect(() => {
+    // Collapse all rows when data source changes
+    setExpandedRows(new Set());
+    setSubDataCache(new Map());
+  }, [tableProps.dataSource]);
 
   return (
     <div className="space-y-4">

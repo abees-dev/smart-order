@@ -148,12 +148,10 @@ export function FormSelectField({
     [field]
   );
 
-  console.log("FormSelectField value:", field.value);
-
   return (
     <FormSelect
       {...props}
-      value={field.value || ""}
+      value={field?.value || ""}
       onValueChange={handleValueChange}
       error={fieldState.error?.message}
     />

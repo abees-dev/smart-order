@@ -11,7 +11,7 @@ import {
   Receipt,
   LogOut,
   User,
-  DollarSign,
+  Wallet2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
@@ -112,7 +112,7 @@ export function AppSidebar() {
     {
       title: t("navigation.debts"),
       url: ROUTES.DASHBOARD.DEBTS,
-      icon: DollarSign,
+      icon: Wallet2,
       view: hasResource(Resources.DEBTS, user?.permissions || {}),
       type: "simple" as const,
     },
