@@ -11,6 +11,7 @@ import type { Debt } from "../types";
 import React from "react";
 import { OrderSelectField, SupplyImportSelect } from "@/components/forms";
 import { useCreateDebt } from "../hooks/use-debt";
+import { generateOrderNumber } from "@/utils";
 
 interface DebtsFormDialogProps {
   open: boolean;
@@ -62,7 +63,7 @@ const DebtsFormDialog: React.FC<DebtsFormDialogProps> = ({
         form.reset({
           type: "sales",
           referenceId: "",
-          referenceNumber: "",
+          referenceNumber: generateOrderNumber("CN"),
           dueDate: undefined,
           description: "",
           notes: "",
@@ -172,6 +173,7 @@ const DebtsFormDialog: React.FC<DebtsFormDialogProps> = ({
               label="Số tham chiếu"
               placeholder="Nhập số tham chiếu"
               required
+              disabled
             />
 
             <FormDatePicker

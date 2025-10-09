@@ -46,6 +46,7 @@ export interface ReferenceRecord {
 }
 
 export interface DebtFilters {
+  search?: string;
   type?: "sales" | "purchase";
   status?: "pending" | "partial" | "paid" | "overdue";
   customerId?: string;

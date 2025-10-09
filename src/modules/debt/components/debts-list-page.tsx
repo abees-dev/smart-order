@@ -9,8 +9,9 @@ import {
   type TableAction,
 } from "@/components/tables";
 import DebtsFormDialog from "./debts-form-dialog";
+import DebtFilter from "./filter/DebtFilter";
 import { useDebts } from "../hooks/use-debt";
-import type { Debt, DebtPayment } from "../types";
+import type { Debt, DebtPayment, DebtFilters } from "../types";
 import { formatCurrency, formatDate } from "@/utils/format";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageHeader } from "@/components/PageHeader";
@@ -20,10 +21,11 @@ const DebtsListPage = () => {
   const [isOpenCreateDebt, setIsOpenCreateDebt] = useState(false);
   const [isOpenCreatePaymentDebt, setIsOpenCreatePaymentDebt] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
+  const [filters, setFilters] = useState<DebtFilters>({});
   const isMobile = useIsMobile();
 
   const { debts, loading, error, refetchDebts, fetchNextPage, hasNextPage } =
-    useDebts({});
+    useDebts(filters);
   const { createColumn } = useEnhancedTableColumns<Debt>();
 
   // Status color mapping for Badge component
@@ -62,12 +64,15 @@ const DebtsListPage = () => {
       render: (_, record: Debt) => (
         <div className="space-y-1">
           <div className="font-semibold text-foreground">
+            {record.referenceNumber}
+          </div>
+          <div className="font-sm text-muted-foreground">
             {record.referenceRecord.referenceNumber}
           </div>
           <div className="text-sm text-muted-foreground">
             {record.type === "sales"
-              ? record.customerName
-              : record.supplierName}
+              ? record.customer?.name
+              : record.supplier?.name}
           </div>
         </div>
       ),
@@ -279,7 +284,11 @@ const DebtsListPage = () => {
         onCreateAction={() => setIsOpenCreateDebt(true)}
         shouldCreateAction={true}
         createActionLabel="Thêm công nợ"
+        filterActions={
+          <DebtFilter filters={filters} onFiltersChange={setFilters} />
+        }
       />
+
       <EnhancedTable<Debt>
         columns={columns}
         dataSource={debts}

@@ -20,11 +20,11 @@ export const normalizeText = (text: string): string => {
   );
 };
 
-export const generateOrderNumber = () => {
+export const generateOrderNumber = (prefix: string = "PO") => {
   const d = new Date();
   const dateFormat = format(d, "yyMMdd");
   const ts = String(d.getTime()).slice(-6);
-  return `PO-${dateFormat}-${ts}`;
+  return `${prefix}-${dateFormat}-${ts}`;
 };
 
 // Format currency for Vietnamese locale
