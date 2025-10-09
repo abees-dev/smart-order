@@ -24,9 +24,20 @@ const DebtsListPage = () => {
   const [filters, setFilters] = useState<DebtFilters>({});
   const isMobile = useIsMobile();
 
-  const { debts, loading, error, refetchDebts, fetchNextPage, hasNextPage } =
-    useDebts(filters);
+  const {
+    debts,
+    loading,
+    error,
+    refetchDebts,
+    fetchNextPage,
+    hasNextPage,
+    pagination,
+  } = useDebts(filters);
   const { createColumn } = useEnhancedTableColumns<Debt>();
+
+  const changePage = (newPage: number) => {
+    setFilters((prev) => ({ ...prev, page: newPage }));
+  };
 
   // Status color mapping for Badge component
   const getStatusBadge = (status: string) => {
@@ -310,6 +321,16 @@ const DebtsListPage = () => {
         isMobile={isMobile}
         loadingMore={loading}
         mobileCardRender={mobileCardRender}
+        pagination={
+          !isMobile
+            ? {
+                current: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
+                onChange: (newPage: number) => changePage(newPage),
+              }
+            : undefined
+        }
       />
 
       {isOpenCreateDebt && (
