@@ -324,7 +324,7 @@ export function OrdersListPage() {
     },
     columns: [
       createColumn({
-        key: "orderNumber",
+        key: "parentOrderNumber",
         title: "Bảo trì đơn hàng",
         dataIndex: "parentOrderNumber",
         render: (value) => (
@@ -333,7 +333,7 @@ export function OrdersListPage() {
           </div>
         ),
       }),
-      ...columns,
+      ...columns.map((col) => ({ ...col, key: `sub-${col.key}` })),
     ],
     onDoubleClick: (record) => {
       if (!hasPermission(Resources.ORDERS, Actions.DETAIL)) return;
