@@ -322,7 +322,35 @@ export function OrdersListPage() {
       // Fetch sub-orders for the given order
       return await OrderService.getSubOrdersByOrderId(record.id);
     },
-    columns: columns,
+    columns: [
+      createColumn({
+        key: "orderNumber",
+        title: "Bảo trì đơn hàng",
+        dataIndex: "parentOrderNumber",
+        render: (value) => (
+          <div className="font-medium text-blue-600">
+            {(value as string) || "--"}
+          </div>
+        ),
+      }),
+      ...columns,
+    ],
+    onDoubleClick: (record) => {
+      if (!hasPermission(Resources.ORDERS, Actions.DETAIL)) return;
+      navigate(ROUTES.DASHBOARD.ORDERS + `/${record.id}`);
+    },
+
+    actions: [
+      {
+        key: "complete",
+        label: "Hoàn thành",
+        icon: Package,
+        onClick: (record) => handleStatusChange(record, "completed"),
+        show: (record) =>
+          record.status === "exported" &&
+          hasPermission(Resources.ORDERS, Actions.UPDATE),
+      },
+    ],
   };
 
   // Mobile card renderer

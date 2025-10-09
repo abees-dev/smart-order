@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,8 @@ export interface SubTableConfig<T, SubT = any> {
   error?: Set<string | number>;
   // Actions for sub table rows
   actions?: TableAction<SubT>[];
+
+  onDoubleClick?: (record: T, index: number) => void;
 }
 
 export interface EnhancedTableProps<T>
@@ -235,25 +238,6 @@ export function EnhancedTable<T = Record<string, unknown>>({
 
           if (visibleActions.length === 0) return null;
 
-          if (visibleActions.length === 1) {
-            const action = visibleActions[0];
-            const Icon = action.icon;
-
-            return (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  action.onClick(record);
-                }}
-              >
-                {Icon && <Icon className="h-4 w-4" />}
-              </Button>
-            );
-          }
-
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -339,6 +323,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
               actions={subTable.actions}
               showHeader={true}
               className="bg-background rounded-md"
+              onDoubleClick={subTable.onDoubleClick as any}
             />
           )}
         </div>

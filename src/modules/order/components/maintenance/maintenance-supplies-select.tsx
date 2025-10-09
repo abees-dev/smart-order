@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +20,15 @@ import { SupplySelect } from "@/components/forms/supply-select";
 import { X, Plus } from "lucide-react";
 import type { Supply } from "@/modules/supplies/types";
 import type { CreateMaintenanceFormData } from "../../validation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui";
+import { VAT_RATE_OPTIONS } from "@/constants";
+import { calculateCurrencyWithVat } from "@/utils/currency";
 
 interface MaintenanceSuppliesSelectProps {
   control: Control<CreateMaintenanceFormData>;
@@ -48,6 +58,7 @@ export function MaintenanceSuppliesSelect({
       quantity: 1,
       unitPrice: 0,
       notes: "",
+      vatRate: 0,
     });
   };
 
@@ -152,7 +163,7 @@ export function MaintenanceSuppliesSelect({
                   )}
                 />
 
-                <div className="grid grid-cols-3 gap-4 items-start">
+                <div className="grid md:grid-cols-2 grid-cols-1 gap-4 items-start">
                   <FormField
                     control={control}
                     name={`supplies.${index}.quantity`}
@@ -198,6 +209,44 @@ export function MaintenanceSuppliesSelect({
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid md:grid-cols-2 grid-cols-1 gap-4 items-start">
+                  <FormField
+                    control={control}
+                    name={`supplies.${index}.vatRate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>VAT (%)</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(parseInt(value));
+                          }}
+                          value={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                className="w-full"
+                                placeholder="Chọn VAT"
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {VAT_RATE_OPTIONS.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="space-y-2">
                     <FormLabel>Thành tiền</FormLabel>
@@ -209,7 +258,15 @@ export function MaintenanceSuppliesSelect({
                             values.supplies?.[index]?.quantity || 0;
                           const unitPrice =
                             values.supplies?.[index]?.unitPrice || 0;
-                          const total = quantity * unitPrice;
+                          const vatRate =
+                            values.supplies?.[index]?.vatRate || 0;
+
+                          const total = calculateCurrencyWithVat({
+                            amount: unitPrice,
+                            quantity,
+                            vatRate,
+                          });
+
                           return new Intl.NumberFormat("vi-VN", {
                             style: "currency",
                             currency: "VND",
@@ -261,9 +318,15 @@ export function MaintenanceSuppliesSelect({
                     const values = getValues();
                     const total = (values.supplies || []).reduce(
                       (sum, supply) => {
-                        return (
-                          sum + (supply.quantity || 0) * (supply.unitPrice || 0)
-                        );
+                        const vatRate = supply.vatRate || 0;
+                        const unitPrice = supply.unitPrice || 0;
+                        const quantity = supply.quantity || 0;
+                        const priceWithVat = calculateCurrencyWithVat({
+                          amount: unitPrice,
+                          quantity,
+                          vatRate,
+                        });
+                        return sum + priceWithVat;
                       },
                       0
                     );

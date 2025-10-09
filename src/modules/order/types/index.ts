@@ -81,6 +81,7 @@ export interface Order {
   };
   parentOrderId?: string | null;
   hasSubOrder?: boolean;
+  parentOrderNumber?: string | null;
 }
 
 export interface CreateOrderData {

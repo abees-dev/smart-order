@@ -146,6 +146,11 @@ export const maintenanceSupplySchema = z.object({
     .max(200, "Ghi chú không được vượt quá 200 ký tự")
     .optional()
     .or(z.literal("")),
+  vatRate: z
+    .number()
+    .min(0, "Thuế VAT không được âm")
+    .max(100, "Thuế VAT không được quá 100%")
+    .optional(),
 });
 
 export const createMaintenanceSchema = z
@@ -186,7 +191,7 @@ export const createMaintenanceSchema = z
   .refine(
     (data) => {
       // If maintenance type is 'paid', cost must be greater than 0
-      if (data.maintenanceType === "paid" && data.cost <= 0) {
+      if (data.maintenanceType === "paid" && data.cost < 0) {
         return false;
       }
       return true;
