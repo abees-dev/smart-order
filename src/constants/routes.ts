@@ -19,6 +19,7 @@ export const ROUTES = {
     REPORTS: "/dashboard/reports",
     SETTINGS: "/dashboard/settings",
     COMING_SOON: "/dashboard/coming-soon",
+    DEBTS: "/dashboard/debts",
 
     // Supplies section (nested)
     SUPPLIES: {

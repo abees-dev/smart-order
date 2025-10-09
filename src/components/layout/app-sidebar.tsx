@@ -11,6 +11,7 @@ import {
   Receipt,
   LogOut,
   User,
+  DollarSign,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
@@ -106,6 +107,13 @@ export function AppSidebar() {
       url: ROUTES.DASHBOARD.ORDERS,
       icon: ShoppingCart,
       view: hasResource(Resources.ORDERS, user?.permissions || {}),
+      type: "simple" as const,
+    },
+    {
+      title: t("navigation.debts"),
+      url: ROUTES.DASHBOARD.DEBTS,
+      icon: DollarSign,
+      view: hasResource(Resources.DEBTS, user?.permissions || {}),
       type: "simple" as const,
     },
     {

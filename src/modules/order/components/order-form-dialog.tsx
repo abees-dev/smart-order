@@ -105,7 +105,7 @@ export function OrderFormDialog({
     }));
 
   const getCustomerOptions = () =>
-    customers.map((customer) => ({
+    customers?.map((customer) => ({
       value: customer.id,
       label: customer.name,
       description: `${customer.phone} - ${customer.address}`,

@@ -334,7 +334,7 @@ export function MonthlyReportDetails({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {report.topCustomers.map((customer, index) => (
+                        {report?.topCustomers?.map((customer, index) => (
                           <TableRow key={customer.customerId || "guest"}>
                             <TableCell>
                               <div className="flex items-center gap-2">

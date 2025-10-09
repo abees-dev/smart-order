@@ -8,6 +8,7 @@ export const Resources = {
   INVOICES: "INVOICES",
   COST_INCURRED: "COST_INCURRED",
   SUPPLIES_IMPORT: "SUPPLIES_IMPORT",
+  DEBTS: "DEBTS",
 } as const;
 
 export const Actions = {

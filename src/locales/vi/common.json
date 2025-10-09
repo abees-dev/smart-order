@@ -52,7 +52,8 @@
     "imports": "Phiếu nhập",
     "invoices": "Hóa đơn",
     "reports": "Báo cáo",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "debts": "Công nợ"
   },
   "common": {
     "save": "Lưu",

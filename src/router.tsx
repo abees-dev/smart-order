@@ -7,6 +7,7 @@ import { productRouter } from "./modules/product";
 import { orderRouter } from "./modules/order";
 import { invoiceRouter } from "./modules/invoice";
 import { reportsRouter } from "./modules/reports/router";
+import { debtRoutes } from "./modules/debt";
 import DashboardLayout from "./layout/dashboard-layout";
 import { AuthGuard } from "./components/guards";
 import { ROUTES } from "./constants/routes";
@@ -37,6 +38,7 @@ const router = createBrowserRouter(
         ...productRouter,
         ...orderRouter,
         ...invoiceRouter,
+        ...debtRoutes,
         reportsRouter,
       ],
       errorElement: <div>Error loading dashboard layout</div>,
