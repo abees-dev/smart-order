@@ -17,6 +17,7 @@ import {
   EnhancedTable,
   useEnhancedTableColumns,
   type ResponsiveTableColumn,
+  type SubTableConfig,
   type TableAction,
 } from "@/components/tables";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -43,6 +44,7 @@ import { usePermissions } from "@/components/guards";
 import { PageHeader } from "@/components/PageHeader";
 import OrderFilter from "./filter/OrderFilter";
 import { useFilterStore } from "@/stores/filter.store";
+import { OrderService } from "../services/order.service";
 
 const FILTER_KEY = Resources.ORDERS;
 export function OrdersListPage() {
@@ -314,6 +316,15 @@ export function OrdersListPage() {
     },
   ];
 
+  const subTableConfig: SubTableConfig<Order, Order> = {
+    hasSubData: (record) => !!record.hasSubOrder,
+    getSubData: async (record) => {
+      // Fetch sub-orders for the given order
+      return await OrderService.getSubOrdersByOrderId(record.id);
+    },
+    columns: columns,
+  };
+
   // Mobile card renderer
   const mobileCardRender = (record: Order) => (
     <div className="space-y-3">
@@ -408,6 +419,7 @@ export function OrdersListPage() {
       <EnhancedTable<Order>
         columns={columns}
         dataSource={orders}
+        subTable={subTableConfig}
         rowKey="id"
         loading={loading}
         emptyText="Không tìm thấy đơn hàng nào"

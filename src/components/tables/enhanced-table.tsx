@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
+  ChevronDown,
+  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,6 +34,24 @@ export interface TableAction<T> {
   show?: (record: T) => boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface SubTableConfig<T, SubT = any> {
+  // Function to check if record has expandable data
+  hasSubData?: (record: T) => boolean;
+  // Function to get sub data for a record
+  getSubData?: (record: T) => SubT[] | Promise<SubT[]>;
+  // Sub table columns configuration
+  columns: ResponsiveTableColumn<SubT>[];
+  // Sub table title (optional)
+  title?: (record: T) => string;
+  // Loading state for async sub data
+  loading?: Set<string | number>;
+  // Error state
+  error?: Set<string | number>;
+  // Actions for sub table rows
+  actions?: TableAction<SubT>[];
+}
+
 export interface EnhancedTableProps<T>
   extends Omit<ResponsiveTableProps<T>, "columns" | "onDoubleClick"> {
   columns: ResponsiveTableColumn<T>[];
@@ -43,6 +63,9 @@ export interface EnhancedTableProps<T>
 
   // Actions
   actions?: TableAction<T>[];
+
+  // Sub-table functionality
+  subTable?: SubTableConfig<T>;
 
   // Pagination for desktop
   pagination?: {
@@ -76,6 +99,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
   searchValue = "",
   onSearchChange,
   actions = [],
+  subTable,
   pagination,
   headerActions,
   title,
@@ -86,6 +110,14 @@ export function EnhancedTable<T = Record<string, unknown>>({
   isMobile = false,
   ...tableProps
 }: EnhancedTableProps<T>) {
+  // State for expanded rows
+  const [expandedRows, setExpandedRows] = React.useState<Set<string | number>>(
+    new Set()
+  );
+  const [subDataCache, setSubDataCache] = React.useState<
+    Map<string | number, unknown[]>
+  >(new Map());
+
   // Infinite scroll for mobile
   const { triggerRef } = useInfiniteScroll({
     hasMore,
@@ -95,80 +127,225 @@ export function EnhancedTable<T = Record<string, unknown>>({
     rootMargin: "100px",
   });
 
-  // Add actions column if actions are provided
+  // Get row key function
+  const getRowKey = React.useCallback(
+    (record: T, index: number): string | number => {
+      if (tableProps.rowKey) {
+        if (typeof tableProps.rowKey === "function") {
+          return tableProps.rowKey(record);
+        }
+        return record[tableProps.rowKey] as string | number;
+      }
+      return index;
+    },
+    [tableProps.rowKey]
+  );
+
+  // Handle row expansion
+  const handleRowExpand = React.useCallback(
+    async (record: T, index: number) => {
+      if (!subTable) return;
+
+      const rowKey = getRowKey(record, index);
+      const isExpanded = expandedRows.has(rowKey);
+
+      if (isExpanded) {
+        // Collapse row
+        setExpandedRows((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(rowKey);
+          return newSet;
+        });
+      } else {
+        // Expand row
+        setExpandedRows((prev) => new Set(prev).add(rowKey));
+
+        // Load sub data if not cached
+        if (!subDataCache.has(rowKey) && subTable.getSubData) {
+          try {
+            const subData = await subTable.getSubData(record);
+            setSubDataCache((prev) => new Map(prev).set(rowKey, subData));
+          } catch (error) {
+            console.error("Failed to load sub data:", error);
+            // Could add error state handling here
+          }
+        }
+      }
+    },
+    [subTable, expandedRows, subDataCache, getRowKey]
+  );
+
+  // Add expand column if subTable is enabled
   const enhancedColumns = React.useMemo(() => {
-    if (actions.length === 0)
-      return columns.filter((col) => col.view !== false);
+    let resultColumns = [...columns.filter((col) => col.view !== false)];
 
-    const actionColumn: ResponsiveTableColumn<T> = {
-      key: "actions",
-      title: "Thao tác",
-      width: 80,
-      align: "center",
-      render: (_, record) => {
-        const visibleActions = actions.filter(
-          (action) => !action.show || action.show(record)
-        );
+    // Add expand column at the beginning if subTable is enabled
+    if (subTable) {
+      const expandColumn: ResponsiveTableColumn<T> = {
+        key: "expand",
+        title: "",
+        width: 40,
+        align: "center",
+        render: (_, record, index) => {
+          const hasData = subTable.hasSubData
+            ? subTable.hasSubData(record)
+            : true;
+          if (!hasData) return null;
 
-        if (visibleActions.length === 0) return null;
-
-        if (visibleActions.length === 1) {
-          const action = visibleActions[0];
-          const Icon = action.icon;
+          const rowKey = getRowKey(record, index);
+          const isExpanded = expandedRows.has(rowKey);
+          const isLoading = subTable.loading?.has(rowKey);
 
           return (
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-6 w-6 p-0"
+              disabled={isLoading}
               onClick={(e) => {
                 e.stopPropagation();
-                action.onClick(record);
+                handleRowExpand(record, index);
               }}
             >
-              {Icon && <Icon className="h-4 w-4" />}
+              {isLoading ? (
+                <Loading width={12} thickness={2} />
+              ) : isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRightIcon className="h-4 w-4" />
+              )}
             </Button>
           );
-        }
+        },
+      };
+      resultColumns = [expandColumn, ...resultColumns];
+    }
 
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+    // Add actions column if actions are provided
+    if (actions.length > 0) {
+      const actionColumn: ResponsiveTableColumn<T> = {
+        key: "actions",
+        title: "Thao tác",
+        width: 80,
+        align: "center",
+        render: (_, record) => {
+          const visibleActions = actions.filter(
+            (action) => !action.show || action.show(record)
+          );
+
+          if (visibleActions.length === 0) return null;
+
+          if (visibleActions.length === 1) {
+            const action = visibleActions[0];
+            const Icon = action.icon;
+
+            return (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  action.onClick(record);
+                }}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                {Icon && <Icon className="h-4 w-4" />}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px]">
-              {visibleActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <DropdownMenuItem
-                    key={action.key}
-                    onClick={() => action.onClick(record)}
-                    className={cn(
-                      "flex items-center gap-2 cursor-pointer",
-                      action.variant === "destructive" &&
-                        "text-destructive focus:text-destructive"
-                    )}
-                  >
-                    {Icon && <Icon className="h-4 w-4" />}
-                    {action.label}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    };
+            );
+          }
 
-    return [...columns.filter((col) => col.view !== false), actionColumn];
-  }, [columns, actions]);
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[160px]">
+                {visibleActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={action.key}
+                      onClick={() => action.onClick(record)}
+                      className={cn(
+                        "flex items-center gap-2 cursor-pointer",
+                        action.variant === "destructive" &&
+                          "text-destructive focus:text-destructive"
+                      )}
+                    >
+                      {Icon && <Icon className="h-4 w-4" />}
+                      {action.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      };
+      resultColumns.push(actionColumn);
+    }
+
+    return resultColumns;
+  }, [columns, actions, subTable, expandedRows, getRowKey, handleRowExpand]);
+
+  // Render expanded row content
+  const renderExpandedRow = React.useCallback(
+    (record: T, index: number) => {
+      if (!subTable) return null;
+
+      const rowKey = getRowKey(record, index);
+      const isExpanded = expandedRows.has(rowKey);
+
+      if (!isExpanded) return null;
+
+      const subData = subDataCache.get(rowKey) || [];
+      const isLoading = subTable.loading?.has(rowKey);
+      const hasError = subTable.error?.has(rowKey);
+
+      return (
+        <div className="p-3 bg-muted/30 border-t">
+          {subTable.title && (
+            <h4 className="text-sm font-medium mb-3">
+              {subTable.title(record)}
+            </h4>
+          )}
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loading width={16} thickness={2} />
+                <span className="text-sm">Đang tải dữ liệu...</span>
+              </div>
+            </div>
+          ) : hasError ? (
+            <div className="flex items-center justify-center py-8 text-destructive">
+              <span className="text-sm">Có lỗi xảy ra khi tải dữ liệu</span>
+            </div>
+          ) : subData.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <span className="text-sm">Không có dữ liệu chi tiết</span>
+            </div>
+          ) : (
+            <EnhancedTable
+              dataSource={subData}
+              columns={subTable.columns}
+              actions={subTable.actions}
+              showHeader={true}
+              className="bg-background rounded-md"
+            />
+          )}
+        </div>
+      );
+    },
+    [subTable, expandedRows, subDataCache, getRowKey]
+  );
 
   return (
     <div className="space-y-4">
@@ -202,7 +379,11 @@ export function EnhancedTable<T = Record<string, unknown>>({
       )}
 
       {/* Table */}
-      <ResponsiveTable<T> {...tableProps} columns={enhancedColumns} />
+      <ResponsiveTable<T>
+        {...tableProps}
+        columns={enhancedColumns}
+        expandedRowRender={subTable ? renderExpandedRow : undefined}
+      />
 
       {/* Infinite Scroll Trigger and Loading for Mobile */}
       {isMobile && (

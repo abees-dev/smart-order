@@ -40,6 +40,7 @@ export interface ResponsiveTableProps<T>
   showHeader?: boolean;
   loadingRows?: number;
   onDoubleClick?: (record: T, index: number) => void;
+  expandedRowRender?: (record: T, index: number) => React.ReactNode;
 }
 
 export function ResponsiveTable<T = Record<string, unknown>>({
@@ -53,6 +54,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
   mobileCardRender,
   showHeader = true,
   onDoubleClick,
+  expandedRowRender,
   ...other
 }: ResponsiveTableProps<T>) {
   const isMobile = useIsMobile();
@@ -191,44 +193,58 @@ export function ResponsiveTable<T = Record<string, unknown>>({
         )}
         {!loading &&
           dataSource.map((record, index) => (
-            <TableRow
-              key={getRowKey(record, index)}
-              onDoubleClick={() => onDoubleClick?.(record, index)}
-              className={cn(
-                "transition-all duration-200",
-                onRowClick && "cursor-pointer active:bg-muted/60",
-                "group",
-                {
-                  "border-b border-border/80": index !== dataSource.length - 1,
-                }
+            <React.Fragment key={getRowKey(record, index)}>
+              <TableRow
+                onDoubleClick={() => onDoubleClick?.(record, index)}
+                className={cn(
+                  "transition-all duration-200",
+                  onRowClick && "cursor-pointer active:bg-muted/60",
+                  "group",
+                  {
+                    "border-b border-border/80":
+                      index !== dataSource.length - 1 && !expandedRowRender,
+                  }
+                )}
+                onClick={() => onRowClick?.(record, index)}
+              >
+                {responsiveColumns.map((column, colIndex) => (
+                  <TableCell
+                    key={column.key}
+                    className={cn(
+                      "relative",
+                      column.key === "customer" &&
+                        "whitespace-normal min-w-[200px]",
+                      column.key !== "customer" && "whitespace-nowrap",
+                      column.align === "center" && "text-center",
+                      column.align === "right" && "text-right",
+                      column.className,
+                      {
+                        "sticky right-0 bg-background border-l-inner":
+                          column.key === "actions",
+                        "border-r":
+                          colIndex !==
+                            responsiveColumns.length - borderNumberLast &&
+                          column.key !== "actions",
+                      }
+                    )}
+                  >
+                    {renderCellValue(column, record, index)}
+                  </TableCell>
+                ))}
+              </TableRow>
+
+              {/* Expanded row content */}
+              {expandedRowRender && (
+                <TableRow className="hover:bg-transparent border-0 p-0">
+                  <TableCell
+                    colSpan={responsiveColumns.length}
+                    className="!p-0 border-0 bg-slate-50/30"
+                  >
+                    <div className="">{expandedRowRender(record, index)}</div>
+                  </TableCell>
+                </TableRow>
               )}
-              onClick={() => onRowClick?.(record, index)}
-            >
-              {responsiveColumns.map((column, colIndex) => (
-                <TableCell
-                  key={column.key}
-                  className={cn(
-                    "relative",
-                    column.key === "customer" &&
-                      "whitespace-normal min-w-[200px]",
-                    column.key !== "customer" && "whitespace-nowrap",
-                    column.align === "center" && "text-center",
-                    column.align === "right" && "text-right",
-                    column.className,
-                    {
-                      "sticky right-0 bg-background border-l-inner":
-                        column.key === "actions",
-                      "border-r":
-                        colIndex !==
-                          responsiveColumns.length - borderNumberLast &&
-                        column.key !== "actions",
-                    }
-                  )}
-                >
-                  {renderCellValue(column, record, index)}
-                </TableCell>
-              ))}
-            </TableRow>
+            </React.Fragment>
           ))}
       </TableBody>
     </Table>

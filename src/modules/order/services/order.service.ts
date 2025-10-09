@@ -178,4 +178,8 @@ export class OrderService {
   ): Promise<MaintenanceRecord[]> {
     return axiosInstance.get(`/maintenance-history/order/${orderId}`);
   }
+
+  static getSubOrdersByOrderId(orderId: string): Promise<Order[]> {
+    return axiosInstance.get(`/orders/${orderId}/sub-orders`);
+  }
 }

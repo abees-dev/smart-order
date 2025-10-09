@@ -80,6 +80,7 @@ export interface Order {
     upcomingMaintenance: Date | string | null;
   };
   parentOrderId?: string | null;
+  hasSubOrder?: boolean;
 }
 
 export interface CreateOrderData {

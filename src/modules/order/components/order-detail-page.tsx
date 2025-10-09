@@ -158,10 +158,7 @@ export function OrderDetailPage() {
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-4">
-          <MaintenanceSection
-            maintenance={order.maintenanceHistory || []}
-            summary={order.maintenanceSummary}
-          />
+          <MaintenanceSection summary={order.maintenanceSummary} />
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-4">

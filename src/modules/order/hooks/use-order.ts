@@ -2,6 +2,7 @@ import type { Order, OrderFilters } from "../types";
 import { OrderService } from "../services/order.service";
 import type { ApiResponsePagination } from "@/types/response";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 // Hook for managing order list with filters and pagination
 export function useOrders(filters: OrderFilters = {}) {
@@ -63,6 +64,39 @@ export function useOrderById(id: string) {
 
   return {
     order,
+    isLoading,
+    error: error?.message || null,
+    refetch,
+  };
+}
+
+export function useSubOrdersByOrderId(orderId: string) {
+  const [orderMap, setOrderMap] = useState<Record<string, Order[]>>({});
+
+  const {
+    data: subOrders,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["sub-orders", orderId],
+    queryFn: () => OrderService.getSubOrdersByOrderId(orderId),
+    enabled: !!orderId,
+  });
+
+  useEffect(() => {
+    if (subOrders) {
+      setOrderMap((prev) => {
+        return {
+          ...prev,
+          [orderId]: subOrders,
+        };
+      });
+    }
+  }, [subOrders]);
+
+  return {
+    subOrders: orderMap,
     isLoading,
     error: error?.message || null,
     refetch,
