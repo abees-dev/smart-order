@@ -36,7 +36,14 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { hasResource } from "@/utils/permission";
 import { Resources } from "@/constants";
 
@@ -44,8 +51,11 @@ export function AppSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
   const { handleLogout, user } = useAuthActions();
+  const { state } = useSidebar();
   const [suppliesOpen, setSuppliesOpen] = useState(false);
   const [invoicesOpen, setInvoicesOpen] = useState(false);
+
+  const isCollapsed = state === "collapsed";
 
   // Unified menu items structure
   const menuItems = [
@@ -140,7 +150,7 @@ export function AppSidebar() {
   }, [location.pathname]);
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center border-b p-4 flex-col">
           <img
@@ -149,7 +159,9 @@ export function AppSidebar() {
             className="h-10 w-10 rounded overflow-hidden"
           />
 
-          <div className="text-lg font-bold p-4">{t("app.title")}</div>
+          <div className="text-lg font-bold p-4 group-data-[collapsible=icon]:hidden">
+            {t("app.title")}
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -166,7 +178,11 @@ export function AppSidebar() {
                     );
                     return (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={isActive}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.title}
+                        >
                           <Link to={item.url!}>
                             <item.icon />
                             <span>{item.title}</span>
@@ -175,21 +191,58 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     );
                   } else if (item.type === "submenu") {
+                    // When collapsed, show submenu items as dropdown on hover
+                    if (isCollapsed) {
+                      return (
+                        <SidebarMenuItem key={item.title}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <SidebarMenuButton tooltip={item.title}>
+                                <item.icon />
+                                <span>{item.title}</span>
+                              </SidebarMenuButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              side="right"
+                              align="start"
+                              className="w-48"
+                            >
+                              {item.subItems!.map((subItem) => {
+                                return (
+                                  <DropdownMenuItem key={subItem.title} asChild>
+                                    <Link
+                                      to={subItem.url}
+                                      className="flex items-center gap-2 w-full"
+                                    >
+                                      <subItem.icon className="h-4 w-4" />
+                                      <span>{subItem.title}</span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </SidebarMenuItem>
+                      );
+                    }
+
+                    // When expanded, show normal submenu
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                           onClick={() => item.setOpen(!item.isOpen)}
+                          tooltip={item.title}
                         >
                           <item.icon />
                           <span>{item.title}</span>
                           <ChevronRight
                             className={`ml-auto transition-transform ${
                               item.isOpen ? "rotate-90" : ""
-                            }`}
+                            } group-data-[collapsible=icon]:hidden`}
                           />
                         </SidebarMenuButton>
                         {item.isOpen && (
-                          <SidebarMenuSub>
+                          <SidebarMenuSub className="group-data-[collapsible=icon]:hidden">
                             {item.subItems!.map((subItem) => {
                               const isActive = isActiveRoute(
                                 location.pathname,
@@ -225,9 +278,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <div className="flex items-center gap-2 p-2 text-sm">
+                <div className="flex items-center gap-2 p-2 text-sm group-data-[collapsible=icon]:justify-center">
                   <User className="h-4 w-4" />
-                  <div className="flex-1 truncate">
+                  <div className="flex-1 truncate group-data-[collapsible=icon]:hidden">
                     <div className="font-medium truncate">
                       {user?.firstName} {user?.lastName}
                     </div>
@@ -244,13 +297,14 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={handleLogout}
                   className="text-destructive hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
+                  tooltip={t("auth.signOut")}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>{t("auth.signOut")}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <SidebarMenuItem className="text-center">
+              <SidebarMenuItem className="text-center group-data-[collapsible=icon]:hidden">
                 {`Version ${__APP_VERSION__}`}
               </SidebarMenuItem>
             </SidebarMenu>

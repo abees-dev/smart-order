@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
+import { AlignJustifyIcon, ChevronsLeft } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -258,24 +258,48 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, state, isMobile } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  const renderIcon = () => {
+    if (isMobile) {
+      return <AlignJustifyIcon />;
+    }
+    return isCollapsed ? (
+      <ChevronsLeft className="rotate-180" />
+    ) : (
+      <ChevronsLeft />
+    );
+  };
 
   return (
-    <Button
-      data-sidebar="trigger"
-      data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("size-7", className)}
-      onClick={(event) => {
-        onClick?.(event);
-        toggleSidebar();
-      }}
-      {...props}
+    <div
+      className={cn("", {
+        "absolute top-4 z-20 flex items-center justify-center -translate-x-1/2 left-0":
+          !isMobile,
+      })}
     >
-      <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+      <Button
+        data-sidebar="trigger"
+        data-slot="sidebar-trigger"
+        variant={isMobile ? "ghost" : "outline"}
+        size="icon"
+        className={cn(
+          "size-8 ",
+          {
+            "rounded-full": !isMobile,
+          },
+          className
+        )}
+        onClick={(event) => {
+          onClick?.(event);
+          toggleSidebar();
+        }}
+        {...props}
+      >
+        {renderIcon()}
+      </Button>
+    </div>
   );
 }
 
