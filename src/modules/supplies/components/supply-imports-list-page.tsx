@@ -26,6 +26,7 @@ import { useSupplyImports, useSupplySummary } from "../hooks/use-supply-import";
 import {
   useAddToWarehouseSupply,
   useCancelSupplyImport,
+  useChangeCompletedStatus,
   useCompleteSupplyImport,
   useDeleteSupplyImport,
 } from "../hooks/use-supply-import-actions";
@@ -143,6 +144,7 @@ export function SupplyImportsListPage() {
     addToWarehouseSupply(importRecord.id);
   };
 
+  const { changeCompletedStatus } = useChangeCompletedStatus();
   const handleCompleteImport = async (importRecord: SupplyImport) => {
     completeSupplyImport(importRecord.id);
   };
@@ -255,6 +257,20 @@ export function SupplyImportsListPage() {
       onClick: (record) => handleCompleteImport(record),
       show: (record) =>
         record.status === "warehouse" &&
+        hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
+    },
+    {
+      key: "back-towarehouse",
+      label: "Đổi trạng thái nhập kho",
+      icon: Package,
+      variant: "default",
+      onClick: async (record) => {
+        await changeCompletedStatus(record.id);
+        refetchSuppliesImports();
+        toast.success("Đổi trạng thái thành công");
+      },
+      show: (record) =>
+        record.status === "completed" &&
         hasPermission(Resources.SUPPLIES_IMPORT, Actions.UPDATE),
     },
     {

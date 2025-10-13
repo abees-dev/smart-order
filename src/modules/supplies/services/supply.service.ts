@@ -57,6 +57,12 @@ export class SupplyService {
     return axiosInstance.post(`/supplies/imports/${importId}/add-to-warehouse`);
   }
 
+  static async changeCompletedStatus(importId: string): Promise<void> {
+    return axiosInstance.post(`/supplies/change-completed-status`, {
+      id: importId,
+    });
+  }
+
   static async getAllSupplyImports(
     filters: SupplyImportFilters = {}
   ): Promise<ApiResponsePagination<SupplyImport[]>> {

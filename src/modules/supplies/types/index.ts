@@ -107,6 +107,7 @@ export interface SupplyImport {
   } | null;
   createdAt: Date;
   updatedAt: Date;
+  orderNumber?: string;
 }
 
 export interface SupplyImportItem {
@@ -118,6 +119,7 @@ export interface SupplyImportItem {
   vatRate: number;
   totalPrice: number;
   orderId?: string;
+  orderNumber?: string;
 }
 
 export interface CreateSupplyImportData {

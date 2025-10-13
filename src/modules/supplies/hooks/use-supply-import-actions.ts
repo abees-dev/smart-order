@@ -174,3 +174,23 @@ export const useDeleteSupplyImport = ({
     isLoading,
   };
 };
+
+export const useChangeCompletedStatus = () => {
+  const {
+    mutateAsync: changeCompletedStatus,
+    isError,
+    error,
+    isPending: isLoading,
+  } = useMutation({
+    mutationFn: (importId: string) =>
+      SupplyService.changeCompletedStatus(importId),
+    onSuccess: () => {},
+  });
+
+  return {
+    changeCompletedStatus,
+    isError,
+    error,
+    isLoading,
+  };
+};

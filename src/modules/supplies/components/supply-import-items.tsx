@@ -111,7 +111,7 @@ function ItemCardMobile({
         {item.orderId && (
           <div className="mt-2 pt-2 border-t">
             <span className="text-xs text-muted-foreground">
-              Đơn hàng: <span className="font-medium">{item.orderId}</span>
+              Đơn hàng: <span className="font-medium">{item.orderNumber}</span>
             </span>
           </div>
         )}
@@ -198,9 +198,9 @@ export function ItemsTableDesktop({
       ),
     },
     {
-      key: "orderId",
+      key: "orderNumber",
       title: "Đơn hàng",
-      dataIndex: "orderId",
+      dataIndex: "orderNumber",
       width: 120,
       render: (value) =>
         value ? (
