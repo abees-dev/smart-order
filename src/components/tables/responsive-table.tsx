@@ -128,12 +128,16 @@ export function ResponsiveTable<T = Record<string, unknown>>({
           <Card
             key={getRowKey(record, index)}
             className={cn(
-              "group transition-all duration-200 border-border/50 hover:border-border hover:shadow-md",
+              "group transition-all duration-200 border-border/50 hover:border-border hover:shadow-md py-0",
               onRowClick && "cursor-pointer active:scale-[0.98]"
             )}
             onClick={() => onRowClick?.(record, index)}
           >
-            <CardContent className="p-5">
+            <CardContent
+              className={
+                actionsColumn && actionsColumn.render ? "pt-1 pb-2 px-4" : "p-4"
+              }
+            >
               {actionsColumn && actionsColumn.render && (
                 <div className="flex justify-end">
                   {actionsColumn?.render(record, record, index)}

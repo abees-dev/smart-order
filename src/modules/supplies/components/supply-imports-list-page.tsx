@@ -361,7 +361,7 @@ export function SupplyImportsListPage() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid-cols-2 md:grid-cols-4 gap-3 hidden md:grid">
         <Card className="hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-xs font-medium text-muted-foreground">

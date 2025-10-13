@@ -56,7 +56,10 @@ const DialogResponsive = ({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent
+          className="max-h-[85vh]"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <DrawerHeader className="text-left">
             <DrawerTitle>{title}</DrawerTitle>
             {description && (
@@ -99,7 +102,10 @@ const DialogResponsive = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("p-0 min-w-3xl", className)}>
+      <DialogContent
+        className={cn("p-0 min-w-3xl", className)}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader className="px-4 pt-4 text-left">
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

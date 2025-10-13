@@ -42,6 +42,7 @@ import {
 import { t } from "i18next";
 import { toast } from "sonner";
 import DialogResponsive from "@/components/ui/dialog-responsive";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SupplyImportFormDialogProps {
   open: boolean;
@@ -57,6 +58,7 @@ export function SupplyImportFormDialog({
   editImport = null,
 }: SupplyImportFormDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
   const { createSupplyImport, isLoading: loadingCreateSupplyImport } =
     useCreateSupplyImport({
       onSuccess: () => {
@@ -171,14 +173,17 @@ export function SupplyImportFormDialog({
   };
 
   const addItem = () => {
-    append({
-      supplyId: "",
-      quantity: 1,
-      unitPrice: 0,
-      vatRate: 0,
-      totalPrice: 0,
-      orderId: "",
-    });
+    append(
+      {
+        supplyId: "",
+        quantity: 1,
+        unitPrice: 0,
+        vatRate: 0,
+        totalPrice: 0,
+        orderId: "",
+      },
+      { shouldFocus: false }
+    );
   };
 
   const removeItem = (index: number) => {
@@ -299,34 +304,60 @@ export function SupplyImportFormDialog({
           </CardContent>
         </Card>
 
+        {isMobile && (
+          <div className="flex gap-2 sticky top-0 bg-background py-2 z-10 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSupplyForm(true)}
+              className="flex items-center gap-2"
+            >
+              <Package className="h-4 w-4" />
+              Thêm vật tư mới
+            </Button>
+            <Button
+              type="button"
+              onClick={addItem}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Thêm mặt hàng
+            </Button>
+          </div>
+        )}
+
         {/* Import Items */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2 relative">
               <CardTitle className="text-lg">
                 Danh sách vật tư nhập ({fields.length} mặt hàng)
               </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSupplyForm(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Package className="h-4 w-4" />
-                  Thêm vật tư mới
-                </Button>
-                <Button
-                  type="button"
-                  onClick={addItem}
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Thêm mặt hàng
-                </Button>
-              </div>
+              {!isMobile && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSupplyForm(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Package className="h-4 w-4" />
+                    Thêm vật tư mới
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={addItem}
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Thêm mặt hàng
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -339,14 +370,19 @@ export function SupplyImportFormDialog({
                       type="button"
                       onClick={() => {
                         const currentItem = form.getValues(`items.${index}`);
-                        append({
-                          supplyId: currentItem.supplyId,
-                          quantity: currentItem.quantity,
-                          unitPrice: currentItem.unitPrice,
-                          vatRate: currentItem.vatRate,
-                          totalPrice: currentItem.totalPrice,
-                          orderId: currentItem.orderId || "",
-                        });
+                        append(
+                          {
+                            supplyId: currentItem.supplyId,
+                            quantity: currentItem.quantity,
+                            unitPrice: currentItem.unitPrice,
+                            vatRate: currentItem.vatRate,
+                            totalPrice: currentItem.totalPrice,
+                            orderId: currentItem.orderId || "",
+                          },
+                          {
+                            shouldFocus: false,
+                          }
+                        );
                       }}
                       variant="ghost"
                       size="sm"
@@ -404,13 +440,13 @@ export function SupplyImportFormDialog({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
-                  <FormField
+                  {/* <FormField
                     control={form.control}
                     name={`items.${index}.quantity`}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Số lượng *</FormLabel>
-                        <FormControl>
+                        <FormControl autoFocus={false}>
                           <Input
                             type="number"
                             min="1"
@@ -421,11 +457,23 @@ export function SupplyImportFormDialog({
                               field.onChange(quantity);
                               handleQuantityChange(index, quantity);
                             }}
+                            autoFocus={false}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
+                  /> */}
+                  <FormTextField
+                    name={`items.${index}.quantity`}
+                    label="Số lượng"
+                    placeholder="Số lượng"
+                    control={form.control}
+                    type="text"
+                    onChange={(e) => {
+                      const quantity = parseInt(e.target.value) || 0;
+                      handleQuantityChange(index, quantity);
+                    }}
                   />
 
                   <FormField

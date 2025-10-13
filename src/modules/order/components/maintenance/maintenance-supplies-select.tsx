@@ -53,13 +53,18 @@ export function MaintenanceSuppliesSelect({
   });
 
   const handleAddSupply = () => {
-    append({
-      supplyId: "",
-      quantity: 1,
-      unitPrice: 0,
-      notes: "",
-      vatRate: 0,
-    });
+    append(
+      {
+        supplyId: "",
+        quantity: 1,
+        unitPrice: 0,
+        notes: "",
+        vatRate: 0,
+      },
+      {
+        shouldFocus: false,
+      }
+    );
   };
 
   const handleRemoveSupply = useCallback(

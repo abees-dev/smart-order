@@ -94,6 +94,7 @@ const FormTextField = ({
 
                   onChange?.(e);
                 }}
+                autoFocus={false}
               />
             );
           } else {

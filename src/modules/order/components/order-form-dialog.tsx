@@ -169,17 +169,22 @@ export function OrderFormDialog({
   }, [editOrder, form]);
 
   const addItem = () => {
-    append({
-      type: "product",
-      itemId: "",
-      quantity: 1,
-      unitPrice: 0,
-      vatRate: 0,
-      vatAmount: 0,
-      subtotal: 0,
-      totalPrice: 0,
-      description: "",
-    });
+    append(
+      {
+        type: "product",
+        itemId: "",
+        quantity: 1,
+        unitPrice: 0,
+        vatRate: 0,
+        vatAmount: 0,
+        subtotal: 0,
+        totalPrice: 0,
+        description: "",
+      },
+      {
+        shouldFocus: false,
+      }
+    );
   };
 
   const removeItem = (index: number) => {
