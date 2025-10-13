@@ -27,8 +27,8 @@ export const createOrderSchema = z.object({
     .min(1, "Số đơn hàng là bắt buộc")
     .max(50, "Số đơn hàng không được vượt quá 50 ký tự")
     .regex(
-      /^[A-Z0-9-]+$/,
-      "Số đơn hàng chỉ được chứa chữ in hoa, số và dấu gạch ngang"
+      /^[A-Za-z0-9-]+$/,
+      "Số đơn hàng chỉ được chứa chữ cái, số và dấu gạch ngang"
     ),
   customerId: z.string().optional().or(z.literal("")),
   customerName: z
