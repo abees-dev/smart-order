@@ -183,19 +183,19 @@ export function SupplyImportFormDialog({
       orderId: "",
     });
 
-    // Scroll to the newly added item after a short delay
-    setTimeout(() => {
-      if (itemsContainerRef.current) {
-        const items = itemsContainerRef.current.children;
-        const lastItem = items[items.length - 1] as HTMLElement;
-        if (lastItem) {
-          lastItem.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }
-      }
-    }, 100);
+    // // Scroll to the newly added item after a short delay
+    // setTimeout(() => {
+    //   if (itemsContainerRef.current) {
+    //     const items = itemsContainerRef.current.children;
+    //     const lastItem = items[items.length - 1] as HTMLElement;
+    //     if (lastItem) {
+    //       lastItem.scrollIntoView({
+    //         behavior: "smooth",
+    //         block: "center",
+    //       });
+    //     }
+    //   }
+    // }, 100);
   };
 
   const removeItem = (index: number) => {
@@ -385,33 +385,30 @@ export function SupplyImportFormDialog({
                         type="button"
                         onClick={() => {
                           const currentItem = form.getValues(`items.${index}`);
-                          append(
-                            {
-                              supplyId: currentItem.supplyId,
-                              quantity: currentItem.quantity,
-                              unitPrice: currentItem.unitPrice,
-                              vatRate: currentItem.vatRate,
-                              totalPrice: currentItem.totalPrice,
-                              orderId: currentItem.orderId || "",
-                            },
-                            { shouldFocus: false }
-                          );
+                          append({
+                            supplyId: currentItem.supplyId,
+                            quantity: currentItem.quantity,
+                            unitPrice: currentItem.unitPrice,
+                            vatRate: currentItem.vatRate,
+                            totalPrice: currentItem.totalPrice,
+                            orderId: currentItem.orderId || "",
+                          });
 
                           // Scroll to the newly duplicated item
-                          setTimeout(() => {
-                            if (itemsContainerRef.current) {
-                              const items = itemsContainerRef.current.children;
-                              const lastItem = items[
-                                items.length - 1
-                              ] as HTMLElement;
-                              if (lastItem) {
-                                lastItem.scrollIntoView({
-                                  behavior: "smooth",
-                                  block: "center",
-                                });
-                              }
-                            }
-                          }, 100);
+                          // setTimeout(() => {
+                          //   if (itemsContainerRef.current) {
+                          //     const items = itemsContainerRef.current.children;
+                          //     const lastItem = items[
+                          //       items.length - 1
+                          //     ] as HTMLElement;
+                          //     if (lastItem) {
+                          //       lastItem.scrollIntoView({
+                          //         behavior: "smooth",
+                          //         block: "center",
+                          //       });
+                          //     }
+                          //   }
+                          // }, 100);
                         }}
                         variant="ghost"
                         size="sm"
