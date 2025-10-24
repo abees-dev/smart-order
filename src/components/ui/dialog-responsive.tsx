@@ -55,21 +55,19 @@ const DialogResponsive = ({
   const isMobile = useIsMobile();
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
         <DrawerContent
-          className="max-h-[85vh] min-h-[85vh] h-auto"
+          className="max-h-[85vh]"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <DrawerHeader className="text-left flex-shrink-0">
+          <DrawerHeader className="text-left">
             <DrawerTitle>{title}</DrawerTitle>
             {description && (
               <DrawerDescription>{description}</DrawerDescription>
             )}
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
-            {children}
-          </div>
-          <DrawerFooter className="flex-shrink-0">
+          <div className="px-4 pb-6 overflow-y-auto">{children}</div>
+          <DrawerFooter>
             {actions && (
               <DialogFooter>
                 {actions.cancel && (
