@@ -57,17 +57,19 @@ const DialogResponsive = ({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
-          className="max-h-[85vh]"
+          className="max-h-[90vh] min-h-[85vh] h-auto"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <DrawerHeader className="text-left">
+          <DrawerHeader className="text-left flex-shrink-0">
             <DrawerTitle>{title}</DrawerTitle>
             {description && (
               <DrawerDescription>{description}</DrawerDescription>
             )}
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">{children}</div>
-          <DrawerFooter>
+          <div className="px-4 pb-6 overflow-y-auto flex-1 min-h-0">
+            {children}
+          </div>
+          <DrawerFooter className="flex-shrink-0">
             {actions && (
               <DialogFooter>
                 {actions.cancel && (
