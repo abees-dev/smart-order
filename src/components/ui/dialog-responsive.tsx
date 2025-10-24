@@ -57,7 +57,7 @@ const DialogResponsive = ({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
-          className="max-h-[90vh] min-h-[85vh] h-auto"
+          className="max-h-[85vh] min-h-[85vh] h-auto"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DrawerHeader className="text-left flex-shrink-0">
