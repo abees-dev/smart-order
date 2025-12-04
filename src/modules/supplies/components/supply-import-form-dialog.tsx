@@ -497,7 +497,7 @@ export function SupplyImportFormDialog({
                       control={form.control}
                       type="number"
                       onChange={(e) => {
-                        const quantity = parseInt(e.target.value) || 0;
+                        const quantity = parseFloat(e.target.value) || 0;
                         handleQuantityChange(index, quantity);
                       }}
                     />

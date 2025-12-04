@@ -124,7 +124,6 @@ export function ProductFormDialog({
   ) => {
     const filteredSupplies = supplies.filter((s) => s.quantity <= 0);
     if (filteredSupplies.length > 0) {
-      console.log(filteredSupplies);
       return toast.error("Số lượng vật tư phải lớn hơn 0");
     }
 
@@ -353,7 +352,6 @@ export function ProductFormDialog({
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      step="1"
                       value={supply.quantity || ""}
                       onChange={(e) =>
                         handleUpdateSupplyQuantity(
