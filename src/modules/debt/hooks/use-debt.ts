@@ -55,6 +55,52 @@ export const useCreateDebtPayment = () => {
   return mutation;
 };
 
+export const useEditDebtPayment = () => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({
+      paymentId,
+      data,
+    }: {
+      paymentId: string;
+      data: DebtPaymentFormData;
+    }) => DebtService.editDebtPayment(paymentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      toast.success("Cập nhật phiếu thu công nợ thành công");
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          "Cập nhật phiếu thu công nợ thất bại, vui lòng thử lại"
+      );
+    },
+  });
+
+  return mutation;
+};
+
+export const useDeleteDebt = () => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (debtId: string) => DebtService.deleteDebt(debtId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      toast.success("Xóa công nợ thành công");
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          "Xóa công nợ thất bại, vui lòng thử lại"
+      );
+    },
+  });
+
+  return mutation;
+};
+
 export function useDebts(filters: DebtFilters = {}) {
   const {
     data,

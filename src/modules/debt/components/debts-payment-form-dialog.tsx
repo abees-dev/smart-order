@@ -5,13 +5,15 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { debtPaymentSchema, type DebtPaymentFormData } from "../validation";
-import { useCreateDebtPayment } from "../hooks/use-debt";
+import { useCreateDebtPayment, useEditDebtPayment } from "../hooks/use-debt";
+import type { DebtPayment } from "../types";
 
 interface DebtsPaymentFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   maxAmount?: number;
   debtId: string;
+  editingPayment?: DebtPayment;
 }
 
 const DebtsPaymentFormDialog = ({
@@ -19,13 +21,18 @@ const DebtsPaymentFormDialog = ({
   onOpenChange,
   maxAmount = 999999999,
   debtId,
+  editingPayment,
 }: DebtsPaymentFormDialogProps) => {
+  const isEditing = !!editingPayment;
+
   const form = useForm<DebtPaymentFormData>({
     resolver: zodResolver(debtPaymentSchema),
     defaultValues: {
-      amount: 0,
-      paymentDate: new Date(),
-      notes: "",
+      amount: editingPayment?.amount || 0,
+      paymentDate: editingPayment?.paymentDate
+        ? new Date(editingPayment.paymentDate)
+        : new Date(),
+      notes: editingPayment?.notes || "",
     },
   });
 
@@ -37,10 +44,15 @@ const DebtsPaymentFormDialog = ({
 
   const amount = watch("amount");
   const { mutateAsync: createDebtPayment } = useCreateDebtPayment();
+  const { mutateAsync: editDebtPayment } = useEditDebtPayment();
 
   const handleFormSubmit = async (data: DebtPaymentFormData) => {
     try {
-      await createDebtPayment({ debtId, data });
+      if (isEditing && editingPayment) {
+        await editDebtPayment({ paymentId: editingPayment.id, data });
+      } else {
+        await createDebtPayment({ debtId, data });
+      }
       onOpenChange(false);
       form.reset();
     } catch (error) {
@@ -52,8 +64,12 @@ const DebtsPaymentFormDialog = ({
     <DialogResponsive
       open={open}
       onOpenChange={onOpenChange}
-      title="Ghi nhận thanh toán"
-      description="Ghi nhận thanh toán cho khoản nợ"
+      title={isEditing ? "Chỉnh sửa thanh toán" : "Ghi nhận thanh toán"}
+      description={
+        isEditing
+          ? "Chỉnh sửa thông tin thanh toán"
+          : "Ghi nhận thanh toán cho khoản nợ"
+      }
       formId="debt-payment-form"
       actions={{
         submit: {

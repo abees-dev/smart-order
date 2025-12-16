@@ -10,8 +10,9 @@ import {
 } from "@/components/tables";
 import DebtsFormDialog from "./debts-form-dialog";
 import DebtFilter from "./filter/DebtFilter";
-import { useDebts } from "../hooks/use-debt";
+import { useDebts, useDeleteDebt } from "../hooks/use-debt";
 import type { Debt, DebtPayment, DebtFilters } from "../types";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatCurrency, formatDate } from "@/utils/format";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageHeader } from "@/components/PageHeader";
@@ -21,6 +22,9 @@ const DebtsListPage = () => {
   const [isOpenCreateDebt, setIsOpenCreateDebt] = useState(false);
   const [isOpenCreatePaymentDebt, setIsOpenCreatePaymentDebt] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
+  const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(
+    null
+  );
   const [filters, setFilters] = useState<DebtFilters>({});
   const isMobile = useIsMobile();
 
@@ -33,6 +37,8 @@ const DebtsListPage = () => {
     hasNextPage,
     pagination,
   } = useDebts(filters);
+  const { mutateAsync: deleteDebt } = useDeleteDebt();
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const { createColumn } = useEnhancedTableColumns<Debt>();
 
   const changePage = (newPage: number) => {
@@ -194,8 +200,19 @@ const DebtsListPage = () => {
       label: "Xóa",
       icon: Trash2,
       variant: "destructive",
-      show: () => false,
-      onClick: () => {},
+      show: () => true, // Only show delete if no payments exist
+      onClick: (record) => {
+        showConfirm({
+          title: "Xác nhận xóa công nợ",
+          description: `Bạn có chắc chắn muốn xóa công nợ "${record.referenceNumber}"? Hành động này không thể hoàn tác.`,
+          confirmText: "Xóa",
+          cancelText: "Hủy",
+          variant: "destructive",
+          onConfirm: async () => {
+            await deleteDebt(record.id);
+          },
+        });
+      },
     },
   ];
 
@@ -222,6 +239,27 @@ const DebtsListPage = () => {
           {record.notes || "-"}
         </div>
       ),
+    },
+  ];
+
+  // Helper function to find the debt that contains a specific payment
+  const findDebtByPayment = (payment: DebtPayment): Debt | undefined => {
+    return debts.find((debt) => debt.payments.some((p) => p.id === payment.id));
+  };
+
+  const subTableActions: TableAction<DebtPayment>[] = [
+    {
+      key: "edit-payment",
+      label: "Chỉnh sửa",
+      icon: Pencil,
+      onClick: (payment) => {
+        const parentDebt = findDebtByPayment(payment);
+        if (parentDebt) {
+          setEditingPayment(payment);
+          setSelectedDebt(parentDebt);
+          setIsOpenCreatePaymentDebt(true);
+        }
+      },
     },
   ];
   // Mobile card renderer
@@ -311,6 +349,7 @@ const DebtsListPage = () => {
             return record.payments;
           },
           columns: subColumns,
+          actions: subTableActions,
         }}
         rowKey="id"
         loading={loading}
@@ -349,16 +388,21 @@ const DebtsListPage = () => {
           onOpenChange={(open) => {
             if (!open) {
               setSelectedDebt(null);
+              setEditingPayment(null);
             }
             setIsOpenCreatePaymentDebt(open);
           }}
           debtId={selectedDebt.id}
           maxAmount={
             selectedDebt.totalAmount -
-            selectedDebt.payments.reduce((sum, p) => sum + p.amount, 0)
+            selectedDebt.payments.reduce((sum, p) => sum + p.amount, 0) +
+            (editingPayment?.amount || 0) // Add back the amount if editing
           }
+          editingPayment={editingPayment || undefined}
         />
       )}
+
+      {ConfirmDialog}
     </div>
   );
 };

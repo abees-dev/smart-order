@@ -15,4 +15,10 @@ export class DebtService {
   static async createDebtPayment(debtId: string, data: DebtPaymentFormData) {
     return axiosInstance.post(`/debts/${debtId}/payments`, data);
   }
+  static async editDebtPayment(paymentId: string, data: DebtPaymentFormData) {
+    return axiosInstance.patch(`/debts/payments/${paymentId}`, data);
+  }
+  static async deleteDebt(debtId: string) {
+    return axiosInstance.delete(`/debts/${debtId}`);
+  }
 }
