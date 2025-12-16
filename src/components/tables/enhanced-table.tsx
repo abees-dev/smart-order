@@ -93,6 +93,9 @@ export interface EnhancedTableProps<T>
   // Device detection
   isMobile?: boolean;
   onDoubleClick?: (record: T, index: number) => void;
+
+  // Preserve expanded state on data updates
+  preserveExpandedOnUpdate?: boolean;
 }
 
 export function EnhancedTable<T = Record<string, unknown>>({
@@ -108,6 +111,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
   title,
   description,
   hasMore = false,
+  preserveExpandedOnUpdate = false,
   onLoadMore,
   loadingMore = false,
   isMobile = false,
@@ -333,10 +337,15 @@ export function EnhancedTable<T = Record<string, unknown>>({
   );
 
   React.useEffect(() => {
-    // Collapse all rows when data source changes
-    setExpandedRows(new Set());
-    setSubDataCache(new Map());
-  }, [tableProps.dataSource]);
+    if (preserveExpandedOnUpdate) {
+      // Clear only subDataCache to force refresh of subtable data but keep expanded state
+      setSubDataCache(new Map());
+    } else {
+      // Collapse all rows when data source changes
+      setExpandedRows(new Set());
+      setSubDataCache(new Map());
+    }
+  }, [tableProps.dataSource, preserveExpandedOnUpdate]);
 
   return (
     <div className="space-y-4">

@@ -359,6 +359,7 @@ const DebtsListPage = () => {
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={loading}
+        preserveExpandedOnUpdate={false}
         mobileCardRender={mobileCardRender}
         pagination={
           !isMobile
