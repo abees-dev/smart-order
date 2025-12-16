@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import Loading from "../ui/loading";
+import clsx from "clsx";
 
 export interface TableAction<T> {
   key: string;
@@ -53,6 +54,7 @@ export interface SubTableConfig<T, SubT = any> {
   actions?: TableAction<SubT>[];
 
   onDoubleClick?: (record: T, index: number) => void;
+  className?: string;
 }
 
 export interface EnhancedTableProps<T>
@@ -326,7 +328,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
               columns={subTable.columns}
               actions={subTable.actions}
               showHeader={true}
-              className="bg-background rounded-md"
+              className={clsx("bg-background rounded-md", subTable.className)}
               onDoubleClick={subTable.onDoubleClick as any}
             />
           )}

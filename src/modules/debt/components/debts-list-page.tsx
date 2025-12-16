@@ -512,6 +512,7 @@ const DebtsListPage = () => {
           },
           columns: subColumns,
           actions: subTableActions,
+          className: "w-full",
         }}
         rowKey="id"
         loading={loading}
