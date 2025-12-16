@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Pencil, Trash2, Eye, CircleDollarSign } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Eye,
+  CircleDollarSign,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +24,13 @@ import { formatCurrency, formatDate } from "@/utils/format";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PageHeader } from "@/components/PageHeader";
 import DebtsPaymentFormDialog from "./debts-payment-form-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 const DebtsListPage = () => {
   const [isOpenCreateDebt, setIsOpenCreateDebt] = useState(false);
@@ -26,6 +40,9 @@ const DebtsListPage = () => {
     null
   );
   const [filters, setFilters] = useState<DebtFilters>({});
+  const [expandedMobileCards, setExpandedMobileCards] = useState<Set<string>>(
+    new Set()
+  );
   const isMobile = useIsMobile();
 
   const {
@@ -262,55 +279,200 @@ const DebtsListPage = () => {
       },
     },
   ];
-  // Mobile card renderer
-  const mobileCardRender = (record: Debt) => (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1 flex-1">
-          <h3 className="font-semibold text-base">{record.referenceNumber}</h3>
-          <div className="flex gap-1">
-            <Badge {...getTypeBadge(record.type)} className="text-xs">
-              {record.type === "sales" ? "Bán hàng" : "Mua hàng"}
-            </Badge>
-            <Badge {...getStatusBadge(record.status)} className="text-xs">
-              {record.status === "pending" && "Chờ thanh toán"}
-              {record.status === "partial" && "Thanh toán một phần"}
-              {record.status === "paid" && "Đã thanh toán"}
-              {record.status === "overdue" && "Quá hạn"}
-            </Badge>
-          </div>
-        </div>
-        <div className="ml-2 text-right">
-          <div className="font-semibold">
-            {formatCurrency(record.totalAmount)}
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-2 text-sm">
-        <div>
-          <span className="text-muted-foreground">
-            Khách hàng/Nhà cung cấp:
+  // Mobile payment item component
+  const MobilePaymentItem = ({
+    payment,
+    record,
+  }: {
+    payment: DebtPayment;
+    record: Debt;
+  }) => (
+    <div className="flex items-center justify-between p-3 border rounded-lg bg-background/50">
+      <div className="space-y-1 flex-1">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">
+            {formatDate(payment.paymentDate)}
           </span>
-          <p className="font-medium">
-            {record.type === "sales"
-              ? record.customerName
-              : record.supplierName}
-          </p>
+          <span className="font-semibold text-green-600">
+            {formatCurrency(payment.amount)}
+          </span>
         </div>
-        <div>
-          <span className="text-muted-foreground">Ngày đến hạn:</span>
-          <p className="font-medium">{formatDate(record.dueDate)}</p>
-        </div>
-        {record.description && (
-          <div>
-            <span className="text-muted-foreground">Mô tả:</span>
-            <p className="font-medium">{record.description}</p>
-          </div>
+        {payment.notes && (
+          <p className="text-xs text-muted-foreground">{payment.notes}</p>
         )}
+      </div>
+      <div className="ml-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                setEditingPayment(payment);
+                setSelectedDebt(record);
+                setIsOpenCreatePaymentDebt(true);
+              }}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Chỉnh sửa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
+
+  // Mobile card renderer with expandable payments
+  const mobileCardRender = (record: Debt) => {
+    const remainingAmount =
+      record.totalAmount -
+      record.payments.reduce((acc, payment) => acc + payment.amount, 0);
+    const hasPayments = record.payments && record.payments.length > 0;
+    const isExpanded = expandedMobileCards.has(record.id);
+
+    return (
+      <div className="space-y-3">
+        {/* Main debt info */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1 flex-1">
+            <h3 className="font-semibold text-base">
+              {record.referenceNumber}
+            </h3>
+            <div className="text-xs text-muted-foreground">
+              {record.referenceRecord.referenceNumber}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              <Badge {...getTypeBadge(record.type)} className="text-xs">
+                {record.type === "sales" ? "Bán hàng" : "Mua hàng"}
+              </Badge>
+              <Badge {...getStatusBadge(record.status)} className="text-xs">
+                {record.status === "pending" && "Chờ thanh toán"}
+                {record.status === "partial" && "Thanh toán một phần"}
+                {record.status === "paid" && "Đã thanh toán"}
+                {record.status === "overdue" && "Quá hạn"}
+              </Badge>
+            </div>
+          </div>
+          <div className="ml-2 text-right">
+            <div className="font-semibold text-base">
+              {formatCurrency(record.totalAmount)}
+            </div>
+            {remainingAmount > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Còn lại: {formatCurrency(remainingAmount)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Customer/Supplier and due date */}
+        <div className="grid grid-cols-1 gap-2 text-sm">
+          <div>
+            <span className="text-muted-foreground">
+              {record.type === "sales" ? "Khách hàng:" : "Nhà cung cấp:"}
+            </span>
+            <p className="font-medium">
+              {record.type === "sales"
+                ? record.customerName
+                : record.supplierName}
+            </p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Ngày đến hạn:</span>
+            <p className="font-medium">{formatDate(record.dueDate)}</p>
+          </div>
+          {record.description && (
+            <div>
+              <span className="text-muted-foreground">Mô tả:</span>
+              <p className="font-medium">{record.description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Payment history section */}
+        {hasPayments && (
+          <div className="border-t pt-3">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedMobileCards((prev) => {
+                    const newSet = new Set(prev);
+                    if (isExpanded) {
+                      newSet.delete(record.id);
+                    } else {
+                      newSet.add(record.id);
+                    }
+                    return newSet;
+                  });
+                }}
+                className="text-sm font-medium h-auto p-0 justify-start"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                )}
+                Lịch sử thanh toán ({record.payments.length})
+              </Button>
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedDebt(record);
+                  setIsOpenCreatePaymentDebt(true);
+                }}
+                className="text-xs"
+              >
+                <CircleDollarSign className="h-3 w-3 mr-1" />
+                Thanh toán
+              </Button>
+            </div>
+
+            {/* Expandable payment list */}
+            {isExpanded && (
+              <div className="mt-3 space-y-2">
+                {record.payments.map((payment) => (
+                  <MobilePaymentItem
+                    key={payment.id}
+                    payment={payment}
+                    record={record}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Add payment button for debts without payments */}
+        {!hasPayments && (
+          <div className="border-t pt-3 flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">
+              Chưa có thanh toán nào
+            </span>
+            <Button
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedDebt(record);
+                setIsOpenCreatePaymentDebt(true);
+              }}
+              className="text-xs"
+            >
+              <CircleDollarSign className="h-3 w-3 mr-1" />
+              Thanh toán
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (error) {
     return (
