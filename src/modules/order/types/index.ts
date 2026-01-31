@@ -292,6 +292,7 @@ export interface OrderCostBreakdown {
   totalCost: number;
   source: "import" | "manual";
   supplies?: SupplyBreakdown[]; // Only present when type is "product"
+  sourceInvoiceNumber?: string; // Only for supplies imported from invoices
 }
 
 export interface OrderCostCalculation {

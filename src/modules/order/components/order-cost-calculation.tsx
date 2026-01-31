@@ -237,7 +237,7 @@ function SummaryCard({
         <div
           className={`absolute bottom-0 right-0 w-16 h-16 rounded-full opacity-5 -mr-8 -mb-8 ${config.iconColor.replace(
             "text-",
-            "bg-"
+            "bg-",
           )}`}
         ></div>
       </CardContent>
@@ -305,7 +305,10 @@ function CostBreakdownSection({
                 </div>
                 <span className="text-2xl font-bold text-orange-700 text-wrap text-center md:text-right">
                   {formatCurrency(
-                    costBreakdown.reduce((sum, item) => sum + item.totalCost, 0)
+                    costBreakdown.reduce(
+                      (sum, item) => sum + item.totalCost,
+                      0,
+                    ),
                   )}
                 </span>
               </div>
@@ -325,8 +328,11 @@ function CostBreakdownItem({
   isMobile: boolean;
 }) {
   const [isSuppliesOpen, setIsSuppliesOpen] = useState(false);
+
+  console.log(item);
   const hasSupplies =
     item.type === "product" && item.supplies && item.supplies.length > 0;
+  const hashSourceNumber = !!item.sourceInvoiceNumber;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200">
@@ -391,6 +397,11 @@ function CostBreakdownItem({
                 {item.itemName}
               </h4>
               <p className="text-sm text-gray-500 font-mono">SKU: {item.sku}</p>
+              {hashSourceNumber && (
+                <p className="text-xs text-gray-500 mt-1 font-mono">
+                  Mã phiếu nhập: {item.sourceInvoiceNumber}
+                </p>
+              )}
             </div>
             {hasSupplies && (
               <button
@@ -478,8 +489,8 @@ function CostBreakdownItem({
                     {formatCurrency(
                       item.supplies!.reduce(
                         (sum, supply) => sum + supply.totalCost,
-                        0
-                      )
+                        0,
+                      ),
                     )}
                   </span>
                 </div>
