@@ -515,6 +515,10 @@ function SupplyBreakdownItem({
     supply.currentStock !== undefined &&
     supply.currentStock < supply.totalQuantityNeeded;
 
+  const hashSourceNumber = supply.sourceInvoiceNumber !== undefined;
+  console.log("hashSourceNumber", hashSourceNumber);
+  console.log("supply.invoiceNumber", supply);
+
   return (
     <div
       className={`bg-white rounded-lg p-4 hover:shadow-sm transition-all duration-200 ${
@@ -554,6 +558,11 @@ function SupplyBreakdownItem({
             </Badge>
           </div>
           <p className="text-xs text-gray-500 font-mono">SKU: {supply.sku}</p>
+          {hashSourceNumber && (
+            <p className="text-xs text-gray-500 mt-1 font-mono">
+              Mã phiếu nhập: {supply.sourceInvoiceNumber}
+            </p>
+          )}
         </div>
 
         <div

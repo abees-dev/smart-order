@@ -280,6 +280,7 @@ export interface SupplyBreakdown {
   totalCost: number;
   source: "import" | "purchase_price";
   currentStock?: number;
+  sourceInvoiceNumber?: string;
 }
 
 export interface OrderCostBreakdown {
