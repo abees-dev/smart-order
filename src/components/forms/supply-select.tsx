@@ -49,7 +49,7 @@ export function SupplySelect({
         supplies.find((s) => s.id === selectedValue) || null;
       onSupplySelect?.(selectedSupply);
     },
-    [onValueChange, onSupplySelect, supplies]
+    [onValueChange, onSupplySelect, supplies],
   );
 
   const selectedSupply = supplies.find((s) => s.id === value);
@@ -71,6 +71,7 @@ export function SupplySelect({
       currentStock: supply.currentStock,
       minStock: supply.minStock,
     },
+    searchableLabel: `${supply.name} ${supply.sku} ${supply.unit}`,
   }));
 
   const renderOption = useCallback((option: SelectOption) => {
@@ -106,6 +107,8 @@ export function SupplySelect({
       </div>
     );
   }, []);
+
+  console.log("Supplies for select:", options); // Debug log to check supplies data
 
   return (
     <div className={className}>

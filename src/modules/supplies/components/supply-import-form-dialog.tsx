@@ -149,7 +149,7 @@ export function SupplyImportFormDialog({
 
   const onSubmit = async (data: CreateSupplyImportFormData) => {
     const hasInvalidItems = data.items.some(
-      (item) => !item.supplyId || item.quantity <= 0 || item.unitPrice < 0
+      (item) => !item.supplyId || item.quantity <= 0 || item.unitPrice < 0,
     );
 
     if (hasInvalidItems) {
@@ -207,7 +207,7 @@ export function SupplyImportFormDialog({
 
     if (hasData) {
       const confirmed = window.confirm(
-        "Bạn có chắc chắn muốn xóa vật tư này? Dữ liệu đã nhập sẽ bị mất."
+        "Bạn có chắc chắn muốn xóa vật tư này? Dữ liệu đã nhập sẽ bị mất.",
       );
       if (!confirmed) return;
     }
@@ -439,7 +439,7 @@ export function SupplyImportFormDialog({
                         <SupplySelectField
                           field={field}
                           fieldState={fieldState}
-                          label="Chọn vật tư *"
+                          label="Chọn vật tư"
                           placeholder="Chọn vật tư"
                           required
                           className="md:col-span-2"
@@ -677,8 +677,8 @@ export function SupplyImportFormDialog({
                 ? "Đang cập nhật..."
                 : "Cập nhật phiếu nhập"
               : loading
-              ? "Đang tạo..."
-              : "Tạo phiếu nhập",
+                ? "Đang tạo..."
+                : "Tạo phiếu nhập",
             disabled: loading || fields.length === 0,
             loading: loading,
           },

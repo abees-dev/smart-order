@@ -17,6 +17,7 @@ export interface SelectOption {
   disabled?: boolean;
   description?: string;
   metadata?: Record<string, unknown>;
+  searchableLabel?: string; // for search indexing, if different from label
 }
 
 export interface FormSelectProps {
@@ -60,7 +61,7 @@ export function FormSelect({
     (selectedValue: string) => {
       onValueChange?.(selectedValue);
     },
-    [onValueChange]
+    [onValueChange],
   );
 
   const defaultRenderOption = useCallback((option: SelectOption) => {
@@ -71,7 +72,7 @@ export function FormSelect({
             <span
               className={cn(
                 "font-medium line-clamp-1",
-                option.disabled && "text-muted-foreground"
+                option.disabled && "text-muted-foreground",
               )}
             >
               {option.label}
@@ -104,6 +105,7 @@ export function FormSelect({
               renderOption: renderOption
                 ? () => renderOption(option)
                 : () => defaultRenderOption(option),
+              searchableLabel: option.searchableLabel,
             }))}
             value={value}
             onValueChange={handleValueChange}
@@ -145,7 +147,7 @@ export function FormSelectField({
       field.onChange(value);
       field.onBlur?.();
     },
-    [field]
+    [field],
   );
 
   return (

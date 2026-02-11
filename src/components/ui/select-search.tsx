@@ -14,6 +14,7 @@ export interface SelectSearchOption {
   label: string;
   disabled?: boolean;
   renderOption?: (option: SelectSearchOption) => React.ReactNode;
+  searchableLabel?: string; // Optional custom label for searching
 }
 
 export interface SelectSearchVirtualConfig {
@@ -58,7 +59,7 @@ export function SelectSearch({
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
   const [selectedValue, setSelectedValue] = React.useState(
-    value || defaultValue || ""
+    value || defaultValue || "",
   );
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -68,6 +69,14 @@ export function SelectSearch({
   const filteredOptions = options.filter((option) => {
     const normalizedLabel = normalizeText(option.label);
     const normalizedSearch = normalizeText(searchValue);
+    if (option.searchableLabel) {
+      return (
+        normalizeText(option.searchableLabel).includes(normalizedSearch) ||
+        normalizedLabel.includes(normalizedSearch) ||
+        option.searchableLabel.toLowerCase().includes(normalizedSearch) ||
+        option.searchableLabel.toLowerCase().includes(searchValue.toLowerCase())
+      );
+    }
     return normalizedLabel.includes(normalizedSearch);
   });
 
@@ -99,7 +108,7 @@ export function SelectSearch({
   // Update search value to show selected option label when not open
   React.useEffect(() => {
     const selectedOption = options.find(
-      (option) => option.value === selectedValue
+      (option) => option.value === selectedValue,
     );
     if (!open && selectedOption) {
       setSearchValue(selectedOption.label);
@@ -109,13 +118,13 @@ export function SelectSearch({
   }, [open, selectedValue, options]);
 
   const selectedOption = options.find(
-    (option) => option.value === selectedValue
+    (option) => option.value === selectedValue,
   );
 
   const handleSelect = (optionValue: string) => {
     const newValue = optionValue;
     const newSelectedOption = options.find(
-      (option) => option.value === newValue
+      (option) => option.value === newValue,
     );
 
     setSelectedValue(newValue);
@@ -157,7 +166,7 @@ export function SelectSearch({
     if (!newOpen) {
       // When closing, restore selected option label
       const selectedOption = options.find(
-        (option) => option.value === selectedValue
+        (option) => option.value === selectedValue,
       );
       setSearchValue(selectedOption?.label || "");
     }
@@ -176,7 +185,7 @@ export function SelectSearch({
               <span
                 className={cn(
                   "font-medium line-clamp-1 text-neutral-800 text-sm",
-                  option.disabled && "text-muted-foreground"
+                  option.disabled && "text-muted-foreground",
                 )}
                 title={option.label}
               >
@@ -187,7 +196,7 @@ export function SelectSearch({
         </div>
       );
     },
-    []
+    [],
   );
 
   return (
@@ -219,7 +228,7 @@ export function SelectSearch({
               className,
               {
                 "pr-12": clearable && selectedValue && !disabled,
-              }
+              },
             )}
           />
         </PopoverTrigger>
@@ -297,7 +306,7 @@ export function SelectSearch({
                       "hover:bg-accent hover:text-accent-foreground",
                       option.disabled && "pointer-events-none opacity-50",
                       selectedValue === option.value &&
-                        "bg-accent text-accent-foreground"
+                        "bg-accent text-accent-foreground",
                     )}
                     onClick={() =>
                       !option.disabled && handleSelect(option.value)
@@ -328,7 +337,7 @@ export function SelectSearch({
                   "hover:bg-accent hover:text-accent-foreground",
                   option.disabled && "pointer-events-none opacity-50",
                   selectedValue === option.value &&
-                    "bg-accent text-accent-foreground"
+                    "bg-accent text-accent-foreground",
                 )}
                 onClick={() => !option.disabled && handleSelect(option.value)}
               >
