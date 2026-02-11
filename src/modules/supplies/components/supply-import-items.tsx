@@ -6,6 +6,8 @@ import type { ResponsiveTableColumn } from "@/components/tables/responsive-table
 
 import type { SupplyImport } from "../types";
 import { calculateCurrencyWithVat } from "@/utils/currency";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants";
 
 interface ItemsTableProps {
   importRecord: SupplyImport;
@@ -192,7 +194,7 @@ export function ItemsTableDesktop({
               amount: record.unitPrice,
               vatRate: record.vatRate,
               quantity: record.quantity,
-            })
+            }),
           )}
         </span>
       ),
@@ -202,11 +204,14 @@ export function ItemsTableDesktop({
       title: "Đơn hàng",
       dataIndex: "orderNumber",
       width: 120,
-      render: (value) =>
+      render: (value, record) =>
         value ? (
-          <span className="text-sm text-muted-foreground">
+          <Link
+            to={`${ROUTES.DASHBOARD.ORDERS}/${record.orderId}`}
+            className="text-sm text-blue-600 hover:underline"
+          >
             {value as string}
-          </span>
+          </Link>
         ) : (
           <span className="text-xs text-muted-foreground">-</span>
         ),

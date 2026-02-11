@@ -10,11 +10,11 @@ import {
   Box,
   Clipboard,
   Edit,
-  Link,
   CheckCircle,
   AlertTriangle,
   Lightbulb,
   CreditCard,
+  Link as LinkIcon,
 } from "lucide-react";
 import {
   Card,
@@ -32,6 +32,8 @@ import type {
   OrderCostBreakdown,
   SupplyBreakdown,
 } from "../types";
+import { ROUTES } from "@/constants";
+import { Link } from "react-router-dom";
 
 interface OrderCostCalculationSectionProps {
   orderId: string;
@@ -385,7 +387,7 @@ function CostBreakdownItem({
                 variant="outline"
               >
                 <div className="flex items-center space-x-1">
-                  <Link className="w-3 h-3" />
+                  <LinkIcon className="w-3 h-3" />
                   <span>{item.supplies!.length} linh kiện</span>
                 </div>
               </Badge>
@@ -398,9 +400,12 @@ function CostBreakdownItem({
               </h4>
               <p className="text-sm text-gray-500 font-mono">SKU: {item.sku}</p>
               {hashSourceNumber && (
-                <p className="text-xs text-gray-500 mt-1 font-mono">
+                <Link
+                  to={`${ROUTES.DASHBOARD.SUPPLIES.IMPORTS}/${item.sourceImportId}`}
+                  className="text-xs text-blue-600 mt-1 font-mono"
+                >
                   Mã phiếu nhập: {item.sourceInvoiceNumber}
-                </p>
+                </Link>
               )}
             </div>
             {hasSupplies && (
@@ -559,9 +564,12 @@ function SupplyBreakdownItem({
           </div>
           <p className="text-xs text-gray-500 font-mono">SKU: {supply.sku}</p>
           {hashSourceNumber && (
-            <p className="text-xs text-gray-500 mt-1 font-mono">
+            <Link
+              to={`${ROUTES.DASHBOARD.SUPPLIES.IMPORTS}/${supply.sourceImportId}`}
+              className="text-xs text-blue-600 mt-1 font-mono"
+            >
               Mã phiếu nhập: {supply.sourceInvoiceNumber}
-            </p>
+            </Link>
           )}
         </div>
 

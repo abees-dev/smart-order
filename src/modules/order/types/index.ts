@@ -281,6 +281,7 @@ export interface SupplyBreakdown {
   source: "import" | "purchase_price";
   currentStock?: number;
   sourceInvoiceNumber?: string;
+  sourceImportId?: string;
 }
 
 export interface OrderCostBreakdown {
@@ -294,6 +295,7 @@ export interface OrderCostBreakdown {
   source: "import" | "manual";
   supplies?: SupplyBreakdown[]; // Only present when type is "product"
   sourceInvoiceNumber?: string; // Only for supplies imported from invoices
+  sourceImportId?: string; // ID of the supply import record, if applicable
 }
 
 export interface OrderCostCalculation {
