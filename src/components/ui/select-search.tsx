@@ -264,6 +264,8 @@ export function SelectSearch({
           maxHeight: virtual.maxHeight || 200,
           overflow: virtual.enabled ? "hidden" : "auto",
         }}
+        onTouchMove={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         {filteredOptions.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
