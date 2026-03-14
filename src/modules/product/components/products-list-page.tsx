@@ -1,38 +1,38 @@
-import { useState, useEffect, useCallback } from "react";
-import { useTranslation } from "react-i18next";
-import { Plus, Eye, Pencil, Trash2, CopyPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Eye, Pencil, Trash2, CopyPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import {
   EnhancedTable,
   useEnhancedTableColumns,
   type ResponsiveTableColumn,
   type TableAction,
-} from "@/components/tables";
+} from '@/components/tables';
 
-import { useProducts } from "../hooks/use-product";
-import { ProductFormDialog } from "./product-form-dialog";
-import { ProductDetailDialog } from "./product-detail-dialog";
-import { DeleteProductDialog } from "./delete-product-dialog";
-import type { Product } from "../types";
-import ReactMarkdown from "react-markdown";
-import { PRODUCT_CATEGORIES_MAP } from "@/constants/category";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useDuplicateProduct } from "../hooks/use-product-actions";
-import { toast } from "sonner";
-import { PermissionGuard, usePermissions } from "@/components/guards";
-import { Actions, Resources } from "@/constants";
-import { useFilterStore } from "@/stores/filter.store";
-import { debounce } from "lodash";
+import { useProducts } from '../hooks/use-product';
+import { ProductFormDialog } from './product-form-dialog';
+import { ProductDetailDialog } from './product-detail-dialog';
+import { DeleteProductDialog } from './delete-product-dialog';
+import type { Product } from '../types';
+import ReactMarkdown from 'react-markdown';
+import { PRODUCT_CATEGORIES_MAP } from '@/constants/category';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useDuplicateProduct } from '../hooks/use-product-actions';
+import { toast } from 'sonner';
+import { PermissionGuard, usePermissions } from '@/components/guards';
+import { Actions, Resources } from '@/constants';
+import { useFilterStore } from '@/stores/filter.store';
+import { debounce } from 'lodash';
 
-const FILTER_KEY = Resources.PRODUCTS + "_filters";
+const FILTER_KEY = Resources.PRODUCTS + '_filters';
 export function ProductsListPage() {
   const { t } = useTranslation();
   useDocumentTitle();
 
   // Set document title manually for this page
   useEffect(() => {
-    document.title = `${t("products.title")} - ${t("app.title")}`;
+    document.title = `${t('products.title')} - ${t('app.title')}`;
   }, [t]);
 
   const { filters, updateFilter } = useFilterStore();
@@ -43,7 +43,7 @@ export function ProductsListPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState(
-    filters[FILTER_KEY]?.search || ""
+    filters[FILTER_KEY]?.search || '',
   );
   const isMobile = useIsMobile();
   const changePage = (newPage: number) => {
@@ -66,10 +66,10 @@ export function ProductsListPage() {
   const { duplicateProduct } = useDuplicateProduct({
     onSuccess: () => {
       refetchProducts();
-      toast.success("Nhân bản sản phẩm thành công");
+      toast.success('Nhân bản sản phẩm thành công');
     },
     onError: (error) => {
-      toast.error("Lỗi khi nhân bản sản phẩm: " + error.message);
+      toast.error('Lỗi khi nhân bản sản phẩm: ' + error.message);
     },
   });
 
@@ -83,7 +83,7 @@ export function ProductsListPage() {
         search: value || undefined,
       });
     }, 300),
-    [filters, updateFilter]
+    [filters, updateFilter],
   );
 
   const handleSearch = (value: string) => {
@@ -92,22 +92,22 @@ export function ProductsListPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
     }).format(amount);
   };
 
   const truncateText = (text: string, maxLength: number = 50) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+    return text.substring(0, maxLength) + '...';
   };
 
   // Define table columns
   const columns: ResponsiveTableColumn<Product>[] = [
     createColumn({
-      key: "product",
-      title: t("products.productInfo") || "Thông tin sản phẩm",
+      key: 'product',
+      title: t('products.productInfo') || 'Thông tin sản phẩm',
       render: (_, record: Product) => (
         <div className="space-y-1">
           <div className="font-semibold text-foreground">{record.name}</div>
@@ -140,8 +140,8 @@ export function ProductsListPage() {
       ),
     }),
     createColumn({
-      key: "productCode",
-      title: t("products.productCode") || "Mã sản phẩm",
+      key: 'productCode',
+      title: t('products.productCode') || 'Mã sản phẩm',
       responsive: false,
       render: (_, record: Product) => (
         <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
@@ -150,8 +150,8 @@ export function ProductsListPage() {
       ),
     }),
     createColumn({
-      key: "description",
-      title: t("products.productDescription") || "Mô tả",
+      key: 'description',
+      title: t('products.productDescription') || 'Mô tả',
       responsive: false,
       render: (_, record: Product) => (
         <div className="max-w-xs">
@@ -167,12 +167,12 @@ export function ProductsListPage() {
         </div>
       ),
     }),
-    createCurrencyColumn("price", t("products.price") || "Giá bán"),
+    createCurrencyColumn('price', t('products.price') || 'Giá bán'),
     createColumn({
-      key: "supplies",
-      title: "Vật tư",
+      key: 'supplies',
+      title: 'Vật tư',
       responsive: false,
-      align: "center",
+      align: 'center',
       render: (_, record: Product) => (
         <div>
           {record.supplies && record.supplies.length > 0 ? (
@@ -185,14 +185,14 @@ export function ProductsListPage() {
         </div>
       ),
     }),
-    createStatusColumn("isActive", t("common.status") || "Trạng thái"),
+    createStatusColumn('isActive', t('common.status') || 'Trạng thái'),
   ];
 
   // Define table actions
   const tableActions: TableAction<Product>[] = [
     {
-      key: "view",
-      label: t("common.view"),
+      key: 'view',
+      label: t('common.view'),
       icon: Eye,
       onClick: (record) => {
         setSelectedProduct(record);
@@ -201,8 +201,8 @@ export function ProductsListPage() {
       show: () => hasPermission(Resources.PRODUCTS, Actions.DETAIL),
     },
     {
-      key: "duplicate",
-      label: t("products.duplicate"),
+      key: 'duplicate',
+      label: t('products.duplicate'),
       icon: CopyPlus,
       onClick: (record) => {
         duplicateProduct(record.id);
@@ -210,8 +210,8 @@ export function ProductsListPage() {
       show: () => hasPermission(Resources.PRODUCTS, Actions.CREATE),
     },
     {
-      key: "edit",
-      label: t("common.edit"),
+      key: 'edit',
+      label: t('common.edit'),
       icon: Pencil,
       onClick: (record) => {
         setSelectedProduct(record);
@@ -220,10 +220,10 @@ export function ProductsListPage() {
       show: () => hasPermission(Resources.PRODUCTS, Actions.CREATE),
     },
     {
-      key: "delete",
-      label: t("common.delete"),
+      key: 'delete',
+      label: t('common.delete'),
       icon: Trash2,
-      variant: "destructive",
+      variant: 'destructive',
       onClick: (record) => {
         setSelectedProduct(record);
         setShowDeleteDialog(true);
@@ -242,10 +242,10 @@ export function ProductsListPage() {
             <span className="px-2 py-1 bg-muted rounded-md text-xs">
               {record.category}
             </span>
-            {createStatusColumn("isActive", "Status").render?.(
+            {createStatusColumn('isActive', 'Status').render?.(
               record.isActive,
               record,
-              0
+              0,
             )}
           </div>
         </div>
@@ -303,7 +303,7 @@ export function ProductsListPage() {
             }}
             className="mt-2"
           >
-            {t("common.retry") || "Thử lại"}
+            {t('common.retry') || 'Thử lại'}
           </Button>
         </div>
       </div>
@@ -313,23 +313,23 @@ export function ProductsListPage() {
   return (
     <div className="space-y-6">
       <EnhancedTable<Product>
-        title={t("products.title") || "Sản phẩm"}
+        title={t('products.title') || 'Sản phẩm'}
         description={
-          t("products.description") || "Quản lý danh sách sản phẩm của cửa hàng"
+          t('products.description') || 'Quản lý danh sách sản phẩm của cửa hàng'
         }
         columns={columns}
         dataSource={products}
         rowKey="id"
         loading={loading}
         emptyText={
-          t("products.noProductsFound") || "Không tìm thấy sản phẩm nào"
+          t('products.noProductsFound') || 'Không tìm thấy sản phẩm nào'
         }
         actions={tableActions}
         hasMore={hasNextPage}
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={isFetching}
-        searchValue={searchTerm || ""}
+        searchValue={searchTerm || ''}
         pagination={
           !isMobile
             ? {
@@ -346,7 +346,7 @@ export function ProductsListPage() {
         }}
         searchable
         searchPlaceholder={
-          t("products.searchPlaceholder") || "Tìm kiếm sản phẩm..."
+          t('products.searchPlaceholder') || 'Tìm kiếm sản phẩm...'
         }
         onSearchChange={handleSearch}
         mobileCardRender={mobileCardRender}
@@ -358,7 +358,7 @@ export function ProductsListPage() {
             >
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                {t("products.addProduct") || "Thêm sản phẩm"}
+                {t('products.addProduct') || 'Thêm sản phẩm'}
               </Button>
             </PermissionGuard>
           </div>

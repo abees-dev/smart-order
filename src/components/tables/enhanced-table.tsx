@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   ResponsiveTable,
   type ResponsiveTableProps,
   type ResponsiveTableColumn,
-} from "./responsive-table";
+} from './responsive-table';
 import {
   Search,
   ChevronLeft,
@@ -15,24 +15,24 @@ import {
   MoreHorizontal,
   ChevronDown,
   ChevronRight as ChevronRightIcon,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import Loading from "../ui/loading";
-import clsx from "clsx";
+} from '@/components/ui/dropdown-menu';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import Loading from '../ui/loading';
+import clsx from 'clsx';
 
 export interface TableAction<T> {
   key: string;
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   onClick: (record: T) => void;
-  variant?: "default" | "destructive";
+  variant?: 'default' | 'destructive';
   show?: (record: T) => boolean;
 }
 
@@ -57,8 +57,10 @@ export interface SubTableConfig<T, SubT = any> {
   className?: string;
 }
 
-export interface EnhancedTableProps<T>
-  extends Omit<ResponsiveTableProps<T>, "columns" | "onDoubleClick"> {
+export interface EnhancedTableProps<T> extends Omit<
+  ResponsiveTableProps<T>,
+  'columns' | 'onDoubleClick'
+> {
   columns: ResponsiveTableColumn<T>[];
   // Search functionality
   searchable?: boolean;
@@ -103,8 +105,8 @@ export interface EnhancedTableProps<T>
 export function EnhancedTable<T = Record<string, unknown>>({
   columns,
   searchable = false,
-  searchPlaceholder = "Tìm kiếm...",
-  searchValue = "",
+  searchPlaceholder = 'Tìm kiếm...',
+  searchValue = '',
   onSearchChange,
   actions = [],
   subTable,
@@ -121,7 +123,7 @@ export function EnhancedTable<T = Record<string, unknown>>({
 }: EnhancedTableProps<T>) {
   // State for expanded rows
   const [expandedRows, setExpandedRows] = React.useState<Set<string | number>>(
-    new Set()
+    new Set(),
   );
   const [subDataCache, setSubDataCache] = React.useState<
     Map<string | number, unknown[]>
@@ -133,21 +135,21 @@ export function EnhancedTable<T = Record<string, unknown>>({
     isLoading: loadingMore,
     onLoadMore: onLoadMore || (() => {}),
     threshold: 0.1,
-    rootMargin: "100px",
+    rootMargin: '100px',
   });
 
   // Get row key function
   const getRowKey = React.useCallback(
     (record: T, index: number): string | number => {
       if (tableProps.rowKey) {
-        if (typeof tableProps.rowKey === "function") {
+        if (typeof tableProps.rowKey === 'function') {
           return tableProps.rowKey(record);
         }
         return record[tableProps.rowKey] as string | number;
       }
       return index;
     },
-    [tableProps.rowKey]
+    [tableProps.rowKey],
   );
 
   // Handle row expansion
@@ -175,13 +177,13 @@ export function EnhancedTable<T = Record<string, unknown>>({
             const subData = await subTable.getSubData(record);
             setSubDataCache((prev) => new Map(prev).set(rowKey, subData));
           } catch (error) {
-            console.error("Failed to load sub data:", error);
+            console.error('Failed to load sub data:', error);
             // Could add error state handling here
           }
         }
       }
     },
-    [subTable, expandedRows, subDataCache, getRowKey]
+    [subTable, expandedRows, subDataCache, getRowKey],
   );
 
   // Add expand column if subTable is enabled
@@ -191,10 +193,10 @@ export function EnhancedTable<T = Record<string, unknown>>({
     // Add expand column at the beginning if subTable is enabled
     if (subTable) {
       const expandColumn: ResponsiveTableColumn<T> = {
-        key: "expand",
-        title: "",
+        key: 'expand',
+        title: '',
         width: 40,
-        align: "center",
+        align: 'center',
         render: (_, record, index) => {
           const hasData = subTable.hasSubData
             ? subTable.hasSubData(record)
@@ -233,13 +235,13 @@ export function EnhancedTable<T = Record<string, unknown>>({
     // Add actions column if actions are provided
     if (actions.length > 0) {
       const actionColumn: ResponsiveTableColumn<T> = {
-        key: "actions",
-        title: "Thao tác",
+        key: 'actions',
+        title: 'Thao tác',
         width: 80,
-        align: "center",
+        align: 'center',
         render: (_, record) => {
           const visibleActions = actions.filter(
-            (action) => !action.show || action.show(record)
+            (action) => !action.show || action.show(record),
           );
 
           if (visibleActions.length === 0) return null;
@@ -264,9 +266,9 @@ export function EnhancedTable<T = Record<string, unknown>>({
                       key={action.key}
                       onClick={() => action.onClick(record)}
                       className={cn(
-                        "flex items-center gap-2 cursor-pointer",
-                        action.variant === "destructive" &&
-                          "text-destructive focus:text-destructive"
+                        'flex items-center gap-2 cursor-pointer',
+                        action.variant === 'destructive' &&
+                          'text-destructive focus:text-destructive',
                       )}
                     >
                       {Icon && <Icon className="h-4 w-4" />}
@@ -328,14 +330,14 @@ export function EnhancedTable<T = Record<string, unknown>>({
               columns={subTable.columns}
               actions={subTable.actions}
               showHeader={true}
-              className={clsx("bg-background rounded-md", subTable.className)}
+              className={clsx('bg-background rounded-md', subTable.className)}
               onDoubleClick={subTable.onDoubleClick as any}
             />
           )}
         </div>
       );
     },
-    [subTable, expandedRows, subDataCache, getRowKey]
+    [subTable, expandedRows, subDataCache, getRowKey],
   );
 
   React.useEffect(() => {
@@ -427,11 +429,11 @@ export function EnhancedTable<T = Record<string, unknown>>({
       {!isMobile && pagination && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {(pagination.current - 1) * pagination.pageSize + 1} -{" "}
+            Hiển thị {(pagination.current - 1) * pagination.pageSize + 1} -{' '}
             {Math.min(
               pagination.current * pagination.pageSize,
-              pagination.total
-            )}{" "}
+              pagination.total,
+            )}{' '}
             trong tổng số {pagination.total} mục
           </div>
 
@@ -456,8 +458,8 @@ export function EnhancedTable<T = Record<string, unknown>>({
                   Math.max(0, pagination.current - 3),
                   Math.min(
                     Math.ceil(pagination.total / pagination.pageSize),
-                    pagination.current + 2
-                  )
+                    pagination.current + 2,
+                  ),
                 )
                 .map((_, index) => {
                   const pageNumber =
@@ -467,14 +469,15 @@ export function EnhancedTable<T = Record<string, unknown>>({
                       key={pageNumber}
                       variant={
                         pageNumber === pagination.current
-                          ? "default"
-                          : "outline"
+                          ? 'default'
+                          : 'outline'
                       }
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() =>
-                        pagination.onChange(pageNumber, pagination.pageSize)
-                      }
+                      onClick={() => {
+                        console.log('Page number clicked:', pageNumber);
+                        pagination.onChange(pageNumber, pagination.pageSize);
+                      }}
                     >
                       {pageNumber}
                     </Button>
@@ -508,10 +511,10 @@ export function useEnhancedTableColumns<T>() {
   const createColumn = React.useCallback(
     (config: ResponsiveTableColumn<T>): ResponsiveTableColumn<T> => ({
       responsive: true,
-      align: "left",
+      align: 'left',
       ...config,
     }),
-    []
+    [],
   );
 
   const createStatusColumn = React.useCallback(
@@ -519,19 +522,19 @@ export function useEnhancedTableColumns<T>() {
       key: String(key),
       title,
       dataIndex: key,
-      align: "center",
+      align: 'center',
       width: 100,
       render: (value) => (
         <Badge
-          variant={"outline"}
-          color={value ? "success" : "error"}
+          variant={'outline'}
+          color={value ? 'success' : 'error'}
           className="text-xs font-medium"
         >
-          {value ? "Hoạt động" : "Không hoạt động"}
+          {value ? 'Hoạt động' : 'Không hoạt động'}
         </Badge>
       ),
     }),
-    []
+    [],
   );
 
   const createDateColumn = React.useCallback(
@@ -541,35 +544,35 @@ export function useEnhancedTableColumns<T>() {
       dataIndex: key,
       width: 120,
       render: (value) => {
-        if (!value) return "-";
+        if (!value) return '-';
         const date = value instanceof Date ? value : new Date(String(value));
-        return date.toLocaleDateString("vi-VN");
+        return date.toLocaleDateString('vi-VN');
       },
     }),
-    []
+    [],
   );
 
   const createCurrencyColumn = React.useCallback(
     (
       key: keyof T,
       title: string,
-      view: boolean = true
+      view: boolean = true,
     ): ResponsiveTableColumn<T> => ({
       key: String(key),
       title,
       dataIndex: key,
-      align: "right",
+      align: 'right',
       view: view,
       width: 120,
       render: (value) => {
-        if (value === null || value === undefined) return "-";
-        return new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
+        if (value === null || value === undefined) return '-';
+        return new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
         }).format(Number(value));
       },
     }),
-    []
+    [],
   );
 
   return {

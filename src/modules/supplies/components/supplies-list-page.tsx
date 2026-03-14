@@ -1,35 +1,37 @@
-import { useState, useEffect, useCallback } from "react";
-import { useTranslation } from "react-i18next";
-import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import {
   EnhancedTable,
   useEnhancedTableColumns,
   type ResponsiveTableColumn,
   type TableAction,
-} from "@/components/tables";
-import { useSupplies } from "../hooks/use-supply";
-import { SupplyFormDialog } from "./supply-form-dialog";
-import { SupplyDetailDialog } from "./supply-detail-dialog";
-import { DeleteSupplyDialog } from "./delete-supply-dialog";
-import type { Supply, SupplyFilters } from "../types";
-import { SUPPLY_CATEGORY_MAP } from "../utils/supply-categrory";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { usePermissions } from "@/components/guards";
-import { Actions, Resources } from "@/constants";
-import { useFilterStore } from "@/stores/filter.store";
-import { debounce } from "lodash";
+} from '@/components/tables';
+import { useSupplies } from '../hooks/use-supply';
+import { SupplyFormDialog } from './supply-form-dialog';
+import { SupplyDetailDialog } from './supply-detail-dialog';
+import { DeleteSupplyDialog } from './delete-supply-dialog';
+import type { Supply, SupplyFilters } from '../types';
+import { SUPPLY_CATEGORY_MAP } from '../utils/supply-categrory';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePermissions } from '@/components/guards';
+import { Actions, Resources } from '@/constants';
+import { useFilterStore } from '@/stores/filter.store';
+import { debounce } from 'lodash';
+import { PageHeader } from '@/components/PageHeader';
+import SuppliesFilter from './filters/SuppliesFilter';
 
-const FILTER_KEY = Resources.SUPPLIES + "_LIST_FILTERS";
+const FILTER_KEY = Resources.SUPPLIES + '_LIST_FILTERS';
 export function SuppliesListPage() {
   const { t } = useTranslation();
   useDocumentTitle();
 
   // Set document title manually for this page
   useEffect(() => {
-    document.title = `${t("supplies.title") || "Vật tư"} - ${t("app.title")}`;
+    document.title = `${t('supplies.title') || 'Vật tư'} - ${t('app.title')}`;
   }, [t]);
 
   const { filters, updateFilter } = useFilterStore();
@@ -38,17 +40,23 @@ export function SuppliesListPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
   const [searchTerm, setSearchTerm] = useState(
-    filters[FILTER_KEY]?.search || ""
+    filters[FILTER_KEY]?.search || '',
   );
   const isMobile = useIsMobile();
   const { hasPermission } = usePermissions();
   const changePage = (newPage: number) => {
     updateFilter(FILTER_KEY, {
-      page: newPage,
       ...(filters[FILTER_KEY] || {}),
+      page: newPage,
     } as SupplyFilters);
   };
 
+  const getFilterOutOfStockValue = () => {
+    const outOfStock = filters[FILTER_KEY]?.outOfStock;
+    if (outOfStock === 'outOfStock') return true;
+    if (outOfStock === 'inStock') return false;
+    return undefined;
+  };
   const {
     loading,
     error,
@@ -62,8 +70,10 @@ export function SuppliesListPage() {
     page: filters[FILTER_KEY]?.page || 1,
     limit: 10,
     ...filters[FILTER_KEY],
+    outOfStock: getFilterOutOfStockValue(),
   });
 
+  console.log(filters[FILTER_KEY]);
   const { createColumn, createCurrencyColumn } =
     useEnhancedTableColumns<Supply>();
 
@@ -74,7 +84,7 @@ export function SuppliesListPage() {
         search: value || undefined,
       } as SupplyFilters);
     }, 300),
-    [filters, updateFilter]
+    [filters, updateFilter],
   );
 
   const handleSearch = (value: string) => {
@@ -94,27 +104,27 @@ export function SuppliesListPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
     }).format(amount);
   };
 
   const getStockStatus = (supply: Supply) => {
     if (supply.currentStock <= supply.minStock) {
-      return { label: "Hết hàng", color: "error" as const };
+      return { label: 'Hết hàng', color: 'error' as const };
     }
     if (supply.currentStock <= supply.minStock * 1.5) {
-      return { label: "Sắp hết", color: "warning" as const };
+      return { label: 'Sắp hết', color: 'warning' as const };
     }
-    return { label: "Còn hàng", color: "info" as const };
+    return { label: 'Còn hàng', color: 'info' as const };
   };
 
   // Define table columns
   const columns: ResponsiveTableColumn<Supply>[] = [
     createColumn({
-      key: "supply",
-      title: "Thông tin vật tư",
+      key: 'supply',
+      title: 'Thông tin vật tư',
       render: (_, record: Supply) => {
         const status = getStockStatus(record);
         return (
@@ -135,7 +145,7 @@ export function SuppliesListPage() {
                 {record.currentStock} {record.unit}
               </span>
               <Badge
-                variant={"outline"}
+                variant={'outline'}
                 color={status.color}
                 className="text-xs"
               >
@@ -157,10 +167,10 @@ export function SuppliesListPage() {
       },
     }),
     createColumn({
-      key: "stock",
-      title: "Tồn kho",
+      key: 'stock',
+      title: 'Tồn kho',
       responsive: false,
-      align: "center",
+      align: 'center',
       render: (_, record: Supply) => {
         const status = getStockStatus(record);
         return (
@@ -169,7 +179,7 @@ export function SuppliesListPage() {
               {record.currentStock} {record.unit}
             </div>
             <Badge
-              variant={"outline"}
+              variant={'outline'}
               color={status.color}
               className="text-xs mb-2"
             >
@@ -183,22 +193,22 @@ export function SuppliesListPage() {
       },
     }),
     createCurrencyColumn(
-      "purchasePrice",
-      "Giá mua",
-      hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE)
+      'purchasePrice',
+      'Giá mua',
+      hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE),
     ),
     createCurrencyColumn(
-      "salePrice",
-      "Giá bán",
-      hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE)
+      'salePrice',
+      'Giá bán',
+      hasPermission(Resources.SUPPLIES, Actions.VIEW_PRICE),
     ),
     createColumn({
-      key: "supplier",
-      title: "Nhà cung cấp",
+      key: 'supplier',
+      title: 'Nhà cung cấp',
       responsive: false,
       render: (_, record: Supply) => (
         <div className="text-sm max-w-48 min-w-24">
-          <div className="truncate">{record.supplier?.name || "-"}</div>
+          <div className="truncate">{record.supplier?.name || '-'}</div>
         </div>
       ),
     }),
@@ -207,8 +217,8 @@ export function SuppliesListPage() {
   // Define table actions
   const tableActions: TableAction<Supply>[] = [
     {
-      key: "view",
-      label: "Xem chi tiết",
+      key: 'view',
+      label: 'Xem chi tiết',
       icon: Eye,
       show: () => hasPermission(Resources.SUPPLIES, Actions.DETAIL),
       onClick: (record) => {
@@ -217,8 +227,8 @@ export function SuppliesListPage() {
       },
     },
     {
-      key: "edit",
-      label: "Chỉnh sửa",
+      key: 'edit',
+      label: 'Chỉnh sửa',
       icon: Pencil,
       show: () => hasPermission(Resources.SUPPLIES, Actions.UPDATE),
       onClick: (record) => {
@@ -227,10 +237,10 @@ export function SuppliesListPage() {
       },
     },
     {
-      key: "delete",
-      label: "Xóa",
+      key: 'delete',
+      label: 'Xóa',
       icon: Trash2,
-      variant: "destructive",
+      variant: 'destructive',
       show: () => hasPermission(Resources.SUPPLIES, Actions.DELETE),
       onClick: (record) => {
         setSelectedSupply(record);
@@ -257,7 +267,7 @@ export function SuppliesListPage() {
                 {SUPPLY_CATEGORY_MAP[record.category] || record.category}
               </Badge>
               <Badge
-                variant={"outline"}
+                variant={'outline'}
                 color={status.color}
                 className="text-xs"
               >
@@ -308,11 +318,17 @@ export function SuppliesListPage() {
 
         <div className="text-sm">
           <span className="text-muted-foreground">Nhà cung cấp:</span>
-          <p className="font-medium">{record.supplier?.name || "-"}</p>
+          <p className="font-medium">{record.supplier?.name || '-'}</p>
         </div>
       </div>
     );
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleFilterChange = useCallback((filter: any) => {
+    updateFilter(FILTER_KEY, {
+      ...filter,
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -325,27 +341,44 @@ export function SuppliesListPage() {
             }}
             className="mt-2"
           >
-            {t("common.retry") || "Thử lại"}
+            {t('common.retry') || 'Thử lại'}
           </Button>
         </div>
       )}
 
-      <EnhancedTable<Supply>
-        title={t("supplies.title") || "Vật tư"}
+      <PageHeader
+        title={t('supplies.title') || 'Vật tư'}
         description={
-          t("supplies.description") || "Quản lý danh sách vật tư của cửa hàng"
+          t('supplies.description') || 'Quản lý danh sách vật tư của cửa hàng'
         }
+        shouldCreateAction={true}
+        createActionLabel={t('supplies.addSupply')}
+        onCreateAction={() => {
+          setShowFormDialog(true);
+          setSelectedSupply(null);
+        }}
+        filterActions={
+          <SuppliesFilter
+            filterValues={filters[FILTER_KEY] || {}}
+            onFiltersChange={(filters) => {
+              handleFilterChange(filters);
+            }}
+          />
+        }
+      />
+
+      <EnhancedTable<Supply>
         columns={columns}
         dataSource={supplies}
         rowKey="id"
         loading={loading}
-        emptyText={t("supplies.noSuppliesFound") || "Không tìm thấy vật tư nào"}
+        emptyText={t('supplies.noSuppliesFound') || 'Không tìm thấy vật tư nào'}
         actions={tableActions}
         hasMore={hasNextPage}
         onLoadMore={fetchNextPage}
         isMobile={isMobile}
         loadingMore={loadingMore}
-        searchValue={searchTerm || ""}
+        searchValue={searchTerm || ''}
         onDoubleClick={(record) => {
           if (!hasPermission(Resources.SUPPLIES, Actions.DETAIL)) return;
           setSelectedSupply(record);
@@ -357,29 +390,15 @@ export function SuppliesListPage() {
                 current: pagination.page,
                 pageSize: pagination.limit,
                 total: pagination.total,
-                onChange: (newPage: number) => changePage(newPage),
+                onChange: (newPage: number) => {
+                  console.log('Page changed:', newPage);
+                  changePage(newPage);
+                },
               }
             : undefined
         }
-        searchable
-        searchPlaceholder={
-          t("supplies.searchPlaceholder") || "Tìm kiếm vật tư..."
-        }
         onSearchChange={handleSearch}
         mobileCardRender={mobileCardRender}
-        headerActions={
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => {
-                setShowFormDialog(true);
-                setSelectedSupply(null);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t("supplies.addSupply")}
-            </Button>
-          </div>
-        }
       />
 
       {/* Dialogs */}
@@ -393,7 +412,7 @@ export function SuppliesListPage() {
           }}
           onSuccess={handleFormSuccess}
           supply={selectedSupply || undefined}
-          mode={selectedSupply ? "edit" : "create"}
+          mode={selectedSupply ? 'edit' : 'create'}
         />
       )}
 
