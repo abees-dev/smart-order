@@ -78,7 +78,6 @@ const MaintenanceFormDialog = ({
     },
   });
 
-  const maintenanceType = form.watch('maintenanceType');
   const isPaidMaintenance = true; //maintenanceType === 'paid';
 
   const isEditMode = Boolean(maintenanceRecord);

@@ -39,8 +39,7 @@ export function MaintenanceSection({
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
 
   const queryClient = useQueryClient();
-  const { createCurrencyColumn, createDateColumn } =
-    useEnhancedTableColumns<MaintenanceRecord>();
+  const { createDateColumn } = useEnhancedTableColumns<MaintenanceRecord>();
 
   const { mutateAsync: changeMaintenanceStatusMutation } =
     useChangeStatusMaintenance();
