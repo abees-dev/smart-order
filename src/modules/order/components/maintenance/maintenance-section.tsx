@@ -6,28 +6,28 @@ import {
   CardHeader,
   CardTitle,
   useConfirmDialog,
-} from "@/components/ui";
+} from '@/components/ui';
 import {
   EnhancedTable,
   useEnhancedTableColumns,
   type TableAction,
-} from "@/components/tables";
-import type { ResponsiveTableColumn } from "@/components/tables/responsive-table";
-import type { MaintenanceRecord, Order } from "../../types";
-import { formatCurrency, formatDate } from "@/utils";
-import { Wrench, User, Pencil, Trash2 } from "lucide-react";
-import { useParams } from "react-router-dom";
-import { useState, useMemo } from "react";
-import MaintenanceFormDialog from "./maintenance-form-dialog";
-import { useTranslation } from "react-i18next";
-import { useChangeStatusMaintenance } from "../../hooks/use-maintenance-action";
-import { useMaintenance } from "../../hooks/use-maintenance";
-import { useQueryClient } from "@tanstack/react-query";
+} from '@/components/tables';
+import type { ResponsiveTableColumn } from '@/components/tables/responsive-table';
+import type { MaintenanceRecord, Order } from '../../types';
+import { formatCurrency, formatDate } from '@/utils';
+import { Wrench, User, Pencil, Trash2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import MaintenanceFormDialog from './maintenance-form-dialog';
+import { useTranslation } from 'react-i18next';
+import { useChangeStatusMaintenance } from '../../hooks/use-maintenance-action';
+import { useMaintenance } from '../../hooks/use-maintenance';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function MaintenanceSection({
   summary,
 }: {
-  summary?: Order["maintenanceSummary"];
+  summary?: Order['maintenanceSummary'];
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
@@ -45,24 +45,24 @@ export function MaintenanceSection({
   const { mutateAsync: changeMaintenanceStatusMutation } =
     useChangeStatusMaintenance();
 
-  const getMaintenanceStatus = (status: MaintenanceRecord["status"]) => {
+  const getMaintenanceStatus = (status: MaintenanceRecord['status']) => {
     const statusMap = {
-      scheduled: { label: "Đã lên lịch", color: "warning" },
-      in_progress: { label: "Đang tiến hành", color: "info" },
-      completed: { label: "Hoàn thành", color: "success" },
-      cancelled: { label: "Đã hủy", color: "error" },
+      scheduled: { label: 'Đã lên lịch', color: 'warning' },
+      in_progress: { label: 'Đang tiến hành', color: 'info' },
+      completed: { label: 'Hoàn thành', color: 'success' },
+      cancelled: { label: 'Đã hủy', color: 'error' },
     } as const;
     // "scheduled" | "in_progress" | "completed" | "cancelled"
 
-    return statusMap[status!] || { label: "Không xác định", color: "neutral" };
+    return statusMap[status!] || { label: 'Không xác định', color: 'neutral' };
   };
 
   const columns = useMemo<ResponsiveTableColumn<MaintenanceRecord>[]>(
     () => [
       {
-        key: "performedBy",
-        title: "Người thực hiện",
-        dataIndex: "performedBy",
+        key: 'performedBy',
+        title: 'Người thực hiện',
+        dataIndex: 'performedBy',
         render: (_, record) =>
           record.performedBy ? (
             <div className="flex items-center gap-2">
@@ -74,9 +74,9 @@ export function MaintenanceSection({
           ),
       },
       {
-        key: "description",
-        title: "Mô tả",
-        dataIndex: "description",
+        key: 'description',
+        title: 'Mô tả',
+        dataIndex: 'description',
         render: (_, record) => (
           <div className="min-w-[200px]">
             <div className="font-medium">{record.description}</div>
@@ -91,59 +91,84 @@ export function MaintenanceSection({
         width: 300,
       },
       {
-        key: "maintenanceType",
-        title: "Loại",
-        dataIndex: "maintenanceType",
+        key: 'maintenanceType',
+        title: 'Loại',
+        dataIndex: 'maintenanceType',
         width: 120,
         render: (_, record) => (
           <Badge
-            variant={"outline"}
-            color={record.maintenanceType === "warranty" ? "info" : "error"}
+            variant={'outline'}
+            color={record.maintenanceType === 'warranty' ? 'info' : 'error'}
           >
-            {record.maintenanceType === "warranty" ? "Bảo hành" : "Trả phí"}
+            {record.maintenanceType === 'warranty' ? 'Bảo hành' : 'Trả phí'}
           </Badge>
         ),
       },
       {
-        key: "status",
-        title: "Trạng thái",
-        dataIndex: "status",
+        key: 'status',
+        title: 'Trạng thái',
+        dataIndex: 'status',
         width: 120,
         render: (_, record) => {
           const statusInfo = getMaintenanceStatus(record.status);
           return (
-            <Badge variant={"outline"} color={statusInfo.color}>
+            <Badge variant={'outline'} color={statusInfo.color}>
               {statusInfo.label}
             </Badge>
           );
         },
       },
-      createDateColumn("performedDate", "Ngày thực hiện"),
-      createCurrencyColumn("cost", "Chi phí"),
+      createDateColumn('performedDate', 'Ngày thực hiện'),
+      // createCurrencyColumn("cost", "Chi phí"),
+      {
+        key: 'cost',
+        title: 'Chi phí',
+        dataIndex: 'cost',
+        width: 120,
+        render: (_, record) => {
+          if (record.maintenanceType === 'warranty') {
+            const totalCostSupplied =
+              record.suppliesData?.reduce(
+                (total, supply) => total + supply.quantity * supply.unitPrice,
+                0,
+              ) || 0;
+            return (
+              <div>
+                <div className="font-medium text-red-600">
+                  -{formatCurrency(totalCostSupplied + record.cost)}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div className="font-medium">{formatCurrency(record.cost)}</div>
+          );
+        },
+      },
     ],
-    []
+    [],
   );
   const { t } = useTranslation();
 
   const tableActions: TableAction<MaintenanceRecord>[] = [
     {
-      key: "edit",
-      label: t("common.edit"),
+      key: 'edit',
+      label: t('common.edit'),
       icon: Pencil,
       onClick: (record) => {
         setSelectedMaintenance(record);
         setIsDialogOpen(true);
       },
-      show: (record) => record.status === "scheduled",
+      show: (record) => record.status === 'scheduled',
     },
 
     {
-      key: "completed",
-      label: "Hoàn thành",
+      key: 'completed',
+      label: 'Hoàn thành',
       icon: Wrench,
       onClick: async (record) => {
         showConfirm({
-          title: "Xác nhận!",
+          title: 'Xác nhận!',
           description: (
             <div>
               Vui lòng kiểm tra lại thông tin trước khi hoàn thành bảo trì này.
@@ -155,46 +180,46 @@ export function MaintenanceSection({
           onConfirm: async () => {
             await changeMaintenanceStatusMutation({
               id: record.id!,
-              status: "completed",
+              status: 'completed',
             });
             queryClient.invalidateQueries({
-              queryKey: ["maintenance-records", id],
+              queryKey: ['maintenance-records', id],
             });
           },
         });
       },
-      show: (record) => record.status === "scheduled",
+      show: (record) => record.status === 'scheduled',
     },
 
     {
-      key: "cancel",
-      label: "Hủy",
+      key: 'cancel',
+      label: 'Hủy',
       icon: Trash2,
-      variant: "destructive",
+      variant: 'destructive',
       onClick: (record) => {
         showConfirm({
-          title: "Bạn có chắc chắn muốn hủy bảo trì này không?",
+          title: 'Bạn có chắc chắn muốn hủy bảo trì này không?',
           description:
-            "Hành động này không thể hoàn tác. Vui lòng xác nhận nếu bạn muốn tiếp tục.",
+            'Hành động này không thể hoàn tác. Vui lòng xác nhận nếu bạn muốn tiếp tục.',
           onConfirm: async () => {
             await changeMaintenanceStatusMutation({
               id: record.id!,
-              status: "cancelled",
+              status: 'cancelled',
             });
             queryClient.invalidateQueries({
-              queryKey: ["maintenance-records", id],
+              queryKey: ['maintenance-records', id],
             });
           },
         });
       },
       show: (record) =>
-        record.status !== "completed" && record.status !== "cancelled",
+        record.status !== 'completed' && record.status !== 'cancelled',
     },
   ];
 
   const handleRowClick = (record: MaintenanceRecord) => {
     // Future: Open maintenance detail modal
-    console.log("Clicked maintenance record:", record);
+    console.log('Clicked maintenance record:', record);
   };
 
   return (
@@ -275,7 +300,7 @@ export function MaintenanceSection({
           orderId={id!}
           onSuccess={() => {
             queryClient.invalidateQueries({
-              queryKey: ["maintenance-records", id!],
+              queryKey: ['maintenance-records', id!],
             });
           }}
           maintenanceRecord={selectedMaintenance || undefined}

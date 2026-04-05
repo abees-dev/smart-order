@@ -1,7 +1,7 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   Form,
   FormControl,
@@ -9,27 +9,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import DialogResponsive from "@/components/ui/dialog-responsive";
-import FormTextField from "@/components/forms/form-textfield";
-import { FormSelectField } from "@/components/forms/form-select";
-import { FormDatePicker } from "@/components/forms/form-date-picker";
-import MaintenanceSuppliesSelect from "./maintenance-supplies-select";
-import { formatCurrency } from "@/utils/format";
+} from '@/components/ui/form';
+import DialogResponsive from '@/components/ui/dialog-responsive';
+import FormTextField from '@/components/forms/form-textfield';
+import { FormSelectField } from '@/components/forms/form-select';
+import { FormDatePicker } from '@/components/forms/form-date-picker';
+import MaintenanceSuppliesSelect from './maintenance-supplies-select';
+import { formatCurrency } from '@/utils/format';
 import {
   createMaintenanceSchema,
   type CreateMaintenanceFormData,
-} from "../../validation";
-import { OrderService } from "../../services/order.service";
-import type { MaintenanceRecord } from "../../types";
+} from '../../validation';
+import { OrderService } from '../../services/order.service';
+import type { MaintenanceRecord } from '../../types';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui";
-import { VAT_RATE_OPTIONS } from "@/constants/vat";
+} from '@/components/ui';
+import { VAT_RATE_OPTIONS } from '@/constants/vat';
 
 interface MaintenanceFormDialogProps {
   open: boolean;
@@ -41,14 +41,14 @@ interface MaintenanceFormDialogProps {
 
 const maintenanceTypeOptions = [
   {
-    value: "warranty",
-    label: "Bảo hành",
-    description: "Bảo trì theo chế độ bảo hành",
+    value: 'warranty',
+    label: 'Bảo hành',
+    description: 'Bảo trì theo chế độ bảo hành',
   },
   {
-    value: "paid",
-    label: "Trả phí",
-    description: "Bảo trì có tính phí",
+    value: 'paid',
+    label: 'Trả phí',
+    description: 'Bảo trì có tính phí',
   },
 ];
 
@@ -65,21 +65,21 @@ const MaintenanceFormDialog = ({
     resolver: zodResolver(createMaintenanceSchema),
     defaultValues: {
       orderId,
-      maintenanceType: maintenanceRecord?.maintenanceType || "warranty",
-      description: maintenanceRecord?.description || "",
+      maintenanceType: maintenanceRecord?.maintenanceType || 'warranty',
+      description: maintenanceRecord?.description || '',
       cost: maintenanceRecord?.cost || 0,
       vatRate: maintenanceRecord?.vatRate || 0,
       supplies: maintenanceRecord?.suppliesData || [],
-      performedBy: maintenanceRecord?.performedBy || "",
+      performedBy: maintenanceRecord?.performedBy || '',
       performedDate: maintenanceRecord?.performedDate
         ? new Date(maintenanceRecord?.performedDate)
         : new Date(),
-      notes: maintenanceRecord?.notes || "",
+      notes: maintenanceRecord?.notes || '',
     },
   });
 
-  const maintenanceType = form.watch("maintenanceType");
-  const isPaidMaintenance = maintenanceType === "paid";
+  const maintenanceType = form.watch('maintenanceType');
+  const isPaidMaintenance = true; //maintenanceType === 'paid';
 
   const isEditMode = Boolean(maintenanceRecord);
 
@@ -87,9 +87,9 @@ const MaintenanceFormDialog = ({
     queryClient.invalidateQueries({
       predicate(query) {
         return (
-          query.queryKey[0] === "orders" ||
-          query.queryKey[0] === "order" ||
-          query.queryKey[0] === "maintenance-records"
+          query.queryKey[0] === 'orders' ||
+          query.queryKey[0] === 'order' ||
+          query.queryKey[0] === 'maintenance-records'
         );
       },
     });
@@ -98,7 +98,7 @@ const MaintenanceFormDialog = ({
   const createMaintenanceMutation = useMutation({
     mutationFn: (data: {
       orderId: string;
-      maintenanceType: "warranty" | "paid";
+      maintenanceType: 'warranty' | 'paid';
       description: string;
       cost: number;
       supplyId?: string;
@@ -107,21 +107,21 @@ const MaintenanceFormDialog = ({
       notes?: string;
     }) => OrderService.createMaintenance(data),
     onSuccess: () => {
-      toast.success("Tạo bảo trì thành công");
+      toast.success('Tạo bảo trì thành công');
       invalidateQueries();
       form.reset();
       onSuccess?.();
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error(error?.message || "Có lỗi xảy ra khi tạo bảo trì");
+      toast.error(error?.message || 'Có lỗi xảy ra khi tạo bảo trì');
     },
   });
 
   const updateMaintenanceMutation = useMutation({
     mutationFn: (data: {
       orderId: string;
-      maintenanceType: "warranty" | "paid";
+      maintenanceType: 'warranty' | 'paid';
       description: string;
       cost: number;
       supplyId?: string;
@@ -130,27 +130,27 @@ const MaintenanceFormDialog = ({
       notes?: string;
     }) => OrderService.updateMaintenance(maintenanceRecord?.id as string, data),
     onSuccess: () => {
-      toast.success("Cập nhật bảo trì thành công");
+      toast.success('Cập nhật bảo trì thành công');
       form.reset();
       onSuccess?.();
       onOpenChange(false);
       invalidateQueries();
     },
     onError: (error: Error) => {
-      toast.error(error?.message || "Có lỗi xảy ra khi tạo bảo trì");
+      toast.error(error?.message || 'Có lỗi xảy ra khi tạo bảo trì');
     },
   });
 
   const onSubmit = (data: CreateMaintenanceFormData) => {
     // Set cost to 0 for warranty maintenance
-    if (data.maintenanceType === "warranty") {
-      data.cost = 0;
-    }
+    // if (data.maintenanceType === 'warranty') {
+    //   data.cost = 0;
+    // }
 
     // Convert dates to ISO strings
     const formattedData = {
       ...data,
-      performedDate: data.performedDate.toISOString().split("T")[0],
+      performedDate: data.performedDate.toISOString().split('T')[0],
     };
 
     if (isEditMode) {
@@ -167,22 +167,22 @@ const MaintenanceFormDialog = ({
 
   return (
     <DialogResponsive
-      title={isEditMode ? "Cập nhật bảo trì" : "Tạo bảo trì mới"}
+      title={isEditMode ? 'Cập nhật bảo trì' : 'Tạo bảo trì mới'}
       description={
         isEditMode
-          ? "Cập nhật thông tin bảo trì cho đơn hàng"
-          : "Nhập thông tin bảo trì cho đơn hàng"
+          ? 'Cập nhật thông tin bảo trì cho đơn hàng'
+          : 'Nhập thông tin bảo trì cho đơn hàng'
       }
       open={open}
       onOpenChange={onOpenChange}
       formId="maintenance-form"
       actions={{
         submit: {
-          label: isEditMode ? "Cập nhật" : "Tạo",
+          label: isEditMode ? 'Cập nhật' : 'Tạo',
           loading: createMaintenanceMutation.isPending,
         },
         cancel: {
-          label: "Hủy",
+          label: 'Hủy',
           onClick: handleCancel,
         },
       }}
@@ -301,20 +301,20 @@ const MaintenanceFormDialog = ({
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Chi phí bảo trì:</span>
                   <span className="text-lg font-semibold">
-                    {formatCurrency(form.watch("cost") || 0)}
+                    {formatCurrency(form.watch('cost') || 0)}
                   </span>
                 </div>
-                {(form.watch("vatRate") || 0) > 0 && (
+                {(form.watch('vatRate') || 0) > 0 && (
                   <>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        VAT ({form.watch("vatRate") || 0}%):
+                        VAT ({form.watch('vatRate') || 0}%):
                       </span>
                       <span className="text-muted-foreground">
                         {formatCurrency(
-                          ((form.watch("cost") || 0) *
-                            (form.watch("vatRate") || 0)) /
-                            100
+                          ((form.watch('cost') || 0) *
+                            (form.watch('vatRate') || 0)) /
+                            100,
                         )}
                       </span>
                     </div>
@@ -322,27 +322,27 @@ const MaintenanceFormDialog = ({
                       <span className="text-sm font-medium">Tổng cộng:</span>
                       <span className="text-lg font-semibold text-primary">
                         {formatCurrency(
-                          (form.watch("cost") || 0) +
-                            ((form.watch("cost") || 0) *
-                              (form.watch("vatRate") || 0)) /
-                              100
+                          (form.watch('cost') || 0) +
+                            ((form.watch('cost') || 0) *
+                              (form.watch('vatRate') || 0)) /
+                              100,
                         )}
                       </span>
                     </div>
                   </>
                 )}
-                {(form.watch("vatRate") || 0) === 0 && (
+                {(form.watch('vatRate') || 0) === 0 && (
                   <div className="flex items-center justify-between border-t pt-2">
                     <span className="text-sm font-medium">Tổng cộng:</span>
                     <span className="text-lg font-semibold text-primary">
-                      {formatCurrency(form.watch("cost") || 0)}
+                      {formatCurrency(form.watch('cost') || 0)}
                     </span>
                   </div>
                 )}
               </div>
-              {(form.watch("supplies")?.length ?? 0) > 0 && (
+              {(form.watch('supplies')?.length ?? 0) > 0 && (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Sử dụng {form.watch("supplies")?.length} vật tư
+                  Sử dụng {form.watch('supplies')?.length} vật tư
                 </div>
               )}
             </div>
@@ -357,9 +357,9 @@ const MaintenanceFormDialog = ({
                   Miễn phí
                 </span>
               </div>
-              {(form.watch("supplies")?.length ?? 0) > 0 && (
+              {(form.watch('supplies')?.length ?? 0) > 0 && (
                 <div className="mt-2 text-xs text-green-600 dark:text-green-400">
-                  Sử dụng {form.watch("supplies")?.length} vật tư
+                  Sử dụng {form.watch('supplies')?.length} vật tư
                 </div>
               )}
             </div>

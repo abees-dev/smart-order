@@ -1,11 +1,11 @@
 export type OrderStatus =
-  | "draft" // Nháp - vừa tạo
-  | "confirmed" // Đã xác nhận
-  | "exported" // Đã xuất kho (sẽ trừ vật tư)
-  | "completed" // Hoàn thành
-  | "cancelled"; // Đã hủy
+  | 'draft' // Nháp - vừa tạo
+  | 'confirmed' // Đã xác nhận
+  | 'exported' // Đã xuất kho (sẽ trừ vật tư)
+  | 'completed' // Hoàn thành
+  | 'cancelled'; // Đã hủy
 
-export type OrderItemType = "product" | "supply";
+export type OrderItemType = 'product' | 'supply';
 
 export interface OrderItem {
   id?: string; // for temporary ID during creation
@@ -90,7 +90,7 @@ export interface CreateOrderData {
   customerName?: string;
   items: Omit<
     OrderItem,
-    "id" | "orderId" | "createdAt" | "updatedAt" | "itemData"
+    'id' | 'orderId' | 'createdAt' | 'updatedAt' | 'itemData'
   >[];
   notes?: string;
 }
@@ -100,7 +100,7 @@ export interface UpdateOrderData {
   customerName?: string;
   items?: Omit<
     OrderItem,
-    "id" | "orderId" | "createdAt" | "updatedAt" | "itemData"
+    'id' | 'orderId' | 'createdAt' | 'updatedAt' | 'itemData'
   >[];
   vatRate?: number; // Default VAT rate for order
   notes?: string;
@@ -134,41 +134,41 @@ export interface OrderFormState {
 
 // Status transition rules
 export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  draft: ["confirmed", "cancelled"],
-  confirmed: ["exported", "cancelled"],
-  exported: ["completed", "cancelled"],
+  draft: ['confirmed', 'cancelled'],
+  confirmed: ['exported', 'cancelled'],
+  exported: ['completed', 'cancelled'],
   completed: [], // Không thể chuyển từ completed
   cancelled: [], // Không thể chuyển từ cancelled
 };
 
 // Status labels for UI
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  draft: "Nháp",
-  confirmed: "Đã xác nhận",
-  exported: "Đã xuất kho",
-  completed: "Hoàn thành",
-  cancelled: "Đã hủy",
+  draft: 'Nháp',
+  confirmed: 'Đã xác nhận',
+  exported: 'Đã xuất kho',
+  completed: 'Hoàn thành',
+  cancelled: 'Đã hủy',
 };
 
 // Status colors for badges
 export const ORDER_STATUS_COLORS: Record<
   OrderStatus,
-  "info" | "success" | "warning" | "error" | "violet" | "neutral"
+  'info' | 'success' | 'warning' | 'error' | 'violet' | 'neutral'
 > = {
-  draft: "neutral",
-  confirmed: "warning",
-  exported: "info",
-  completed: "success",
-  cancelled: "error",
+  draft: 'neutral',
+  confirmed: 'warning',
+  exported: 'info',
+  completed: 'success',
+  cancelled: 'error',
 };
 
 // Cost Incurred types and interfaces
 export type CostType =
-  | "material"
-  | "labor"
-  | "equipment"
-  | "transport"
-  | "other";
+  | 'material'
+  | 'labor'
+  | 'equipment'
+  | 'transport'
+  | 'other';
 
 export interface CostIncurred {
   id?: string;
@@ -187,7 +187,7 @@ export interface CostIncurred {
   updatedAt?: Date | string;
 }
 
-export type MaintenanceType = "warranty" | "paid";
+export type MaintenanceType = 'warranty' | 'paid';
 
 export interface MaintenanceSupply {
   supplyId: string;
@@ -219,8 +219,9 @@ export interface MaintenanceRecord {
     unit?: string;
     quantity: number;
     notes?: string;
+    unitPrice: number;
   }> | null;
-  status?: "scheduled" | "in_progress" | "completed" | "cancelled";
+  status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 }
 
 export interface CreateCostIncurredData {
@@ -250,23 +251,23 @@ export interface CostIncurredFilters {
 
 // Cost type labels for UI
 export const COST_TYPE_LABELS: Record<CostType, string> = {
-  material: "Vật liệu",
-  labor: "Nhân công",
-  equipment: "Thiết bị",
-  transport: "Vận chuyển",
-  other: "Khác",
+  material: 'Vật liệu',
+  labor: 'Nhân công',
+  equipment: 'Thiết bị',
+  transport: 'Vận chuyển',
+  other: 'Khác',
 };
 
 // Cost type colors for badges
 export const COST_TYPE_COLORS: Record<
   CostType,
-  "info" | "success" | "warning" | "error" | "violet" | "neutral"
+  'info' | 'success' | 'warning' | 'error' | 'violet' | 'neutral'
 > = {
-  material: "info",
-  labor: "success",
-  equipment: "warning",
-  transport: "violet",
-  other: "neutral",
+  material: 'info',
+  labor: 'success',
+  equipment: 'warning',
+  transport: 'violet',
+  other: 'neutral',
 };
 
 // Order Cost Calculation interfaces
@@ -278,21 +279,21 @@ export interface SupplyBreakdown {
   totalQuantityNeeded: number;
   unitCost: number;
   totalCost: number;
-  source: "import" | "purchase_price";
+  source: 'import' | 'purchase_price';
   currentStock?: number;
   sourceInvoiceNumber?: string;
   sourceImportId?: string;
 }
 
 export interface OrderCostBreakdown {
-  type: "supply" | "product";
+  type: 'supply' | 'product';
   itemId: string;
   itemName: string;
   sku: string;
   quantity: number;
   unitCost: number;
   totalCost: number;
-  source: "import" | "manual";
+  source: 'import' | 'manual';
   supplies?: SupplyBreakdown[]; // Only present when type is "product"
   sourceInvoiceNumber?: string; // Only for supplies imported from invoices
   sourceImportId?: string; // ID of the supply import record, if applicable
@@ -320,7 +321,7 @@ export interface ProductContext {
 }
 
 export interface SupplyShortage {
-  type: "supply";
+  type: 'supply';
   supplyId: string;
   supplyName: string;
   sku: string;
