@@ -131,7 +131,7 @@ export function DetailedInfoCard({
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Hash className="h-3 w-3" />
-              Số hóa đơn
+              Mã phiếu nhập
             </div>
             <div className="font-semibold text-lg">
               {importRecord.invoiceNumber}

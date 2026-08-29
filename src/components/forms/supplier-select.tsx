@@ -7,6 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SupplierService } from "@/modules/suppliers/services/supplier.service";
+import type { Supplier } from "@/modules/suppliers/types";
 import { cn } from "@/lib/utils";
 import SelectSearch from "../ui/select-search";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 interface SupplierSelectProps {
   value?: string;
   onValueChange?: (value: string) => void;
+  onSupplierSelect?: (supplier: Supplier | null) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -27,6 +29,7 @@ interface SupplierSelectProps {
 export function SupplierSelect({
   value,
   onValueChange,
+  onSupplierSelect,
   label,
   placeholder,
   required = false,
@@ -44,8 +47,11 @@ export function SupplierSelect({
   const handleValueChange = useCallback(
     (selectedValue: string) => {
       onValueChange?.(selectedValue);
+      const selectedSupplier =
+        (suppliers || []).find((s) => s.id === selectedValue) || null;
+      onSupplierSelect?.(selectedSupplier);
     },
-    [onValueChange]
+    [onValueChange, onSupplierSelect, suppliers]
   );
 
   return (
@@ -97,6 +103,7 @@ export function SupplierSelect({
 export function SupplierSelectField({
   field,
   fieldState,
+  onSupplierSelect,
   ...props
 }: {
   field: {
@@ -109,7 +116,8 @@ export function SupplierSelectField({
       message?: string;
     };
   };
-} & Omit<SupplierSelectProps, "value" | "onValueChange" | "error">) {
+  onSupplierSelect?: (supplier: Supplier | null) => void;
+} & Omit<SupplierSelectProps, "value" | "onValueChange" | "error" | "onSupplierSelect">) {
   const handleValueChange = useCallback(
     (value: string) => {
       field.onChange(value);
@@ -123,7 +131,9 @@ export function SupplierSelectField({
       {...props}
       value={field.value || ""}
       onValueChange={handleValueChange}
+      onSupplierSelect={onSupplierSelect}
       error={fieldState.error?.message}
     />
   );
 }
+

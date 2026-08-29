@@ -34,6 +34,7 @@ import {
 } from "../validation";
 import { SupplyFormDialog } from "./supply-form-dialog";
 import type { Supply, SupplyImport } from "../types";
+import type { Supplier as SupplierType } from "@/modules/suppliers/types";
 import FormTextField from "@/components/forms/form-textfield";
 import {
   useCreateSupplyImport,
@@ -245,6 +246,45 @@ export function SupplyImportFormDialog({
       form.setValue(`items.${index}.totalPrice`, totalPrice);
     }
   };
+  const handleSelectSupplier = (supplier: SupplierType | null) => {
+    if (supplier) {
+      const removeAccents = (str: string) => {
+        return str
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/đ/g, "d")
+          .replace(/Đ/g, "D");
+      };
+
+      const rawName = removeAccents(supplier.name || "");
+      const cleanWords = rawName
+        .replace(/[^a-zA-Z0-9\s]/g, "")
+        .trim()
+        .split(/\s+/)
+        .filter(
+          (w) =>
+            !["cong", "ty", "tnhh", "cp", "tmdv", "co", "ltd", "inc"].includes(
+              w.toLowerCase()
+            )
+        );
+
+      let supplierCode = cleanWords.join("").toUpperCase();
+      if (!supplierCode) {
+        supplierCode =
+          rawName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() || "NCC";
+      }
+      supplierCode = supplierCode.slice(0, 10);
+
+      const randomNumber = Math.floor(100 + Math.random() * 999899);
+      const generatedInvoiceNumber = `PN-${supplierCode}-${randomNumber}`;
+
+      form.setValue("invoiceNumber", generatedInvoiceNumber, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  };
+
   const handleSelectSupply = (supply: Supply | null, index: number) => {
     if (supply) {
       // Auto-fill supply info when selected
@@ -276,9 +316,10 @@ export function SupplyImportFormDialog({
           <CardContent className="space-y-4">
             <FormTextField
               name="invoiceNumber"
-              label="Số hóa đơn"
+              label="Mã phiếu nhập"
               required
-              placeholder="Nhập số hóa đơn"
+              placeholder="Nhập mã phiếu nhập"
+              helpText="Mã phiếu nhập kho (tự động tạo khi chọn nhà cung cấp)"
               control={form.control}
             />
 
@@ -301,6 +342,7 @@ export function SupplyImportFormDialog({
                   label="Nhà cung cấp"
                   placeholder="Chọn nhà cung cấp"
                   required
+                  onSupplierSelect={handleSelectSupplier}
                 />
               )}
             />

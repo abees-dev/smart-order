@@ -98,8 +98,8 @@ export const createSupplyImportSchema = z.object({
   }),
   invoiceNumber: z
     .string()
-    .min(1, "Số hóa đơn là bắt buộc")
-    .max(50, "Số hóa đơn không được vượt quá 50 ký tự"),
+    .min(1, "Mã phiếu nhập là bắt buộc")
+    .max(50, "Mã phiếu nhập không được vượt quá 50 ký tự"),
   supplierId: z.string().min(1, "Nhà cung cấp là bắt buộc"),
   notes: z
     .string()
