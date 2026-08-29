@@ -31,19 +31,37 @@ axiosInstance.interceptors.response.use(
       try {
         // Use the refresh token queue to handle concurrent refresh requests
         const newToken = await refreshTokenQueue.addRefreshRequest(async () => {
+          const authStorage = localStorage.getItem("smart-order-auth");
+          let storedRefreshToken = "";
+          if (authStorage) {
+            try {
+              const parsed = JSON.parse(authStorage);
+              storedRefreshToken = parsed?.state?.refreshToken || "";
+            } catch (e) {
+              console.error("Error parsing authStorage:", e);
+            }
+          }
+
           const refreshResponse = await axios.post(
             `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-            {},
+            { refreshToken: storedRefreshToken },
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                "x-refresh-token": storedRefreshToken,
               },
               withCredentials: true,
             }
           );
 
-          const { accessToken } = refreshResponse.data;
+          const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data;
           localStorage.setItem("auth_token", accessToken);
+
+          if (newRefreshToken) {
+            import("@/stores/auth.store").then(({ useAuthStore }) => {
+              useAuthStore.getState().setTokens(accessToken, newRefreshToken);
+            });
+          }
 
           return accessToken;
         });
