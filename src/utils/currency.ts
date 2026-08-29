@@ -17,5 +17,6 @@ export const calculateVatAmount = ({
   amount: number;
   vatRate: number;
 }) => {
+  console.log('');
   return amount * (vatRate / 100);
 };
