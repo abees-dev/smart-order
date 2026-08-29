@@ -142,7 +142,7 @@ export function SupplyImportFormDialog({
     mode: "onChange", // Enable real-time validation
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, prepend, remove } = useFieldArray({
     control: form.control,
     name: "items",
   });
@@ -174,7 +174,7 @@ export function SupplyImportFormDialog({
   };
 
   const addItem = () => {
-    append({
+    prepend({
       supplyId: "",
       quantity: 1,
       unitPrice: 0,
@@ -183,19 +183,18 @@ export function SupplyImportFormDialog({
       orderId: "",
     });
 
-    // // Scroll to the newly added item after a short delay
-    // setTimeout(() => {
-    //   if (itemsContainerRef.current) {
-    //     const items = itemsContainerRef.current.children;
-    //     const lastItem = items[items.length - 1] as HTMLElement;
-    //     if (lastItem) {
-    //       lastItem.scrollIntoView({
-    //         behavior: "smooth",
-    //         block: "center",
-    //       });
-    //     }
-    //   }
-    // }, 100);
+    // Scroll to the newly added item at top
+    setTimeout(() => {
+      if (itemsContainerRef.current) {
+        const firstItem = itemsContainerRef.current.firstElementChild as HTMLElement;
+        if (firstItem) {
+          firstItem.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      }
+    }, 50);
   };
 
   const removeItem = (index: number) => {

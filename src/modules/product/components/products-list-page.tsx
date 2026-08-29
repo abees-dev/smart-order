@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Eye, Pencil, Trash2, CopyPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDocumentTitle } from '@/hooks/use-document-title';
@@ -28,6 +29,7 @@ import { debounce } from 'lodash';
 const FILTER_KEY = Resources.PRODUCTS + '_filters';
 export function ProductsListPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   useDocumentTitle();
 
   // Set document title manually for this page
@@ -195,8 +197,7 @@ export function ProductsListPage() {
       label: t('common.view'),
       icon: Eye,
       onClick: (record) => {
-        setSelectedProduct(record);
-        setShowDetailDialog(true);
+        navigate(`/dashboard/products/${record.id}`);
       },
       show: () => hasPermission(Resources.PRODUCTS, Actions.DETAIL),
     },
@@ -341,8 +342,7 @@ export function ProductsListPage() {
             : undefined
         }
         onDoubleClick={(record) => {
-          setSelectedProduct(record);
-          setShowDetailDialog(true);
+          navigate(`/dashboard/products/${record.id}`);
         }}
         searchable
         searchPlaceholder={
